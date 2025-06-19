@@ -77,7 +77,7 @@ function appendDMMessage(who, message, timestamp) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function openDMChat(friend) {
+async function openDMChat(friend) {
   currentDM = friend;
   const sidebar = document.querySelector('.users-sidebar');
   if (!sidebar) return;
@@ -102,9 +102,7 @@ function openDMChat(friend) {
     sidebar.classList.remove('dm-animate-in');
     setTimeout(() => {
       sidebar.classList.remove('dm-active');
-      // Restore original sidebar content after transition
       sidebar.innerHTML = '';
-      // Re-insert +Add Friends button
       const addBtn = document.createElement('button');
       addBtn.className = 'add-friend-btn';
       addBtn.id = 'open-add-friend-modal';
@@ -114,6 +112,22 @@ function openDMChat(friend) {
       renderFriendsSidebar();
     }, 350);
   };
+  // Load previous messages from backend
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  const chat = sidebar.querySelector('.dm-chat-messages');
+  if (user && chat) {
+    chat.innerHTML = '<div class="dm-loading">Loading chat...</div>';
+    try {
+      const res = await fetch(`/messages?user1=${user.user_id}&user2=${friend.user_id}`);
+      const messages = await res.json();
+      chat.innerHTML = '';
+      for (const msg of messages) {
+        appendDMMessage(msg.sender_id === user.user_id ? 'me' : 'them', msg.content, msg.timestamp);
+      }
+    } catch (err) {
+      chat.innerHTML = '<div class="dm-error">Failed to load messages.</div>';
+    }
+  }
   // DM send logic
   const form = sidebar.querySelector('.dm-chat-input-area');
   form.onsubmit = (e) => {
@@ -121,7 +135,6 @@ function openDMChat(friend) {
     const input = form.querySelector('.dm-chat-input');
     const msg = input.value.trim();
     if (!msg) return;
-    const user = JSON.parse(localStorage.getItem('spice_user'));
     const timestamp = Date.now();
     appendDMMessage('me', msg, timestamp);
     if (socket) {
@@ -129,7 +142,6 @@ function openDMChat(friend) {
     }
     input.value = '';
   };
-  // Optionally: Load previous messages from Supabase here
 }
 
 // Helper for fade-slide animation with smooth height transition
