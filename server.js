@@ -47,6 +47,27 @@ io.on('connection', (socket) => {
     socket.emit('dm', { from, message, timestamp, media_url, media_type, file_name });
   });
 
+  // Handle pinning a DM message globally
+  socket.on('pin', async (pinData) => {
+    // Save to Supabase (already done on client, but safe to upsert here too)
+    await supabase.from('pins').upsert([pinData]);
+    // Broadcast to both users in the DM
+    const { dm_id } = pinData;
+    const [user1, user2] = dm_id.split('-');
+    io.to(user1).emit('pin', pinData);
+    io.to(user2).emit('pin', pinData);
+  });
+
+  // Handle deleting a DM message globally
+  socket.on('delete', async ({ dm_id, timestamp }) => {
+    // Remove from Supabase
+    await supabase.from('messages').delete().eq('timestamp', timestamp).eq('dm_id', dm_id);
+    // Broadcast to both users in the DM
+    const [user1, user2] = dm_id.split('-');
+    io.to(user1).emit('delete', timestamp);
+    io.to(user2).emit('delete', timestamp);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
