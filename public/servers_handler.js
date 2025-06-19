@@ -163,7 +163,7 @@ async function openServerChannel(serverId, channelId) {
   if (footer) {
     if (channel && channel.type === 'text') {
       footer.innerHTML = `
-        <form class="server-chat-input-form" style="display:flex;width:100%;gap:0.5rem;">
+        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
           <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
           <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
         </form>
@@ -275,6 +275,94 @@ window.addEventListener('DOMContentLoaded', () => {
 function openJoinServerModal() {
   // TODO: Show modal for joining a server by invite code
 }
+
+// --- Create Channel Modal Logic ---
+function openCreateChannelModal() {
+  const overlay = document.getElementById('create-channel-modal-overlay');
+  const modal = document.getElementById('create-channel-modal');
+  if (!overlay || !modal) return;
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('active'), 10);
+  // Animate modal elements
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.classList.remove('fade-in-up');
+    void content.offsetWidth;
+    content.classList.add('fade-in-up');
+    const fields = content.querySelectorAll('label, input, button, .channel-type-section, .channel-name-input-group, .private-channel-section, .modal-actions');
+    fields.forEach((el, i) => {
+      el.classList.remove('fade-in-up');
+      void el.offsetWidth;
+      el.classList.add('fade-in-up');
+      el.style.animationDelay = (0.07 * i) + 's';
+    });
+  }
+  const nameInput = document.getElementById('new-channel-name');
+  if (nameInput) nameInput.focus();
+}
+
+function closeCreateChannelModal() {
+  const overlay = document.getElementById('create-channel-modal-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  setTimeout(() => { overlay.style.display = 'none'; }, 350);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // ... existing code ...
+  // Create Channel modal open/close
+  const createChannelBtn = document.getElementById('create-channel-btn');
+  if (createChannelBtn) createChannelBtn.onclick = openCreateChannelModal;
+  const closeCreateChannelBtn = document.getElementById('close-create-channel-modal');
+  if (closeCreateChannelBtn) closeCreateChannelBtn.onclick = closeCreateChannelModal;
+  const cancelCreateChannelBtn = document.getElementById('cancel-create-channel');
+  if (cancelCreateChannelBtn) cancelCreateChannelBtn.onclick = closeCreateChannelModal;
+  const createChannelOverlay = document.getElementById('create-channel-modal-overlay');
+  if (createChannelOverlay) createChannelOverlay.onclick = (e) => {
+    if (e.target === createChannelOverlay) closeCreateChannelModal();
+  };
+  // Channel type selector logic
+  const typeText = document.getElementById('channel-type-text');
+  const typeVoice = document.getElementById('channel-type-voice');
+  if (typeText && typeVoice) {
+    typeText.onclick = () => {
+      typeText.classList.add('selected');
+      typeVoice.classList.remove('selected');
+      typeText.querySelector('input').checked = true;
+      typeVoice.querySelector('input').checked = false;
+      document.getElementById('channel-name-prefix').textContent = '#';
+    };
+    typeVoice.onclick = () => {
+      typeVoice.classList.add('selected');
+      typeText.classList.remove('selected');
+      typeVoice.querySelector('input').checked = true;
+      typeText.querySelector('input').checked = false;
+      document.getElementById('channel-name-prefix').textContent = '';
+    };
+  }
+  // Create channel form submit
+  const createChannelForm = document.getElementById('create-channel-form');
+  if (createChannelForm) {
+    createChannelForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentServer || !currentServer.id) return;
+      const name = document.getElementById('new-channel-name').value.trim();
+      const type = typeText && typeText.querySelector('input').checked ? 'text' : 'voice';
+      if (!name) return;
+      // Create channel in Supabase
+      const { data: channel, error } = await supabase.from('channels').insert([
+        { server_id: currentServer.id, name, type }
+      ]).select().single();
+      if (error || !channel) return;
+      closeCreateChannelModal();
+      await renderChannelsList(currentServer.id);
+      // Optionally auto-select the new channel
+      currentChannel = channel;
+      await openServerChannel(currentServer.id, channel.id);
+    };
+  }
+  // ... existing code ...
+});
 
 // --- Real-time Updates ---
 // TODO: Setup Socket.IO or Supabase Realtime for server/channel events
