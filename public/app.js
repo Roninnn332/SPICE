@@ -50,7 +50,8 @@ let currentDM = null;
 function setupSocketIO(userId) {
   if (!window.io) return;
   if (socket) socket.disconnect();
-  socket = window.io('http://localhost:3000');
+  const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+  socket = window.io(socketUrl);
   socket.on('connect', () => {
     socket.emit('join', userId);
   });
@@ -101,6 +102,15 @@ function openDMChat(friend) {
     sidebar.classList.remove('dm-animate-in');
     setTimeout(() => {
       sidebar.classList.remove('dm-active');
+      // Restore original sidebar content after transition
+      sidebar.innerHTML = '';
+      // Re-insert +Add Friends button
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-friend-btn';
+      addBtn.id = 'open-add-friend-modal';
+      addBtn.textContent = '+ Add Friends';
+      addBtn.onclick = openAddFriendModal;
+      sidebar.appendChild(addBtn);
       renderFriendsSidebar();
     }, 350);
   };
@@ -833,7 +843,7 @@ async function renderFriendsSidebar() {
   for (const friend of usersData) {
     html += `
       <div class="friend-list-item">
-        <img class="friend-list-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+        <img class="friend-list-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" data-user-id="${friend.user_id}">
         <span class="friend-list-username">${friend.username}</span>
       </div>
     `;
@@ -846,11 +856,13 @@ async function renderFriendsSidebar() {
   setTimeout(() => {
     document.querySelectorAll('.friend-list-item').forEach(item => {
       item.onclick = async () => {
-        const userId = item.querySelector('.friend-list-avatar').getAttribute('data-user-id') || item.querySelector('.friend-list-avatar').src;
-        // Find friend data
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        const { data: friendData } = await supabase.from('users').select('user_id,username,avatar_url').eq('user_id', item.querySelector('.friend-list-avatar').getAttribute('data-user-id')).single();
-        openDMChat(friendData);
+        const userId = item.querySelector('.friend-list-avatar').getAttribute('data-user-id');
+        const { data: friendData } = await supabase.from('users').select('user_id,username,avatar_url').eq('user_id', userId).single();
+        if (friendData) {
+          openDMChat(friendData);
+        } else {
+          alert('Could not load friend data. Please try again.');
+        }
       };
     });
   }, 100);
