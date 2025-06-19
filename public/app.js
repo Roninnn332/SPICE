@@ -117,9 +117,8 @@ if (!window.pinDeleteSocketSetup) {
   }, 500);
 }
 
-// --- Patch appendDMMessage to support pin/delete ---
-const origAppendDMMessage = appendDMMessage;
-appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null) {
+// Define appendDMMessage globally
+window.appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null) {
   const chat = document.querySelector('.dm-chat-messages');
   if (!chat) return;
   const msgDiv = document.createElement('div');
@@ -128,31 +127,22 @@ appendDMMessage = function(who, message, timestamp, media_url = null, media_type
   let mediaHtml = '';
   if (media_url && media_type) {
     if (media_type.startsWith('image/')) {
-      mediaHtml = `<img class="dm-message-media-img" src="${media_url}" alt="Image" loading="lazy" />`;
+      mediaHtml = `<img class=\"dm-message-media-img\" src=\"${media_url}\" alt=\"Image\" loading=\"lazy\" />`;
     } else if (media_type.startsWith('video/')) {
-      mediaHtml = `<video class="dm-message-media-video" src="${media_url}" controls preload="metadata"></video>`;
+      mediaHtml = `<video class=\"dm-message-media-video\" src=\"${media_url}\" controls preload=\"metadata\"></video>`;
     } else {
       const name = file_name ? file_name : 'Download File';
-      mediaHtml = `<a class="dm-message-media-file" href="${media_url}" download target="_blank"><i class="fa-solid fa-file-arrow-down"></i> ${name}</a>`;
+      mediaHtml = `<a class=\"dm-message-media-file\" href=\"${media_url}\" download target=\"_blank\"><i class=\"fa-solid fa-file-arrow-down\"></i> ${name}</a>`;
     }
   }
   msgDiv.innerHTML = `
-    <div class="dm-message-bubble">
-      ${mediaHtml}
-      ${message ? `<span class="dm-message-text">${message}</span>` : ''}
-      <span class="dm-message-time">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-    </div>
-  `;
+    <div class=\"dm-message-bubble\">\n      ${mediaHtml}\n      ${message ? `<span class=\"dm-message-text\">${message}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
   // Dropdown menu for message actions
   const dropdown = document.createElement('div');
   dropdown.className = 'dm-message-dropdown';
   dropdown.style.display = 'none';
   dropdown.innerHTML = `
-    <button class="dm-msg-action" data-action="reply">Reply</button>
-    <button class="dm-msg-action" data-action="copy">Copy</button>
-    <button class="dm-msg-action" data-action="delete">Delete</button>
-    <button class="dm-msg-action" data-action="pin">Pin</button>
-  `;
+    <button class=\"dm-msg-action\" data-action=\"reply\">Reply</button>\n    <button class=\"dm-msg-action\" data-action=\"copy\">Copy</button>\n    <button class=\"dm-msg-action\" data-action=\"delete\">Delete</button>\n    <button class=\"dm-msg-action\" data-action=\"pin\">Pin</button>\n  `;
   msgDiv.appendChild(dropdown);
   msgDiv.addEventListener('dblclick', (e) => {
     document.querySelectorAll('.dm-message-dropdown').forEach(el => {
@@ -178,7 +168,6 @@ appendDMMessage = function(who, message, timestamp, media_url = null, media_type
           setTimeout(() => { e.target.textContent = 'Copy'; }, 1200);
         });
       } else if (action === 'pin') {
-        // Pin globally: emit socket event, save to Supabase
         if (socket && currentDM) {
           const user = JSON.parse(localStorage.getItem('spice_user'));
           const pinData = {
@@ -192,12 +181,10 @@ appendDMMessage = function(who, message, timestamp, media_url = null, media_type
             content: message,
             timestamp
           };
-          // Save to Supabase
           await supabase.from('pins').upsert([pinData]);
           socket.emit('pin', pinData);
         }
       } else if (action === 'delete') {
-        // Delete globally: emit socket event, delete from Supabase
         if (socket && currentDM) {
           const user = JSON.parse(localStorage.getItem('spice_user'));
           const dm_id = [user.user_id, currentDM.user_id].sort().join('-');
