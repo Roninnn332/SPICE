@@ -57,27 +57,37 @@ function setupSocketIO(userId) {
   });
   socket.on('dm', (data) => {
     if (currentDM && data.from === currentDM.user_id) {
-      appendDMMessage('them', data.message, data.timestamp);
+      appendDMMessage('them', data.message, data.timestamp, data.media_url, data.media_type, data.file_name);
     }
   });
 }
 
-function appendDMMessage(who, message, timestamp) {
+function appendDMMessage(who, message, timestamp, media_url = null, media_type = null, file_name = null) {
   const chat = document.querySelector('.dm-chat-messages');
   if (!chat) return;
   const msgDiv = document.createElement('div');
   msgDiv.className = 'dm-message ' + who;
+  let mediaHtml = '';
+  if (media_url && media_type) {
+    if (media_type.startsWith('image/')) {
+      mediaHtml = `<img class="dm-message-media-img" src="${media_url}" alt="Image" loading="lazy" />`;
+    } else if (media_type.startsWith('video/')) {
+      mediaHtml = `<video class="dm-message-media-video" src="${media_url}" controls preload="metadata"></video>`;
+    } else {
+      const name = file_name ? file_name : 'Download File';
+      mediaHtml = `<a class="dm-message-media-file" href="${media_url}" download target="_blank"><i class="fa-solid fa-file-arrow-down"></i> ${name}</a>`;
+    }
+  }
   msgDiv.innerHTML = `
     <div class="dm-message-bubble">
-      <span class="dm-message-text">${message}</span>
+      ${mediaHtml}
+      ${message ? `<span class="dm-message-text">${message}</span>` : ''}
       <span class="dm-message-time">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
     </div>
   `;
   chat.appendChild(msgDiv);
-  // Animate in (reflow to trigger animation if needed)
   void msgDiv.offsetWidth;
   msgDiv.classList.add('dm-message-animate-in');
-  // Smooth scroll to bottom
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
@@ -95,6 +105,8 @@ async function openDMChat(friend) {
     </div>
     <div class="dm-chat-messages"></div>
     <form class="dm-chat-input-area">
+      <button type="button" class="dm-chat-attach-btn" title="Attach Media"><i class="fa-solid fa-paperclip"></i></button>
+      <input type="file" class="dm-chat-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg" />
       <input type="text" class="dm-chat-input" placeholder="Type a message..." autocomplete="off" />
       <button type="submit" class="dm-chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
     </form>
@@ -126,7 +138,7 @@ async function openDMChat(friend) {
       const messages = await res.json();
       chat.innerHTML = '';
       for (const msg of messages) {
-        appendDMMessage(msg.sender_id === user.user_id ? 'me' : 'them', msg.content, msg.timestamp);
+        appendDMMessage(msg.sender_id === user.user_id ? 'me' : 'them', msg.content, msg.timestamp, msg.media_url, msg.media_type, msg.file_name);
       }
     } catch (err) {
       chat.innerHTML = '<div class="dm-error">Failed to load messages.</div>';
@@ -134,17 +146,85 @@ async function openDMChat(friend) {
   }
   // DM send logic
   const form = sidebar.querySelector('.dm-chat-input-area');
-  form.onsubmit = (e) => {
+  const attachBtn = form.querySelector('.dm-chat-attach-btn');
+  const fileInput = form.querySelector('.dm-chat-file-input');
+
+  // Feedback message for file errors
+  let fileErrorMsg = form.querySelector('.dm-file-error-msg');
+  if (!fileErrorMsg) {
+    fileErrorMsg = document.createElement('div');
+    fileErrorMsg.className = 'dm-file-error-msg';
+    fileErrorMsg.style.display = 'none';
+    form.appendChild(fileErrorMsg);
+  }
+
+  attachBtn.onclick = (e) => {
     e.preventDefault();
-    const input = form.querySelector('.dm-chat-input');
-    const msg = input.value.trim();
-    if (!msg) return;
-    const timestamp = Date.now();
-    appendDMMessage('me', msg, timestamp);
-    if (socket) {
-      socket.emit('dm', { to: friend.user_id, from: user.user_id, message: msg, timestamp });
+    fileInput.value = '';
+    fileErrorMsg.style.display = 'none';
+    fileInput.click();
+  };
+
+  fileInput.onchange = async (e) => {
+    fileErrorMsg.style.display = 'none';
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { // 20MB limit
+      fileErrorMsg.textContent = 'File too large (max 20MB).';
+      fileErrorMsg.style.display = 'block';
+      fileErrorMsg.classList.add('show');
+      setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
+      return;
     }
-    input.value = '';
+    // Show loading spinner
+    let loading = form.querySelector('.dm-file-upload-loading');
+    if (!loading) {
+      loading = document.createElement('div');
+      loading.className = 'dm-file-upload-loading';
+      loading.innerHTML = '<div class="spinner"></div><span>Uploading...</span>';
+      form.appendChild(loading);
+    }
+    loading.style.display = 'flex';
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'user_media');
+      const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/auto/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      loading.style.display = 'none';
+      if (data.secure_url) {
+        // Determine media type
+        const type = file.type;
+        const name = file.name;
+        const timestamp = Date.now();
+        appendDMMessage('me', '', timestamp, data.secure_url, type, name);
+        if (socket) {
+          socket.emit('dm', {
+            to: friend.user_id,
+            from: user.user_id,
+            message: '',
+            timestamp,
+            media_url: data.secure_url,
+            media_type: type,
+            file_name: name
+          });
+        }
+      } else {
+        fileErrorMsg.textContent = 'Upload failed.';
+        fileErrorMsg.style.display = 'block';
+        fileErrorMsg.classList.add('show');
+        setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      fileErrorMsg.textContent = 'Upload error.';
+      fileErrorMsg.style.display = 'block';
+      fileErrorMsg.classList.add('show');
+      setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
+    }
   };
 }
 
