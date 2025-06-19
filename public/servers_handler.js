@@ -165,6 +165,20 @@ function openCreateServerModal() {
   if (!overlay || !modal) return;
   overlay.style.display = 'flex';
   setTimeout(() => overlay.classList.add('active'), 10);
+  // Animate modal elements
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.classList.remove('fade-in-up');
+    void content.offsetWidth;
+    content.classList.add('fade-in-up');
+    const fields = content.querySelectorAll('label, input, button');
+    fields.forEach((el, i) => {
+      el.classList.remove('fade-in-up');
+      void el.offsetWidth;
+      el.classList.add('fade-in-up');
+      el.style.animationDelay = (0.08 * i) + 's';
+    });
+  }
   const nameInput = document.getElementById('server-name');
   if (nameInput) nameInput.focus();
 }
@@ -201,8 +215,24 @@ window.addEventListener('DOMContentLoaded', () => {
       await supabase.from('server_members').insert([
         { server_id: server.id, user_id: user.user_id, role: 'owner' }
       ]);
+      // Create default channels
+      const { data: textChannel } = await supabase.from('channels').insert([
+        { server_id: server.id, name: 'general', type: 'text' }
+      ]).select().single();
+      const { data: voiceChannel } = await supabase.from('channels').insert([
+        { server_id: server.id, name: 'General', type: 'voice' }
+      ]).select().single();
       closeCreateServerModal();
-      renderServersList();
+      await renderServersList();
+      // Auto-select the new server and its general text channel
+      currentServer = server;
+      if (textChannel) {
+        currentChannel = textChannel;
+        await renderChannelsList(server.id);
+        await openServerChannel(server.id, textChannel.id);
+      } else {
+        await renderChannelsList(server.id);
+      }
     };
   }
 });

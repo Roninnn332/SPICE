@@ -2353,3 +2353,33 @@ body {
     padding: 1.2rem 0.7rem 1rem 0.7rem;
   }
 }
+
+/* ... existing code ... */
+.server-btn img,
+.server-btn .user-avatar-initial {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+/* ... existing code ... */
+
+/* ... existing code ... */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: fadeInUpModal 0.55s cubic-bezier(.4,2,.6,1) forwards;
+}
+@keyframes fadeInUpModal {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ... existing code ... */
