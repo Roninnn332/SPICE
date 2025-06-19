@@ -264,15 +264,14 @@ window.openDMChat = async function(friend) {
     if (!text) return;
     const user = JSON.parse(localStorage.getItem('spice_user'));
     const timestamp = Date.now();
-    // Send message with reply info if present
-    window.appendDMMessage('me', text, timestamp, null, null, null, replyState);
+    // Send message (no reply)
+    window.appendDMMessage('me', text, timestamp, null, null, null, null);
     if (socket) {
       socket.emit('dm', {
         to: friend.user_id,
         from: user.user_id,
         message: text,
-        timestamp,
-        reply: replyState
+        timestamp
       });
     }
     input.value = '';
