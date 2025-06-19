@@ -81,17 +81,48 @@ async function renderChannelsList(serverId) {
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
   channelsListDiv.innerHTML = '';
-  channels.forEach(channel => {
-    const btn = document.createElement('button');
-    btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-    btn.textContent = `# ${channel.name}`;
-    btn.onclick = () => {
-      currentChannel = channel;
-      renderChannelsList(serverId); // re-render to update active
-      openServerChannel(serverId, channel.id);
-    };
-    channelsListDiv.appendChild(btn);
-  });
+  // Split channels by type
+  const textChannels = channels.filter(c => c.type === 'text');
+  const voiceChannels = channels.filter(c => c.type === 'voice');
+  // Text Channels Section
+  if (textChannels.length) {
+    const textHeader = document.createElement('div');
+    textHeader.className = 'channel-section-header';
+    textHeader.textContent = 'Text Channels';
+    channelsListDiv.appendChild(textHeader);
+    textChannels.forEach(channel => {
+      const btn = document.createElement('button');
+      btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
+      btn.innerHTML = `<span class='channel-icon'>#</span> ${channel.name}`;
+      btn.onclick = () => {
+        currentChannel = channel;
+        renderChannelsList(serverId); // re-render to update active
+        openServerChannel(serverId, channel.id);
+      };
+      channelsListDiv.appendChild(btn);
+    });
+    const pad = document.createElement('div');
+    pad.className = 'channels-list-padding';
+    channelsListDiv.appendChild(pad);
+  }
+  // Voice Channels Section
+  if (voiceChannels.length) {
+    const voiceHeader = document.createElement('div');
+    voiceHeader.className = 'channel-section-header';
+    voiceHeader.textContent = 'Voice Channels';
+    channelsListDiv.appendChild(voiceHeader);
+    voiceChannels.forEach(channel => {
+      const btn = document.createElement('button');
+      btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
+      btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> ${channel.name}`;
+      btn.onclick = () => {
+        currentChannel = channel;
+        renderChannelsList(serverId); // re-render to update active
+        openServerChannel(serverId, channel.id);
+      };
+      channelsListDiv.appendChild(btn);
+    });
+  }
 }
 
 // --- Server Chat UI ---
@@ -127,34 +158,38 @@ async function openServerChannel(serverId, channelId) {
     `;
     chat.appendChild(msgDiv);
   }
-  // Render message input in footer
+  // Render message input in footer ONLY for text channels
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (footer) {
-    footer.innerHTML = `
-      <form class="server-chat-input-form" style="display:flex;width:100%;gap:0.5rem;">
-        <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
-        <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
-      </form>
-    `;
-    const form = footer.querySelector('.server-chat-input-form');
-    const input = footer.querySelector('.server-chat-input');
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const user = JSON.parse(localStorage.getItem('spice_user'));
-      const content = input.value.trim();
-      if (!user || !user.user_id || !content) return;
-      input.value = '';
-      await supabase.from('channel_messages').insert([
-        {
-          server_id: serverId,
-          channel_id: channelId,
-          user_id: user.user_id,
-          content,
-          timestamp: new Date().toISOString()
-        }
-      ]);
-      openServerChannel(serverId, channelId); // re-fetch messages
-    };
+    if (channel && channel.type === 'text') {
+      footer.innerHTML = `
+        <form class="server-chat-input-form" style="display:flex;width:100%;gap:0.5rem;">
+          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
+          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
+        </form>
+      `;
+      const form = footer.querySelector('.server-chat-input-form');
+      const input = footer.querySelector('.server-chat-input');
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        const content = input.value.trim();
+        if (!user || !user.user_id || !content) return;
+        input.value = '';
+        await supabase.from('channel_messages').insert([
+          {
+            server_id: serverId,
+            channel_id: channelId,
+            user_id: user.user_id,
+            content,
+            timestamp: new Date().toISOString()
+          }
+        ]);
+        openServerChannel(serverId, channelId); // re-fetch messages
+      };
+    } else {
+      footer.innerHTML = '';
+    }
   }
 }
 

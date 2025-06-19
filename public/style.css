@@ -2383,3 +2383,60 @@ body {
   }
 }
 /* ... existing code ... */
+
+/* ... existing code ... */
+.channels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.2rem 0.7rem 0.2rem;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+.channel-section-header {
+  font-size: 0.98rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin: 0.7rem 0 0.2rem 0.5rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.channel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--white);
+  font-size: 1.04rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  padding: 0.38em 0.9em 0.38em 0.9em;
+  border-radius: 0.7em;
+  cursor: pointer;
+  transition: background 0.16s, color 0.16s;
+  width: 100%;
+  text-align: left;
+  min-height: 36px;
+}
+.channel-btn:hover, .channel-btn:focus {
+  background: var(--primary-blue-dark);
+  color: var(--accent);
+}
+.channel-btn.active {
+  background: var(--primary-blue);
+  color: var(--white);
+  font-weight: 700;
+}
+.channel-btn .channel-icon {
+  font-size: 1.1em;
+  margin-right: 0.3em;
+  display: flex;
+  align-items: center;
+}
+.channels-list-padding {
+  margin-bottom: 0.7rem;
+}
+/* ... existing code ... */
