@@ -2,12 +2,6 @@
 // Handles all logic for servers (group chats), channels, and server chat UI
 // This keeps app.js focused on DMs/friends only
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-const SUPABASE_URL = 'https://qhbeexkqftbhjkeuruiy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoYmVleGtxZnRiaGprZXVydWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzAxMTEsImV4cCI6MjA2NTg0NjExMX0.swpojIxW47IIPX097X45l3LYe5OiDZijGlAMXfCD30I';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 // --- Server State ---
 let currentServer = null;
 let currentChannel = null;
