@@ -51,6 +51,7 @@ let currentDM = null;
 let currentPinned = null;
 let pinBtn = null;
 let pinnedModal = null;
+let replyState = null;
 
 function showPinnedIcon(show) {
   if (!pinBtn) pinBtn = document.getElementById('dm-pin-btn');
@@ -84,7 +85,7 @@ function setupSocketIO(userId) {
   });
   socket.on('dm', (data) => {
     if (currentDM && data.from === currentDM.user_id) {
-      appendDMMessage('them', data.message, data.timestamp, data.media_url, data.media_type, data.file_name);
+      window.appendDMMessage('them', data.message, data.timestamp, data.media_url, data.media_type, data.file_name, data.reply || null);
     }
   });
 }
@@ -116,7 +117,7 @@ if (!window.pinDeleteSocketSetup) {
 }
 
 // --- Define appendDMMessage globally ---
-window.appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null) {
+window.appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null, reply = null) {
   const chat = document.querySelector('.dm-chat-messages');
   if (!chat) return;
   const msgDiv = document.createElement('div');
@@ -133,8 +134,13 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
       mediaHtml = `<a class=\"dm-message-media-file\" href=\"${media_url}\" download target=\"_blank\"><i class=\"fa-solid fa-file-arrow-down\"></i> ${name}</a>`;
     }
   }
+  let replyHtml = '';
+  if (reply && (reply.message || reply.media_url)) {
+    replyHtml = `<div class='dm-reply-bubble'><span class='dm-reply-label'>Replying to:</span> <span class='dm-reply-msg'>${reply.message ? reply.message : '[media]'}</span></div>`;
+  }
   msgDiv.innerHTML = `
-    <div class=\"dm-message-bubble\">\n      ${mediaHtml}\n      ${message ? `<span class=\"dm-message-text\">${message}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
+    <div class=\"dm-message-bubble\">\n      ${replyHtml}
+      ${mediaHtml}\n      ${message ? `<span class=\"dm-message-text\">${message}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
   const dropdown = document.createElement('div');
   dropdown.className = 'dm-message-dropdown';
   dropdown.style.display = 'none';
@@ -189,6 +195,9 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
           socket.emit('delete', { dm_id, timestamp });
           msgDiv.remove();
         }
+      } else if (action === 'reply') {
+        replyState = { who, message, timestamp, media_url, media_type, file_name };
+        showReplyPreview();
       }
       dropdown.style.display = 'none';
     }
@@ -198,6 +207,26 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
   msgDiv.classList.add('dm-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 };
+
+function showReplyPreview() {
+  const form = document.querySelector('.dm-chat-input-area');
+  if (!form) return;
+  let preview = form.querySelector('.dm-reply-preview');
+  if (!replyState) {
+    if (preview) preview.remove();
+    return;
+  }
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.className = 'dm-reply-preview';
+    form.insertAdjacentElement('beforebegin', preview);
+  }
+  preview.innerHTML = `<span>Replying to: </span><span class='dm-reply-msg'>${replyState.message || '[media]'}</span> <button class='dm-reply-cancel' title='Cancel'>&times;</button>`;
+  preview.querySelector('.dm-reply-cancel').onclick = () => { replyState = null; showReplyPreview(); };
+  // Scroll to input
+  const input = form.querySelector('.dm-chat-input');
+  if (input) input.focus();
+}
 
 // --- Pin icon click handler ---
 document.addEventListener('click', (e) => {
@@ -213,20 +242,7 @@ window.openDMChat = async function(friend) {
   if (!sidebar) return;
   sidebar.classList.add('dm-active');
   sidebar.innerHTML = `
-    <div class="dm-chat-header">
-      <button class="dm-back-btn" title="Back">&#8592;</button>
-      <img class="dm-chat-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
-      <span class="dm-chat-username">${friend.username}</span>
-      <button id="dm-pin-btn" class="dm-pin-btn" title="Show pinned message" style="display:none;"><i class="fa-solid fa-thumbtack"></i></button>
-    </div>
-    <div class="dm-chat-messages"></div>
-    <form class="dm-chat-input-area">
-      <button type="button" class="dm-chat-attach-btn" title="Attach Media"><i class="fa-solid fa-paperclip"></i></button>
-      <input type="file" class="dm-chat-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg" />
-      <input type="text" class="dm-chat-input" placeholder="Type a message..." autocomplete="off" />
-      <button type="submit" class="dm-chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-    </form>
-  `;
+    <div class=\"dm-chat-header\">\n      <button class=\"dm-back-btn\" title=\"Back\">&#8592;</button>\n      <img class=\"dm-chat-avatar\" src=\"${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\">\n      <span class=\"dm-chat-username\">${friend.username}</span>\n      <button id=\"dm-pin-btn\" class=\"dm-pin-btn\" title=\"Show pinned message\" style=\"display:none;\"><i class=\"fa-solid fa-thumbtack\"></i></button>\n    </div>\n    <div class=\"dm-chat-messages\"></div>\n    <form class=\"dm-chat-input-area\">\n      <button type=\"button\" class=\"dm-chat-attach-btn\" title=\"Attach Media\"><i class=\"fa-solid fa-paperclip\"></i></button>\n      <input type=\"file\" class=\"dm-chat-file-input\" style=\"display:none;\" accept=\"image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg\" />\n      <input type=\"text\" class=\"dm-chat-input\" placeholder=\"Type a message...\" autocomplete=\"off\" />\n      <button type=\"submit\" class=\"dm-chat-send-btn\"><i class=\"fa-solid fa-paper-plane\"></i></button>\n    </form>\n  `;
   setTimeout(() => sidebar.classList.add('dm-animate-in'), 10);
   sidebar.querySelector('.dm-back-btn').onclick = () => {
     sidebar.classList.remove('dm-animate-in');
@@ -245,16 +261,24 @@ window.openDMChat = async function(friend) {
   const user = JSON.parse(localStorage.getItem('spice_user'));
   const chat = sidebar.querySelector('.dm-chat-messages');
   if (user && chat) {
-    chat.innerHTML = '<div class="dm-loading">Loading chat...</div>';
+    chat.innerHTML = '<div class=\"dm-loading\">Loading chat...</div>';
     try {
       const res = await fetch(`/messages?user1=${user.user_id}&user2=${friend.user_id}`);
       const messages = await res.json();
       chat.innerHTML = '';
       for (const msg of messages) {
-        window.appendDMMessage(msg.sender_id === user.user_id ? 'me' : 'them', msg.content, msg.timestamp, msg.media_url, msg.media_type, msg.file_name);
+        window.appendDMMessage(
+          msg.sender_id === user.user_id ? 'me' : 'them',
+          msg.content,
+          msg.timestamp,
+          msg.media_url,
+          msg.media_type,
+          msg.file_name,
+          msg.reply || null
+        );
       }
     } catch (err) {
-      chat.innerHTML = '<div class="dm-error">Failed to load messages.</div>';
+      chat.innerHTML = '<div class=\"dm-error\">Failed to load messages.</div>';
     }
   }
   const form = sidebar.querySelector('.dm-chat-input-area');
@@ -288,7 +312,7 @@ window.openDMChat = async function(friend) {
     if (!loading) {
       loading = document.createElement('div');
       loading.className = 'dm-file-upload-loading';
-      loading.innerHTML = '<div class="spinner"></div><span>Uploading...</span>';
+      loading.innerHTML = '<div class=\"spinner\"></div><span>Uploading...</span>';
       form.appendChild(loading);
     }
     loading.style.display = 'flex';
@@ -343,6 +367,29 @@ window.openDMChat = async function(friend) {
     currentPinned = null;
     showPinnedIcon(false);
   }
+  // Add reply to message send
+  const input = form.querySelector('.dm-chat-input');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text && !replyState) return;
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const timestamp = Date.now();
+    // Send message with reply info if present
+    window.appendDMMessage('me', text, timestamp, null, null, null, replyState);
+    if (socket) {
+      socket.emit('dm', {
+        to: friend.user_id,
+        from: user.user_id,
+        message: text,
+        timestamp,
+        reply: replyState
+      });
+    }
+    input.value = '';
+    replyState = null;
+    showReplyPreview();
+  };
 };
 
 // Helper for fade-slide animation with smooth height transition
