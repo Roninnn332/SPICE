@@ -74,7 +74,11 @@ function appendDMMessage(who, message, timestamp) {
     </div>
   `;
   chat.appendChild(msgDiv);
-  chat.scrollTop = chat.scrollHeight;
+  // Animate in (reflow to trigger animation if needed)
+  void msgDiv.offsetWidth;
+  msgDiv.classList.add('dm-message-animate-in');
+  // Smooth scroll to bottom
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
 async function openDMChat(friend) {
