@@ -212,7 +212,7 @@ document.addEventListener('click', (e) => {
 // --- On DM open, fetch pin ---
 const origOpenDMChat = openDMChat;
 openDMChat = async function(friend) {
-  await origOpenDMChat(friend);
+  await window.openDMChat(friend);
   pinBtn = document.getElementById('dm-pin-btn');
   // Fetch pin from Supabase
   const user = JSON.parse(localStorage.getItem('spice_user'));
@@ -954,7 +954,7 @@ async function renderFriendsSidebar() {
         const userId = item.querySelector('.friend-list-avatar').getAttribute('data-user-id');
         const { data: friendData } = await supabase.from('users').select('user_id,username,avatar_url').eq('user_id', userId).single();
         if (friendData) {
-          openDMChat(friendData);
+          window.openDMChat(friendData);
         } else {
           alert('Could not load friend data. Please try again.');
         }
