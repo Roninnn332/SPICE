@@ -254,6 +254,23 @@
     </div>
   </div>
 
+  <!-- Create Server Modal (hidden by default) -->
+  <div class="modal-overlay" id="create-server-modal-overlay" style="display:none;">
+    <div class="modal" id="create-server-modal">
+      <button class="modal-close" id="close-create-server-modal">&times;</button>
+      <div class="modal-content">
+        <h2>Create a Server</h2>
+        <form id="create-server-form">
+          <label for="server-name">Server Name</label>
+          <input type="text" id="server-name" name="server-name" required maxlength="32" placeholder="Enter server name" />
+          <label for="server-icon-url">Icon URL (optional)</label>
+          <input type="url" id="server-icon-url" name="server-icon-url" placeholder="Paste image URL (optional)" />
+          <button type="submit">Create Server</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer footer-animate" id="site-footer">
     <div class="footer-content">
       <div class="footer-brand">
@@ -278,5 +295,6 @@
   </footer>
 
   <script src="app.js" type="module"></script>
+  <script src="servers_handler.js"></script>
 </body>
 </html> 
