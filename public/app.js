@@ -47,75 +47,6 @@ let friendsRealtimeSub = null;
 let socket = null;
 let currentDM = null;
 
-// --- Pin/Unpin/Show Pinned Message Logic ---
-let currentPinned = null;
-let pinBtn = null;
-let pinnedModal = null;
-let replyState = null;
-
-function showPinnedIcon(show) {
-  if (!pinBtn) pinBtn = document.getElementById('dm-pin-btn');
-  if (pinBtn) pinBtn.style.display = show ? 'inline-flex' : 'none';
-}
-
-function renderPinnedModal(msg) {
-  if (pinnedModal) pinnedModal.remove();
-  pinnedModal = document.createElement('div');
-  pinnedModal.className = 'dm-pinned-modal';
-  pinnedModal.innerHTML = `
-    <button class="dm-pinned-close" title="Close">&times;</button>
-    <div class="dm-message-bubble">
-      ${msg.media_url && msg.media_type && msg.media_type.startsWith('image/') ? `<img class='dm-message-media-img' src='${msg.media_url}' alt='Image' />` : ''}
-      ${msg.media_url && msg.media_type && msg.media_type.startsWith('video/') ? `<video class='dm-message-media-video' src='${msg.media_url}' controls></video>` : ''}
-      ${msg.content ? `<span class='dm-message-text'>${msg.content}</span>` : ''}
-      <span class='dm-message-time'>${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-    </div>
-  `;
-  document.body.appendChild(pinnedModal);
-  pinnedModal.querySelector('.dm-pinned-close').onclick = () => pinnedModal.remove();
-}
-
-function setupSocketIO(userId) {
-  if (!window.io) return;
-  if (socket) socket.disconnect();
-  const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
-  socket = window.io(socketUrl);
-  socket.on('connect', () => {
-    socket.emit('join', userId);
-  });
-  socket.on('dm', (data) => {
-    if (currentDM && data.from === currentDM.user_id) {
-      window.appendDMMessage('them', data.message, data.timestamp, data.media_url, data.media_type, data.file_name, data.reply || null);
-    }
-  });
-}
-
-// --- Socket.IO Pin/Delete Events ---
-if (!window.pinDeleteSocketSetup) {
-  window.pinDeleteSocketSetup = true;
-  if (!window.io) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
-    document.head.appendChild(script);
-  }
-  setTimeout(() => {
-    if (!socket) return;
-    socket.on('pin', (msg) => {
-      currentPinned = msg;
-      showPinnedIcon(true);
-    });
-    socket.on('unpin', () => {
-      currentPinned = null;
-      showPinnedIcon(false);
-    });
-    socket.on('delete', (timestamp) => {
-      document.querySelectorAll('.dm-message').forEach(div => {
-        if (div.dataset.timestamp == timestamp) div.remove();
-      });
-    });
-  }, 500);
-}
-
 // --- Define appendDMMessage globally ---
 window.appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null, reply = null) {
   const chat = document.querySelector('.dm-chat-messages');
@@ -170,23 +101,6 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
           e.target.textContent = 'Copied!';
           setTimeout(() => { e.target.textContent = 'Copy'; }, 1200);
         });
-      } else if (action === 'pin') {
-        if (socket && currentDM) {
-          const user = JSON.parse(localStorage.getItem('spice_user'));
-          const pinData = {
-            dm_id: [user.user_id, currentDM.user_id].sort().join('-'),
-            message_timestamp: timestamp,
-            message: message,
-            media_url,
-            media_type,
-            file_name,
-            sender_id: who === 'me' ? user.user_id : currentDM.user_id,
-            content: message,
-            timestamp
-          };
-          await supabase.from('pins').upsert([pinData]);
-          socket.emit('pin', pinData);
-        }
       } else if (action === 'delete') {
         if (socket && currentDM) {
           const user = JSON.parse(localStorage.getItem('spice_user'));
@@ -195,9 +109,6 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
           socket.emit('delete', { dm_id, timestamp });
           msgDiv.remove();
         }
-      } else if (action === 'reply') {
-        replyState = { who, message, timestamp, media_url, media_type, file_name };
-        showReplyPreview();
       }
       dropdown.style.display = 'none';
     }
@@ -208,32 +119,20 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 };
 
-function showReplyPreview() {
-  const form = document.querySelector('.dm-chat-input-area');
-  if (!form) return;
-  let preview = form.querySelector('.dm-reply-preview');
-  if (!replyState) {
-    if (preview) preview.remove();
-    return;
-  }
-  if (!preview) {
-    preview = document.createElement('div');
-    preview.className = 'dm-reply-preview';
-    form.insertAdjacentElement('beforebegin', preview);
-  }
-  preview.innerHTML = `<span>Replying to: </span><span class='dm-reply-msg'>${replyState.message || '[media]'}</span> <button class='dm-reply-cancel' title='Cancel'>&times;</button>`;
-  preview.querySelector('.dm-reply-cancel').onclick = () => { replyState = null; showReplyPreview(); };
-  // Scroll to input
-  const input = form.querySelector('.dm-chat-input');
-  if (input) input.focus();
+function setupSocketIO(userId) {
+  if (!window.io) return;
+  if (socket) socket.disconnect();
+  const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+  socket = window.io(socketUrl);
+  socket.on('connect', () => {
+    socket.emit('join', userId);
+  });
+  socket.on('dm', (data) => {
+    if (currentDM && data.from === currentDM.user_id) {
+      window.appendDMMessage('them', data.message, data.timestamp, data.media_url, data.media_type, data.file_name, data.reply || null);
+    }
+  });
 }
-
-// --- Pin icon click handler ---
-document.addEventListener('click', (e) => {
-  if (e.target.closest && e.target.closest('#dm-pin-btn')) {
-    if (currentPinned) renderPinnedModal(currentPinned);
-  }
-});
 
 // --- Define openDMChat globally ---
 window.openDMChat = async function(friend) {
@@ -242,7 +141,7 @@ window.openDMChat = async function(friend) {
   if (!sidebar) return;
   sidebar.classList.add('dm-active');
   sidebar.innerHTML = `
-    <div class=\"dm-chat-header\">\n      <button class=\"dm-back-btn\" title=\"Back\">&#8592;</button>\n      <img class=\"dm-chat-avatar\" src=\"${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\">\n      <span class=\"dm-chat-username\">${friend.username}</span>\n      <button id=\"dm-pin-btn\" class=\"dm-pin-btn\" title=\"Show pinned message\" style=\"display:none;\"><i class=\"fa-solid fa-thumbtack\"></i></button>\n    </div>\n    <div class=\"dm-chat-messages\"></div>\n    <form class=\"dm-chat-input-area\">\n      <button type=\"button\" class=\"dm-chat-attach-btn\" title=\"Attach Media\"><i class=\"fa-solid fa-paperclip\"></i></button>\n      <input type=\"file\" class=\"dm-chat-file-input\" style=\"display:none;\" accept=\"image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg\" />\n      <input type=\"text\" class=\"dm-chat-input\" placeholder=\"Type a message...\" autocomplete=\"off\" />\n      <button type=\"submit\" class=\"dm-chat-send-btn\"><i class=\"fa-solid fa-paper-plane\"></i></button>\n    </form>\n  `;
+    <div class=\"dm-chat-header\">\n      <button class=\"dm-back-btn\" title=\"Back\">&#8592;</button>\n      <img class=\"dm-chat-avatar\" src=\"${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\">\n      <span class=\"dm-chat-username\">${friend.username}</span>\n    </div>\n    <div class=\"dm-chat-messages\"></div>\n    <form class=\"dm-chat-input-area\">\n      <button type=\"button\" class=\"dm-chat-attach-btn\" title=\"Attach Media\"><i class=\"fa-solid fa-paperclip\"></i></button>\n      <input type=\"file\" class=\"dm-chat-file-input\" style=\"display:none;\" accept=\"image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg\" />\n      <input type=\"text\" class=\"dm-chat-input\" placeholder=\"Type a message...\" autocomplete=\"off\" />\n      <button type=\"submit\" class=\"dm-chat-send-btn\"><i class=\"fa-solid fa-paper-plane\"></i></button>\n    </form>\n  `;
   setTimeout(() => sidebar.classList.add('dm-animate-in'), 10);
   sidebar.querySelector('.dm-back-btn').onclick = () => {
     sidebar.classList.remove('dm-animate-in');
@@ -356,23 +255,12 @@ window.openDMChat = async function(friend) {
       setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
     }
   };
-  // Fetch pin from Supabase
-  pinBtn = document.getElementById('dm-pin-btn');
-  const dm_id = [user.user_id, friend.user_id].sort().join('-');
-  const { data: pins } = await supabase.from('pins').select('*').eq('dm_id', dm_id);
-  if (pins && pins.length) {
-    currentPinned = pins[0];
-    showPinnedIcon(true);
-  } else {
-    currentPinned = null;
-    showPinnedIcon(false);
-  }
   // Add reply to message send
   const input = form.querySelector('.dm-chat-input');
   form.onsubmit = async (e) => {
     e.preventDefault();
     const text = input.value.trim();
-    if (!text && !replyState) return;
+    if (!text) return;
     const user = JSON.parse(localStorage.getItem('spice_user'));
     const timestamp = Date.now();
     // Send message with reply info if present
@@ -387,8 +275,6 @@ window.openDMChat = async function(friend) {
       });
     }
     input.value = '';
-    replyState = null;
-    showReplyPreview();
   };
 };
 
