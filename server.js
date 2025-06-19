@@ -35,16 +35,16 @@ io.on('connection', (socket) => {
   });
 
   // Handle sending a DM
-  socket.on('dm', async ({ to, from, message, timestamp }) => {
+  socket.on('dm', async ({ to, from, message, timestamp, media_url = null, media_type = null, file_name = null }) => {
     // Save to Supabase
     const { error } = await supabase.from('messages').insert([
-      { sender_id: from, receiver_id: to, content: message, timestamp }
+      { sender_id: from, receiver_id: to, content: message, timestamp, media_url, media_type, file_name }
     ]);
     if (error) console.error('Supabase insert error:', error);
     // Emit to recipient's room
-    io.to(to).emit('dm', { from, message, timestamp });
+    io.to(to).emit('dm', { from, message, timestamp, media_url, media_type, file_name });
     // Optionally, emit to sender for echo
-    socket.emit('dm', { from, message, timestamp });
+    socket.emit('dm', { from, message, timestamp, media_url, media_type, file_name });
   });
 
   socket.on('disconnect', () => {
