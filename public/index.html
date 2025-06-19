@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spice Chat - Group Chat, Fun & Games</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo fade-in-left">
+      <img src="assets/logo.png" alt="Spice Logo" height="40">
+      <span>Spice</span>
+    </div>
+    <nav class="main-nav fade-in-up">
+      <a href="#" class="nav-link">Home</a>
+      <a href="#" class="nav-link">Devs</a>
+      <a href="#" class="nav-link">More</a>
+    </nav>
+    <button class="btn btn-login fade-in-right" id="open-login">Log In</button>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title fade-in-up headline-shine">GROUP CHAT THAT'S ALL FUN & GAMES</h1>
+      <p class="hero-desc fade-in-up">Spice is your place to talk, play, and hang out. Create your own space, connect with friends, and enjoy seamless group chat with a stunning, modern design.</p>
+      <div class="hero-actions animate-stagger">
+        <button class="btn btn-primary">Get Started</button>
+        <button class="btn btn-secondary" id="open-signup">Sign Up</button>
+      </div>
+    </div>
+    <div class="hero-visuals fade-in-right">
+      <!-- Placeholder for hero image/illustration -->
+      <img src="assets/hero.png" alt="Chat Illustration" class="hero-img">
+    </div>
+  </section>
+
+  <!-- Info Section -->
+  <section class="info fade-in-up">
+    <h2>Why Choose Spice?</h2>
+    <div class="info-features animate-stagger">
+      <div class="feature">
+        <h3>Lightning Fast</h3>
+        <p>Experience real-time chat with zero lag, powered by modern tech.</p>
+      </div>
+      <div class="feature">
+        <h3>Stunning Design</h3>
+        <p>Enjoy a beautiful, pro-level interface inspired by the best in the industry.</p>
+      </div>
+      <div class="feature">
+        <h3>Simple & Secure</h3>
+        <p>Easy to use, with privacy and security at the core.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Login/Signup Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="auth-modal">
+      <button class="modal-close" id="close-modal">&times;</button>
+      <div class="modal-content" id="modal-content">
+        <!-- Login/Signup forms will be injected here by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Layout (hidden by default, shown after login/signup) -->
+  <div class="main-app-layout" id="main-app-layout" style="display:none;">
+    <aside class="sidebar servers-sidebar">
+      <div class="servers-list">
+        <button class="server-btn add-server-btn" title="Add Server"><i class="fa-solid fa-plus"></i></button>
+        <button class="server-btn"></button>
+        <button class="server-btn"></button>
+        <button class="server-btn"></button>
+      </div>
+    </aside>
+    <aside class="sidebar channels-sidebar">
+      <div class="channels-list">
+        <!-- Channel list goes here -->
+      </div>
+      <button id="sidebar-user-profile" class="sidebar-user-profile sidebar-user-profile-btn" type="button"></button>
+    </aside>
+    <main class="chat-section">
+      <header class="chat-header">
+        <!-- Channel name, topic, etc. -->
+      </header>
+      <section class="chat-messages">
+        <!-- Messages will appear here -->
+      </section>
+      <footer class="chat-input-area">
+        <!-- Message input and voice controls -->
+      </footer>
+    </main>
+    <aside class="sidebar users-sidebar">
+      <button class="add-friend-btn" id="open-add-friend-modal">+ Add Friends</button>
+      <!-- User list/profile -->
+    </aside>
+  </div>
+
+  <!-- Profile/Settings Modal (hidden by default) -->
+  <div id="profile-modal" class="profile-modal-overlay" style="display:none;">
+    <div class="profile-modal-container">
+      <aside class="profile-modal-sidebar modal-slide-in-left">
+        <nav class="profile-settings-nav">
+          <div class="nav-section">USER SETTINGS</div>
+          <button class="nav-link active">My Account</button>
+          <button class="nav-link">Profiles</button>
+          <button class="nav-link">Content & Social</button>
+          <button class="nav-link">Data & Privacy</button>
+          <button class="nav-link">Family Center</button>
+          <button class="nav-link">Authorized Apps</button>
+          <button class="nav-link">Devices</button>
+          <button class="nav-link">Connections</button>
+          <button class="nav-link">Clips</button>
+          <div class="nav-section">BILLING SETTINGS</div>
+          <button class="nav-link">Nitro</button>
+          <button class="nav-link">Server Boost</button>
+          <button class="nav-link">Subscriptions</button>
+          <button class="nav-link">Gift Inventory</button>
+          <button class="nav-link">Billing</button>
+          <div class="nav-section">APP SETTINGS</div>
+          <button class="nav-link">Appearance</button>
+          <button class="nav-link">Accessibility</button>
+          <button class="nav-link">Voice & Video</button>
+        </nav>
+      </aside>
+      <section class="profile-modal-content">
+        <header class="profile-modal-header modal-fade-in">
+          <h2>Profiles</h2>
+          <button class="profile-modal-close" id="close-profile-modal" title="Close">&times;</button>
+        </header>
+        <div class="modal-stagger">
+          <nav class="profile-tabs">
+            <button class="tab-link active">Main Profile</button>
+            <button class="tab-link">Per-server Profiles</button>
+          </nav>
+          <div class="profile-banner-promo">
+            <div class="banner-img"></div>
+            <div class="banner-text">
+              <div class="banner-title">Give your profile a fresh look</div>
+              <div class="banner-desc">Check out the latest avatar decorations, profile effects, and nameplates and collect your favorite styles.</div>
+            </div>
+            <button class="banner-cta">Go to Shop</button>
+          </div>
+          <form class="profile-form">
+            <label>Display Name
+              <input type="text" class="profile-input" placeholder="Display Name">
+            </label>
+            <label>Pronouns
+              <input type="text" class="profile-input" placeholder="Add your pronouns">
+            </label>
+            <div class="profile-avatar-controls">
+              <span>Avatar</span>
+              <button class="profile-btn">Change Avatar</button>
+              <button class="profile-btn secondary">Remove Avatar</button>
+            </div>
+          </form>
+          <div class="profile-preview-section">
+            <div class="profile-preview-card">
+              <div class="profile-banner">
+                <button class="profile-change-banner-btn" title="Change Banner"><i class="fa-solid fa-camera"></i></button>
+              </div>
+              <div class="profile-avatar-stack">
+                <img class="profile-avatar-img" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar">
+                <span class="profile-status-badge"><i class="fa-solid fa-minus"></i></span>
+                <button class="profile-add-status" disabled><i class="fa-solid fa-plus"></i> Add Status</button>
+              </div>
+              <div class="profile-info">
+                <div class="profile-displayname">NAVANEETH REDDY</div>
+                <div class="profile-username">rffastral <span class="profile-tag">#</span></div>
+              </div>
+              <div class="profile-action">
+                <button class="profile-action-btn">Example Button</button>
+              </div>
+            </div>
+          </div>
+          <div class="profile-nameplate-preview">
+            <div class="nameplate-avatar"></div>
+            <div class="nameplate-name"></div>
+            <button class="nameplate-btn">Try it out</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Avatar Upload Input (hidden) -->
+  <input type="file" id="avatar-upload-input" accept="image/*" style="display:none;" />
+
+  <!-- Avatar Crop Modal (hidden by default) -->
+  <div id="avatar-crop-modal" class="avatar-crop-modal" style="display:none;">
+    <div class="avatar-crop-modal-content">
+      <div id="avatar-crop-area"></div>
+      <div class="avatar-crop-actions">
+        <button id="avatar-crop-confirm" class="profile-btn">Crop & Upload</button>
+        <button id="avatar-crop-cancel" class="profile-btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avatar Upload Loading Spinner (hidden by default) -->
+  <div id="avatar-upload-loading" class="avatar-upload-loading" style="display:none;">
+    <div class="spinner"></div>
+    <span>Uploading...</span>
+  </div>
+
+  <!-- Banner Upload Input (hidden) -->
+  <input type="file" id="banner-upload-input" accept="image/*" style="display:none;" />
+
+  <!-- Banner Crop Modal (hidden by default) -->
+  <div id="banner-crop-modal" class="avatar-crop-modal" style="display:none;">
+    <div class="avatar-crop-modal-content">
+      <div id="banner-crop-area" style="border-radius:0.8rem;width:360px;height:90px;"></div>
+      <div class="avatar-crop-actions">
+        <button id="banner-crop-confirm" class="profile-btn">Crop & Upload</button>
+        <button id="banner-crop-cancel" class="profile-btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner Upload Loading Spinner (hidden by default) -->
+  <div id="banner-upload-loading" class="avatar-upload-loading" style="display:none;">
+    <div class="spinner"></div>
+    <span>Uploading...</span>
+  </div>
+
+  <!-- Add Friend Modal (hidden by default) -->
+  <div id="add-friend-modal" class="add-friend-modal-overlay" style="display:none;">
+    <div class="add-friend-modal-container modal-scale-in">
+      <header class="add-friend-modal-header modal-fade-in">
+        <h2>Add a Friend</h2>
+        <button class="add-friend-modal-close" id="close-add-friend-modal" title="Close">&times;</button>
+      </header>
+      <form class="add-friend-form modal-stagger">
+        <label for="add-friend-userid">Enter User ID</label>
+        <input type="text" id="add-friend-userid" class="profile-input" placeholder="User ID (e.g. 123456789)" required />
+        <button type="submit" class="profile-btn">Send Request</button>
+      </form>
+      <div id="add-friend-feedback" class="add-friend-feedback"></div>
+      <div class="friend-requests-section modal-stagger">
+        <h3>Received Requests</h3>
+        <div id="received-requests-list" class="friend-requests-list"></div>
+        <h3>Sent Requests</h3>
+        <div id="sent-requests-list" class="friend-requests-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer footer-animate" id="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="Spice Logo" height="38">
+        <span class="footer-title">Spice</span>
+      </div>
+      <nav class="footer-nav">
+        <a href="#" class="footer-link">Home</a>
+        <a href="#" class="footer-link">Devs</a>
+        <a href="#" class="footer-link">More</a>
+      </nav>
+      <div class="footer-social">
+        <a href="#" class="footer-social-link" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        <a href="#" class="footer-social-link" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="#" class="footer-social-link" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2024 Spice. All rights reserved.</span>
+      <span class="footer-made">Made with <span style="color:#f87171;">&#10084;&#65039;</span> for chat lovers.</span>
+    </div>
+  </footer>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html> 
