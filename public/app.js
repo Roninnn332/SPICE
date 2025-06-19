@@ -97,7 +97,6 @@ if (!window.pinDeleteSocketSetup) {
     script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
     document.head.appendChild(script);
   }
-  // Listen for pin and delete events
   setTimeout(() => {
     if (!socket) return;
     socket.on('pin', (msg) => {
@@ -109,7 +108,6 @@ if (!window.pinDeleteSocketSetup) {
       showPinnedIcon(false);
     });
     socket.on('delete', (timestamp) => {
-      // Remove message from UI
       document.querySelectorAll('.dm-message').forEach(div => {
         if (div.dataset.timestamp == timestamp) div.remove();
       });
@@ -117,7 +115,7 @@ if (!window.pinDeleteSocketSetup) {
   }, 500);
 }
 
-// Define appendDMMessage globally
+// --- Define appendDMMessage globally ---
 window.appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null) {
   const chat = document.querySelector('.dm-chat-messages');
   if (!chat) return;
@@ -137,7 +135,6 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
   }
   msgDiv.innerHTML = `
     <div class=\"dm-message-bubble\">\n      ${mediaHtml}\n      ${message ? `<span class=\"dm-message-text\">${message}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
-  // Dropdown menu for message actions
   const dropdown = document.createElement('div');
   dropdown.className = 'dm-message-dropdown';
   dropdown.style.display = 'none';
@@ -209,13 +206,134 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// --- On DM open, fetch pin ---
-const origOpenDMChat = openDMChat;
-openDMChat = async function(friend) {
-  await window.openDMChat(friend);
-  pinBtn = document.getElementById('dm-pin-btn');
-  // Fetch pin from Supabase
+// --- Define openDMChat globally ---
+window.openDMChat = async function(friend) {
+  currentDM = friend;
+  const sidebar = document.querySelector('.users-sidebar');
+  if (!sidebar) return;
+  sidebar.classList.add('dm-active');
+  sidebar.innerHTML = `
+    <div class="dm-chat-header">
+      <button class="dm-back-btn" title="Back">&#8592;</button>
+      <img class="dm-chat-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+      <span class="dm-chat-username">${friend.username}</span>
+      <button id="dm-pin-btn" class="dm-pin-btn" title="Show pinned message" style="display:none;"><i class="fa-solid fa-thumbtack"></i></button>
+    </div>
+    <div class="dm-chat-messages"></div>
+    <form class="dm-chat-input-area">
+      <button type="button" class="dm-chat-attach-btn" title="Attach Media"><i class="fa-solid fa-paperclip"></i></button>
+      <input type="file" class="dm-chat-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg" />
+      <input type="text" class="dm-chat-input" placeholder="Type a message..." autocomplete="off" />
+      <button type="submit" class="dm-chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+  `;
+  setTimeout(() => sidebar.classList.add('dm-animate-in'), 10);
+  sidebar.querySelector('.dm-back-btn').onclick = () => {
+    sidebar.classList.remove('dm-animate-in');
+    setTimeout(() => {
+      sidebar.classList.remove('dm-active');
+      sidebar.innerHTML = '';
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-friend-btn';
+      addBtn.id = 'open-add-friend-modal';
+      addBtn.textContent = '+ Add Friends';
+      addBtn.onclick = openAddFriendModal;
+      sidebar.appendChild(addBtn);
+      renderFriendsSidebar();
+    }, 350);
+  };
   const user = JSON.parse(localStorage.getItem('spice_user'));
+  const chat = sidebar.querySelector('.dm-chat-messages');
+  if (user && chat) {
+    chat.innerHTML = '<div class="dm-loading">Loading chat...</div>';
+    try {
+      const res = await fetch(`/messages?user1=${user.user_id}&user2=${friend.user_id}`);
+      const messages = await res.json();
+      chat.innerHTML = '';
+      for (const msg of messages) {
+        window.appendDMMessage(msg.sender_id === user.user_id ? 'me' : 'them', msg.content, msg.timestamp, msg.media_url, msg.media_type, msg.file_name);
+      }
+    } catch (err) {
+      chat.innerHTML = '<div class="dm-error">Failed to load messages.</div>';
+    }
+  }
+  const form = sidebar.querySelector('.dm-chat-input-area');
+  const attachBtn = form.querySelector('.dm-chat-attach-btn');
+  const fileInput = form.querySelector('.dm-chat-file-input');
+  let fileErrorMsg = form.querySelector('.dm-file-error-msg');
+  if (!fileErrorMsg) {
+    fileErrorMsg = document.createElement('div');
+    fileErrorMsg.className = 'dm-file-error-msg';
+    fileErrorMsg.style.display = 'none';
+    form.appendChild(fileErrorMsg);
+  }
+  attachBtn.onclick = (e) => {
+    e.preventDefault();
+    fileInput.value = '';
+    fileErrorMsg.style.display = 'none';
+    fileInput.click();
+  };
+  fileInput.onchange = async (e) => {
+    fileErrorMsg.style.display = 'none';
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      fileErrorMsg.textContent = 'File too large (max 20MB).';
+      fileErrorMsg.style.display = 'block';
+      fileErrorMsg.classList.add('show');
+      setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
+      return;
+    }
+    let loading = form.querySelector('.dm-file-upload-loading');
+    if (!loading) {
+      loading = document.createElement('div');
+      loading.className = 'dm-file-upload-loading';
+      loading.innerHTML = '<div class="spinner"></div><span>Uploading...</span>';
+      form.appendChild(loading);
+    }
+    loading.style.display = 'flex';
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'user_media');
+      const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/auto/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      loading.style.display = 'none';
+      if (data.secure_url) {
+        const type = file.type;
+        const name = file.name;
+        const timestamp = Date.now();
+        window.appendDMMessage('me', '', timestamp, data.secure_url, type, name);
+        if (socket) {
+          socket.emit('dm', {
+            to: friend.user_id,
+            from: user.user_id,
+            message: '',
+            timestamp,
+            media_url: data.secure_url,
+            media_type: type,
+            file_name: name
+          });
+        }
+      } else {
+        fileErrorMsg.textContent = 'Upload failed.';
+        fileErrorMsg.style.display = 'block';
+        fileErrorMsg.classList.add('show');
+        setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      fileErrorMsg.textContent = 'Upload error.';
+      fileErrorMsg.style.display = 'block';
+      fileErrorMsg.classList.add('show');
+      setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
+    }
+  };
+  // Fetch pin from Supabase
+  pinBtn = document.getElementById('dm-pin-btn');
   const dm_id = [user.user_id, friend.user_id].sort().join('-');
   const { data: pins } = await supabase.from('pins').select('*').eq('dm_id', dm_id);
   if (pins && pins.length) {
@@ -961,140 +1079,4 @@ async function renderFriendsSidebar() {
       };
     });
   }, 100);
-}
-
-// Define openDMChat globally
-window.openDMChat = async function(friend) {
-  currentDM = friend;
-  const sidebar = document.querySelector('.users-sidebar');
-  if (!sidebar) return;
-  // Animate sidebar to expand left and show DM UI
-  sidebar.classList.add('dm-active');
-  sidebar.innerHTML = `
-    <div class="dm-chat-header">
-      <button class="dm-back-btn" title="Back">&#8592;</button>
-      <img class="dm-chat-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
-      <span class="dm-chat-username">${friend.username}</span>
-      <button id="dm-pin-btn" class="dm-pin-btn" title="Show pinned message" style="display:none;"><i class="fa-solid fa-thumbtack"></i></button>
-    </div>
-    <div class="dm-chat-messages"></div>
-    <form class="dm-chat-input-area">
-      <button type="button" class="dm-chat-attach-btn" title="Attach Media"><i class="fa-solid fa-paperclip"></i></button>
-      <input type="file" class="dm-chat-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg" />
-      <input type="text" class="dm-chat-input" placeholder="Type a message..." autocomplete="off" />
-      <button type="submit" class="dm-chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-    </form>
-  `;
-  // Animate
-  setTimeout(() => sidebar.classList.add('dm-animate-in'), 10);
-  // Back button
-  sidebar.querySelector('.dm-back-btn').onclick = () => {
-    sidebar.classList.remove('dm-animate-in');
-    setTimeout(() => {
-      sidebar.classList.remove('dm-active');
-      sidebar.innerHTML = '';
-      const addBtn = document.createElement('button');
-      addBtn.className = 'add-friend-btn';
-      addBtn.id = 'open-add-friend-modal';
-      addBtn.textContent = '+ Add Friends';
-      addBtn.onclick = openAddFriendModal;
-      sidebar.appendChild(addBtn);
-      renderFriendsSidebar();
-    }, 350);
-  };
-  // Load previous messages from backend
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  const chat = sidebar.querySelector('.dm-chat-messages');
-  if (user && chat) {
-    chat.innerHTML = '<div class="dm-loading">Loading chat...</div>';
-    try {
-      const res = await fetch(`/messages?user1=${user.user_id}&user2=${friend.user_id}`);
-      const messages = await res.json();
-      chat.innerHTML = '';
-      for (const msg of messages) {
-        window.appendDMMessage(msg.sender_id === user.user_id ? 'me' : 'them', msg.content, msg.timestamp, msg.media_url, msg.media_type, msg.file_name);
-      }
-    } catch (err) {
-      chat.innerHTML = '<div class="dm-error">Failed to load messages.</div>';
-    }
-  }
-  // DM send logic
-  const form = sidebar.querySelector('.dm-chat-input-area');
-  const attachBtn = form.querySelector('.dm-chat-attach-btn');
-  const fileInput = form.querySelector('.dm-chat-file-input');
-  // Feedback message for file errors
-  let fileErrorMsg = form.querySelector('.dm-file-error-msg');
-  if (!fileErrorMsg) {
-    fileErrorMsg = document.createElement('div');
-    fileErrorMsg.className = 'dm-file-error-msg';
-    fileErrorMsg.style.display = 'none';
-    form.appendChild(fileErrorMsg);
-  }
-  attachBtn.onclick = (e) => {
-    e.preventDefault();
-    fileInput.value = '';
-    fileErrorMsg.style.display = 'none';
-    fileInput.click();
-  };
-  fileInput.onchange = async (e) => {
-    fileErrorMsg.style.display = 'none';
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { // 20MB limit
-      fileErrorMsg.textContent = 'File too large (max 20MB).';
-      fileErrorMsg.style.display = 'block';
-      fileErrorMsg.classList.add('show');
-      setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
-      return;
-    }
-    // Show loading spinner
-    let loading = form.querySelector('.dm-file-upload-loading');
-    if (!loading) {
-      loading = document.createElement('div');
-      loading.className = 'dm-file-upload-loading';
-      loading.innerHTML = '<div class="spinner"></div><span>Uploading...</span>';
-      form.appendChild(loading);
-    }
-    loading.style.display = 'flex';
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'user_media');
-      const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/auto/upload', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      loading.style.display = 'none';
-      if (data.secure_url) {
-        // Determine media type
-        const type = file.type;
-        const name = file.name;
-        const timestamp = Date.now();
-        window.appendDMMessage('me', '', timestamp, data.secure_url, type, name);
-        if (socket) {
-          socket.emit('dm', {
-            to: friend.user_id,
-            from: user.user_id,
-            message: '',
-            timestamp,
-            media_url: data.secure_url,
-            media_type: type,
-            file_name: name
-          });
-        }
-      } else {
-        fileErrorMsg.textContent = 'Upload failed.';
-        fileErrorMsg.style.display = 'block';
-        fileErrorMsg.classList.add('show');
-        setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
-      }
-    } catch (err) {
-      loading.style.display = 'none';
-      fileErrorMsg.textContent = 'Upload error.';
-      fileErrorMsg.style.display = 'block';
-      fileErrorMsg.classList.add('show');
-      setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
-    }
-  };
-}; 
+} 
