@@ -2276,3 +2276,80 @@ body {
   flex-direction: column;
   gap: 0.1em;
 }
+
+/* Create Server Modal Styles */
+#create-server-modal-overlay {
+  z-index: 1002;
+}
+#create-server-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: stretch;
+  min-width: 320px;
+  max-width: 380px;
+  padding: 2.2rem 2.2rem 1.5rem 2.2rem;
+  background: var(--off-black);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow);
+}
+#create-server-modal h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  margin-bottom: 0.7rem;
+  text-align: center;
+}
+#create-server-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+#create-server-form label {
+  font-size: 1.02rem;
+  color: var(--gray);
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}
+#create-server-form input[type="text"],
+#create-server-form input[type="url"] {
+  padding: 0.7em 1em;
+  border-radius: 0.8em;
+  border: 2px solid var(--primary-blue);
+  background: var(--pure-black);
+  color: var(--white);
+  font-size: 1.05rem;
+  outline: none;
+  transition: border 0.18s;
+}
+#create-server-form input[type="text"]:focus,
+#create-server-form input[type="url"]:focus {
+  border-color: var(--accent);
+}
+#create-server-form button[type="submit"] {
+  background: var(--primary-blue);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.08rem;
+  padding: 0.7em 0;
+  border: none;
+  border-radius: 1em;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+}
+#create-server-form button[type="submit"]:hover,
+#create-server-form button[type="submit"]:focus {
+  background: var(--accent);
+  color: var(--pure-black);
+  transform: scale(1.04);
+}
+@media (max-width: 600px) {
+  #create-server-modal .modal-content {
+    min-width: 90vw;
+    max-width: 98vw;
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+}

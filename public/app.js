@@ -429,6 +429,7 @@ function showMainApp(user) {
   }
   renderFriendsSidebar();
   setupSocketIO(user.user_id);
+  if (typeof renderServersList === 'function') renderServersList();
 }
 
 // Helper to update profile preview card with real user data
