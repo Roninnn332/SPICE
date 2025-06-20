@@ -3161,4 +3161,8 @@ input:checked + .slider:before {
   }
 } 
 
+.server-message-animate-in {
+  animation: server-message-in 0.38s cubic-bezier(.4,2,.6,1) forwards;
+} 
+
  
