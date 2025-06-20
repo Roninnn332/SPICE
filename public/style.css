@@ -3177,4 +3177,126 @@ input:checked + .slider:before {
   animation: server-message-in 0.38s cubic-bezier(.4,2,.6,1) forwards;
 } 
 
+/* --- WhatsApp-Style Group Chat Message --- */
+.wa-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 0.18rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+.wa-message.me {
+  align-items: flex-end;
+}
+.wa-message.them {
+  align-items: flex-start;
+}
+.wa-message.grouped .wa-message-username {
+  display: none;
+}
+.wa-message-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 420px;
+}
+.wa-message.me .wa-message-body {
+  align-items: flex-end;
+}
+.wa-message-username {
+  font-weight: 700;
+  font-size: 0.98em;
+  font-family: 'Montserrat', sans-serif;
+  margin-bottom: 0.08em;
+  letter-spacing: 0.01em;
+  user-select: text;
+  transition: color 0.18s;
+}
+.wa-message-bubble {
+  background: #23272f;
+  color: #fff;
+  border-radius: 1.2rem;
+  padding: 0.55em 1.1em 0.45em 1.1em;
+  font-size: 1.07rem;
+  font-family: 'Roboto', sans-serif;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+  max-width: 90vw;
+  min-width: 36px;
+  word-break: break-word;
+  position: relative;
+  transition: background 0.18s, border 0.18s;
+  margin-top: 0.01em;
+  border: 1.5px solid #23272f;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.wa-message.me .wa-message-bubble {
+  background: var(--primary-blue);
+  color: #fff;
+  align-self: flex-end;
+  border: 1.5px solid var(--primary-blue);
+  box-shadow: 0 2px 12px 0 rgba(37,99,235,0.18);
+}
+.wa-message.them .wa-message-bubble {
+  background: #23272f;
+  color: #fff;
+  align-self: flex-start;
+  border: 1.5px solid #23272f;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+}
+.wa-message-content {
+  display: block;
+  font-size: 1.01em;
+  color: var(--white);
+  font-family: 'Roboto', sans-serif;
+  white-space: pre-line;
+  user-select: text;
+}
+.wa-message-time {
+  display: block;
+  font-size: 0.85em;
+  color: var(--gray);
+  margin-top: 0.18em;
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+  opacity: 0.7;
+  user-select: text;
+}
+.wa-message.grouped {
+  margin-top: -0.18rem;
+}
+.wa-message-animate-in {
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
+  animation: wa-message-in 0.38s cubic-bezier(.4,2,.6,1) forwards;
+}
+@keyframes wa-message-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (max-width: 700px) {
+  .wa-message-body {
+    max-width: 98vw;
+  }
+  .wa-message-bubble {
+    font-size: 0.97rem;
+    padding: 0.35em 0.7em 0.3em 0.7em;
+    max-width: 98vw;
+  }
+} 
+
  

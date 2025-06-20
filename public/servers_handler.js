@@ -233,45 +233,54 @@ async function openServerChannel(serverId, channelId) {
 // --- Premium Server Message Rendering ---
 let lastServerMsgUser = null;
 let lastServerMsgTime = null;
+let lastServerMsgDiv = null;
+const userColorMap = {};
+const colorPalette = [
+  '#60a5fa', '#f472b6', '#fbbf24', '#34d399', '#a78bfa', '#f87171', '#38bdf8', '#facc15', '#4ade80', '#818cf8', '#fb7185', '#f472b6', '#f59e42', '#10b981', '#6366f1', '#eab308', '#22d3ee', '#f43f5e', '#a3e635', '#f472b6'
+];
+function getUserColor(userId) {
+  if (!userColorMap[userId]) {
+    // Hash userId to pick a color
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    userColorMap[userId] = colorPalette[Math.abs(hash) % colorPalette.length];
+  }
+  return userColorMap[userId];
+}
 async function appendServerMessage(msg, who = 'them') {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
-  // Fetch user info for avatar/username
   let userInfo = { username: msg.user_id, avatar_url: '' };
   if (msg.user_id) {
     userInfo = await getUserInfo(msg.user_id);
   }
-  // Grouping logic: hide avatar/username if previous message is from same user within 5 minutes
-  let showAvatar = true;
-  let showUsername = true;
-  let grouped = false;
+  // WhatsApp-style grouping: group if previous message is from same user within 5 min
   const msgTime = new Date(msg.timestamp).getTime();
+  let grouped = false;
   if (lastServerMsgUser === msg.user_id && lastServerMsgTime && (msgTime - lastServerMsgTime < 5 * 60 * 1000)) {
-    showAvatar = false;
-    showUsername = false;
     grouped = true;
   }
   lastServerMsgUser = msg.user_id;
   lastServerMsgTime = msgTime;
+  // Create message div
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'server-message ' + who + (grouped ? ' grouped' : '');
+  msgDiv.className = 'wa-message ' + who + (grouped ? ' grouped' : '');
   msgDiv.dataset.timestamp = msg.timestamp;
+  // WhatsApp style: no avatar, sender name above message (for others, not for 'me'), color sender name, right/left align
   msgDiv.innerHTML = `
-    ${showAvatar ? `<div class=\"server-message-avatar-wrap\"><img class=\"server-message-avatar\" src=\"${userInfo.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\"></div>` : `<div class=\"server-message-avatar-wrap\"></div>`}
-    <div class=\"server-message-body\">
-      <div class=\"server-message-meta-row\">
-        ${showUsername ? `<span class=\"server-message-username\">${userInfo.username}</span>` : ''}
-        <span class=\"server-message-time\">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-      </div>
-      <div class=\"server-message-bubble\">
-        <span class=\"server-message-content\">${msg.content || ''}</span>
+    <div class="wa-message-body">
+      ${who === 'me' || grouped ? '' : `<div class="wa-message-username" style="color:${getUserColor(msg.user_id)};">${userInfo.username}</div>`}
+      <div class="wa-message-bubble">
+        <span class="wa-message-content">${msg.content || ''}</span>
+        <span class="wa-message-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
     </div>
   `;
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
-  msgDiv.classList.add('server-message-animate-in');
+  msgDiv.classList.add('wa-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  lastServerMsgDiv = msgDiv;
 }
 
 // --- Server Creation/Join ---
