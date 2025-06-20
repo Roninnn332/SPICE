@@ -2968,4 +2968,86 @@ input:checked + .slider:before {
   vertical-align: middle;
 }
 
+/* --- Server Chat Avatar Styling Fix --- */
+.server-message-avatar-wrap {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 0.2rem;
+}
+.server-message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-blue);
+  background: #222;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+  display: block;
+}
+.server-message.me .server-message-avatar-wrap {
+  justify-content: flex-end;
+}
+.server-message-bubble {
+  margin-top: 0.1rem;
+}
+@media (max-width: 700px) {
+  .server-message-avatar-wrap,
+  .server-message-avatar {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
+
+/* --- Server Chat Skeleton Loading --- */
+.server-message-skeleton {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  margin-bottom: 0.5rem;
+  opacity: 1;
+  animation: none;
+}
+.server-message-skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #23272f;
+  opacity: 0.7;
+  animation: skeleton-pulse 1.2s infinite ease-in-out;
+}
+.server-message-skeleton-bubble {
+  background: #23272f;
+  border-radius: 1.2rem;
+  min-width: 120px;
+  min-height: 22px;
+  width: 180px;
+  height: 22px;
+  margin-top: 0.3rem;
+  opacity: 0.7;
+  animation: skeleton-pulse 1.2s infinite ease-in-out;
+}
+@keyframes skeleton-pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 0.4; }
+  100% { opacity: 0.7; }
+}
+@media (max-width: 700px) {
+  .server-message-skeleton-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  .server-message-skeleton-bubble {
+    min-width: 60px;
+    width: 90px;
+    height: 16px;
+  }
+}
+
  

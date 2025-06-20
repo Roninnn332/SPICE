@@ -158,7 +158,15 @@ async function openServerChannel(serverId, channelId) {
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
   // Fetch messages for the channel
   const chat = serverChatSection.querySelector('.chat-messages');
-  if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
+  if (chat) {
+    // Show skeletons instead of loading text
+    chat.innerHTML = Array(4).fill('').map(() => `
+      <div class='server-message-skeleton'>
+        <div class='server-message-skeleton-avatar'></div>
+        <div class='server-message-skeleton-bubble'></div>
+      </div>
+    `).join('');
+  }
   const { data: messages, error } = await supabase
     .from('channel_messages')
     .select('*')
@@ -868,7 +876,7 @@ async function fetchServerMembers() {
   if (!currentServer) return;
   const { data: members, error } = await supabase
     .from('server_members')
-    .select('user_id, role, users:users(user_id, username, avatar_url)')
+    .select('user_id, role, user:user_id(username, avatar_url)')
     .eq('server_id', currentServer.id);
   const list = document.getElementById('server-members-list');
   if (!list) return;
@@ -882,7 +890,7 @@ async function fetchServerMembers() {
     return;
   }
   for (const member of members) {
-    const user = member.users || {};
+    const user = member.user || {};
     const isOwner = member.role === 'owner';
     list.innerHTML += `
       <div class="friend-request-item" style="display:flex;align-items:center;gap:1.1rem;">
