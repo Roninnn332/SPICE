@@ -213,11 +213,10 @@ async function openServerChannel(serverId, channelId) {
         if (serverSocket && currentServerRoom) {
           serverSocket.emit('server-message', { ...msgObj, room: currentServerRoom });
         }
-        // Store in Supabase for persistence
-        const { error: insertError } = await supabase.from('channel_messages').insert([msgObj]);
-        if (insertError) console.error('Insert error:', insertError);
-        // Optionally, append immediately for sender
-        appendServerMessage(msgObj, 'me');
+        // Store in Supabase for persistence (optional, can be handled by server)
+        // const { error: insertError } = await supabase.from('channel_messages').insert([msgObj]);
+        // if (insertError) console.error('Insert error:', insertError);
+        // Do NOT append immediately; wait for server echo
       };
     } else {
       footer.innerHTML = '';
