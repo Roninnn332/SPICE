@@ -1013,4 +1013,113 @@ async function renderFriendsSidebar() {
       };
     });
   }, 100);
+}
+
+let joinRequestRealtimeSub = null;
+
+function setupJoinRequestRealtime(serverId, userId) {
+  if (joinRequestRealtimeSub) return;
+  joinRequestRealtimeSub = supabase.channel('join-request-rt')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'server_invites',
+      filter: `server_id=eq.${serverId},user_id=eq.${userId}`
+    }, payload => {
+      checkJoinRequestStatus(serverId, userId);
+    })
+    .subscribe();
+}
+
+function cleanupJoinRequestRealtime() {
+  if (joinRequestRealtimeSub) {
+    supabase.removeChannel(joinRequestRealtimeSub);
+    joinRequestRealtimeSub = null;
+  }
+}
+
+async function checkJoinRequestStatus(serverId, userId) {
+  const statusDiv = document.getElementById('join-server-status');
+  const { data: existing } = await supabase.from('server_invites')
+    .select('*')
+    .eq('server_id', serverId)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existing && statusDiv) {
+    statusDiv.textContent = 'Status: ' + (existing.status.charAt(0).toUpperCase() + existing.status.slice(1));
+    statusDiv.className = 'add-friend-feedback ' + (existing.status === 'accepted' ? 'success' : existing.status === 'rejected' ? 'error' : '');
+  }
+}
+
+// Join Server Request Logic
+const joinServerForm = document.getElementById('join-server-form');
+if (joinServerForm) {
+  joinServerForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const feedback = document.getElementById('join-server-feedback');
+    const statusDiv = document.getElementById('join-server-status');
+    if (!user || !user.user_id) {
+      feedback.textContent = 'You must be logged in to join a server.';
+      feedback.className = 'add-friend-feedback error';
+      if (statusDiv) statusDiv.textContent = '';
+      cleanupJoinRequestRealtime();
+      return;
+    }
+    const input = document.getElementById('join-server-code');
+    const serverId = input.value.trim();
+    if (!serverId) {
+      feedback.textContent = 'Please enter a valid Server ID.';
+      feedback.className = 'add-friend-feedback error';
+      if (statusDiv) statusDiv.textContent = '';
+      cleanupJoinRequestRealtime();
+      return;
+    }
+    // Check for existing request
+    const { data: existing, error: fetchErr } = await supabase.from('server_invites')
+      .select('*')
+      .eq('server_id', serverId)
+      .eq('user_id', user.user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (fetchErr) {
+      feedback.textContent = 'Error: ' + fetchErr.message;
+      feedback.className = 'add-friend-feedback error';
+      if (statusDiv) statusDiv.textContent = '';
+      cleanupJoinRequestRealtime();
+      return;
+    }
+    if (existing) {
+      feedback.textContent = 'You already have a request for this server.';
+      feedback.className = 'add-friend-feedback';
+      if (statusDiv) {
+        statusDiv.textContent = 'Status: ' + (existing.status.charAt(0).toUpperCase() + existing.status.slice(1));
+        statusDiv.className = 'add-friend-feedback ' + (existing.status === 'accepted' ? 'success' : existing.status === 'rejected' ? 'error' : '');
+      }
+      setupJoinRequestRealtime(serverId, user.user_id);
+      return;
+    }
+    // Insert join request
+    const { data, error } = await supabase.from('server_invites').insert([
+      { server_id: serverId, user_id: user.user_id, status: 'pending' }
+    ]);
+    if (error) {
+      feedback.textContent = 'Error: ' + error.message;
+      feedback.className = 'add-friend-feedback error';
+      if (statusDiv) statusDiv.textContent = '';
+      cleanupJoinRequestRealtime();
+    } else {
+      feedback.textContent = 'Request sent! Waiting for approval.';
+      feedback.className = 'add-friend-feedback success';
+      input.value = '';
+      if (statusDiv) {
+        statusDiv.textContent = 'Status: Pending';
+        statusDiv.className = 'add-friend-feedback';
+      }
+      setupJoinRequestRealtime(serverId, user.user_id);
+    }
+  };
 } 

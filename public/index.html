@@ -178,6 +178,7 @@
               <button type="submit" class="profile-btn">Join Server</button>
             </form>
             <div id="join-server-feedback" class="add-friend-feedback"></div>
+            <div id="join-server-status" class="add-friend-feedback"></div>
           </div>
         </div>
       </section>
@@ -331,7 +332,13 @@
         <div id="server-settings-section-server-profile" class="modal-stagger">
           <form class="profile-form">
             <label>Server Name
-              <input type="text" id="server-settings-name" class="profile-input" placeholder="Server Name">
+              <div id="server-settings-name-row" style="display:flex;align-items:center;gap:0.7rem;">
+                <span id="server-settings-name-text" style="font-size:1.13rem;font-weight:700;"></span>
+                <button type="button" id="server-settings-edit-name-btn" class="profile-btn secondary" title="Edit Server Name" style="padding:0.3em 0.8em;"><i class="fa-solid fa-pen"></i></button>
+                <input type="text" id="server-settings-name-input" class="profile-input" style="display:none;max-width:220px;" maxlength="32" />
+                <button type="button" id="server-settings-save-name-btn" class="profile-btn" style="display:none;padding:0.3em 1em;">Save</button>
+                <button type="button" id="server-settings-cancel-name-btn" class="profile-btn secondary" style="display:none;padding:0.3em 1em;">Cancel</button>
+              </div>
             </label>
             <label>Icon
               <input type="file" id="server-settings-icon" accept="image/*" style="display:none;" />
@@ -359,14 +366,62 @@
               </div>
               <div class="profile-info">
                 <div class="profile-displayname" id="server-settings-name-preview">Server Name</div>
+                <div class="server-profile-id-row" style="margin:0.5rem 0 0.7rem 0;display:flex;align-items:center;justify-content:center;gap:0.6rem;">
+                  <span class="server-profile-id" id="server-settings-id-preview" style="font-family:'Roboto Mono',monospace;font-weight:700;color:var(--white);background:rgba(37,99,235,0.08);border-radius:0.4em;padding:0.1em 0.5em;font-size:1.05em;"></span>
+                  <button class="profile-copy-id-btn" id="server-settings-copy-id-btn" title="Copy Server ID"><i class="fa-regular fa-copy"></i></button>
+                  <span class="profile-copy-feedback" id="server-settings-copy-id-feedback" style="display:none;">Copied!</span>
+                </div>
                 <div class="profile-username" id="server-settings-meta-preview">1 Online • 1 Member<br>Est. Jun 2025</div>
               </div>
             </div>
           </div>
         </div>
-        <!-- Other sections (Emoji, Members, etc.) can be added here -->
+        <div id="server-settings-section-invites" class="modal-stagger" style="display:none;">
+          <h3>Pending Join Requests</h3>
+          <div id="server-invites-list"></div>
+        </div>
       </section>
     </div>
+  </div>
+
+  <!-- Server Icon Upload Input (hidden) -->
+  <input type="file" id="server-icon-upload-input" accept="image/*" style="display:none;" />
+
+  <!-- Server Icon Crop Modal (hidden by default) -->
+  <div id="server-icon-crop-modal" class="avatar-crop-modal" style="display:none;">
+    <div class="avatar-crop-modal-content">
+      <div id="server-icon-crop-area"></div>
+      <div class="avatar-crop-actions">
+        <button id="server-icon-crop-confirm" class="profile-btn">Crop & Upload</button>
+        <button id="server-icon-crop-cancel" class="profile-btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server Icon Upload Loading Spinner (hidden by default) -->
+  <div id="server-icon-upload-loading" class="avatar-upload-loading" style="display:none;">
+    <div class="spinner"></div>
+    <span>Uploading...</span>
+  </div>
+
+  <!-- Server Banner Upload Input (hidden) -->
+  <input type="file" id="server-banner-upload-input" accept="image/*" style="display:none;" />
+
+  <!-- Server Banner Crop Modal (hidden by default) -->
+  <div id="server-banner-crop-modal" class="avatar-crop-modal" style="display:none;">
+    <div class="avatar-crop-modal-content">
+      <div id="server-banner-crop-area" style="border-radius:0.8rem;width:360px;height:90px;"></div>
+      <div class="avatar-crop-actions">
+        <button id="server-banner-crop-confirm" class="profile-btn">Crop & Upload</button>
+        <button id="server-banner-crop-cancel" class="profile-btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server Banner Upload Loading Spinner (hidden by default) -->
+  <div id="server-banner-upload-loading" class="avatar-upload-loading" style="display:none;">
+    <div class="spinner"></div>
+    <span>Uploading...</span>
   </div>
 
   <footer class="site-footer footer-animate" id="site-footer">

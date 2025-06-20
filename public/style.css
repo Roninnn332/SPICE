@@ -2877,4 +2877,80 @@ input:checked + .slider:before {
   }
 }
 
-</code_block_to_apply_changes_from>
+/* Server Settings Name Edit Row */
+#server-settings-modal-overlay #server-settings-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+#server-settings-modal-overlay #server-settings-name-text {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.01em;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#server-settings-modal-overlay #server-settings-edit-name-btn {
+  background: var(--off-black);
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
+  font-size: 1.05rem;
+  border-radius: 0.7rem;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  margin-left: 0.1rem;
+}
+#server-settings-modal-overlay #server-settings-edit-name-btn:hover,
+#server-settings-modal-overlay #server-settings-edit-name-btn:focus {
+  background: var(--primary-blue);
+  color: var(--white);
+}
+#server-settings-modal-overlay #server-settings-name-input {
+  font-size: 1.08rem;
+  padding: 0.5em 1em;
+  border-radius: 0.7rem;
+  border: 2px solid var(--primary-blue);
+  background: var(--pure-black);
+  color: var(--white);
+  margin-left: 0.2rem;
+  min-width: 120px;
+  max-width: 220px;
+}
+#server-settings-modal-overlay #server-settings-save-name-btn,
+#server-settings-modal-overlay #server-settings-cancel-name-btn {
+  font-size: 1.01rem;
+  padding: 0.3em 1em;
+  margin-left: 0.2rem;
+}
+@media (max-width: 700px) {
+  #server-settings-modal-overlay #server-settings-name-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+  #server-settings-modal-overlay #server-settings-name-text {
+    max-width: 98vw;
+  }
+}
+
+#server-settings-section-invites {
+  margin-top: 1.5rem;
+}
+#server-settings-section-invites h3 {
+  color: var(--primary-blue);
+  font-size: 1.08rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  margin-bottom: 0.7rem;
+  margin-top: 0.2rem;
+}
+#server-invites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+

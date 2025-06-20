@@ -386,5 +386,404 @@ window.addEventListener('DOMContentLoaded', () => {
 // --- Real-time Updates ---
 // TODO: Setup Socket.IO or Supabase Realtime for server/channel events
 
+// --- Server Icon & Banner Upload/Crop Logic ---
+let serverIconCropper = null;
+let serverBannerCropper = null;
+
+const serverIconInput = document.getElementById('server-icon-upload-input');
+const serverIconCropModal = document.getElementById('server-icon-crop-modal');
+const serverIconCropArea = document.getElementById('server-icon-crop-area');
+const serverIconCropConfirm = document.getElementById('server-icon-crop-confirm');
+const serverIconCropCancel = document.getElementById('server-icon-crop-cancel');
+const serverIconLoading = document.getElementById('server-icon-upload-loading');
+
+const serverBannerInput = document.getElementById('server-banner-upload-input');
+const serverBannerCropModal = document.getElementById('server-banner-crop-modal');
+const serverBannerCropArea = document.getElementById('server-banner-crop-area');
+const serverBannerCropConfirm = document.getElementById('server-banner-crop-confirm');
+const serverBannerCropCancel = document.getElementById('server-banner-crop-cancel');
+const serverBannerLoading = document.getElementById('server-banner-upload-loading');
+
+// Open file input when Change Server Icon is clicked
+const changeIconBtn = document.getElementById('server-settings-change-icon');
+if (changeIconBtn) {
+  changeIconBtn.onclick = (e) => {
+    e.preventDefault();
+    serverIconInput.value = '';
+    serverIconInput.click();
+  };
+}
+
+// Show crop modal and initialize Cropper.js for server icon
+if (serverIconInput) {
+  serverIconInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      serverIconCropArea.innerHTML = `<img id="server-icon-crop-img" src="${ev.target.result}" style="max-width:100%;max-height:100%;display:block;" />`;
+      serverIconCropModal.style.display = 'flex';
+      setTimeout(() => {
+        const img = document.getElementById('server-icon-crop-img');
+        if (serverIconCropper) serverIconCropper.destroy();
+        serverIconCropper = new window.Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          background: false,
+          dragMode: 'move',
+          guides: false,
+          autoCropArea: 1,
+          movable: true,
+          zoomable: true,
+          rotatable: false,
+          scalable: false,
+          cropBoxResizable: true,
+          minCropBoxWidth: 100,
+          minCropBoxHeight: 100,
+        });
+      }, 100);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Cancel crop for server icon
+if (serverIconCropCancel) {
+  serverIconCropCancel.onclick = () => {
+    serverIconCropModal.style.display = 'none';
+    if (serverIconCropper) { serverIconCropper.destroy(); serverIconCropper = null; }
+  };
+}
+
+// Confirm crop and upload to Cloudinary for server icon
+if (serverIconCropConfirm) {
+  serverIconCropConfirm.onclick = async () => {
+    if (!serverIconCropper || !currentServer) return;
+    serverIconCropModal.style.display = 'none';
+    serverIconLoading.style.display = 'flex';
+    serverIconCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', 'user_media');
+        const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          // Update icon in UI
+          document.getElementById('server-settings-icon-preview').src = data.secure_url;
+          document.getElementById('server-settings-icon-preview').style.display = 'block';
+          document.getElementById('server-settings-icon-preview-card').src = data.secure_url;
+          // Save to Supabase
+          await supabase.from('servers').update({ icon_url: data.secure_url }).eq('id', currentServer.id);
+          currentServer.icon_url = data.secure_url;
+          renderServersList();
+        } else {
+          alert('Upload failed.');
+        }
+      } catch (err) {
+        alert('Upload error: ' + err.message);
+      } finally {
+        serverIconLoading.style.display = 'none';
+        if (serverIconCropper) { serverIconCropper.destroy(); serverIconCropper = null; }
+      }
+    }, 'image/jpeg', 0.95);
+  };
+}
+
+// Open file input when clicking on banner color or add a "Change Banner" button if needed
+const bannerColorsDiv = document.getElementById('server-settings-banner-colors');
+if (bannerColorsDiv) {
+  bannerColorsDiv.querySelectorAll('.profile-btn').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      // Set selected color
+      bannerColorsDiv.querySelectorAll('.profile-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const color = btn.style.backgroundColor || btn.style.background;
+      document.getElementById('server-settings-banner-preview').style.background = color;
+      // Save to Supabase
+      if (currentServer) {
+        await supabase.from('servers').update({ banner_url: null, banner_color: color }).eq('id', currentServer.id);
+        currentServer.banner_url = null;
+        currentServer.banner_color = color;
+        renderServersList();
+      }
+    };
+  });
+}
+
+// Banner image upload/crop logic
+// (Optional: Add a "Change Banner" button for image upload, or allow clicking the preview to upload)
+const serverBannerPreview = document.getElementById('server-settings-banner-preview');
+if (serverBannerPreview) {
+  serverBannerPreview.onclick = (e) => {
+    e.preventDefault();
+    serverBannerInput.value = '';
+    serverBannerInput.click();
+  };
+}
+
+if (serverBannerInput) {
+  serverBannerInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      serverBannerCropArea.innerHTML = `<img id="server-banner-crop-img" src="${ev.target.result}" style="max-width:100%;max-height:100%;display:block;" />`;
+      serverBannerCropModal.style.display = 'flex';
+      setTimeout(() => {
+        const img = document.getElementById('server-banner-crop-img');
+        if (serverBannerCropper) serverBannerCropper.destroy();
+        serverBannerCropper = new window.Cropper(img, {
+          aspectRatio: 4,
+          viewMode: 1,
+          background: false,
+          dragMode: 'move',
+          guides: false,
+          autoCropArea: 1,
+          movable: true,
+          zoomable: true,
+          rotatable: false,
+          scalable: false,
+          cropBoxResizable: true,
+          minCropBoxWidth: 200,
+          minCropBoxHeight: 50,
+        });
+      }, 100);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+if (serverBannerCropCancel) {
+  serverBannerCropCancel.onclick = () => {
+    serverBannerCropModal.style.display = 'none';
+    if (serverBannerCropper) { serverBannerCropper.destroy(); serverBannerCropper = null; }
+  };
+}
+
+if (serverBannerCropConfirm) {
+  serverBannerCropConfirm.onclick = async () => {
+    if (!serverBannerCropper || !currentServer) return;
+    serverBannerCropModal.style.display = 'none';
+    serverBannerLoading.style.display = 'flex';
+    serverBannerCropper.getCroppedCanvas({ width: 1200, height: 300 }).toBlob(async (blob) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', 'user_media');
+        const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          // Update banner in UI
+          document.getElementById('server-settings-banner-preview').style.background = '';
+          document.getElementById('server-settings-banner-preview').style.backgroundImage = `url('${data.secure_url}')`;
+          document.getElementById('server-settings-banner-preview').style.backgroundSize = 'cover';
+          document.getElementById('server-settings-banner-preview').style.backgroundPosition = 'center';
+          // Save to Supabase
+          await supabase.from('servers').update({ banner_url: data.secure_url, banner_color: null }).eq('id', currentServer.id);
+          currentServer.banner_url = data.secure_url;
+          currentServer.banner_color = null;
+          renderServersList();
+        } else {
+          alert('Upload failed.');
+        }
+      } catch (err) {
+        alert('Upload error: ' + err.message);
+      } finally {
+        serverBannerLoading.style.display = 'none';
+        if (serverBannerCropper) { serverBannerCropper.destroy(); serverBannerCropper = null; }
+      }
+    }, 'image/jpeg', 0.95);
+  };
+}
+
+// --- Server Name Edit Logic ---
+function setupServerNameEdit() {
+  const nameText = document.getElementById('server-settings-name-text');
+  const editBtn = document.getElementById('server-settings-edit-name-btn');
+  const nameInput = document.getElementById('server-settings-name-input');
+  const saveBtn = document.getElementById('server-settings-save-name-btn');
+  const cancelBtn = document.getElementById('server-settings-cancel-name-btn');
+  if (!nameText || !editBtn || !nameInput || !saveBtn || !cancelBtn) return;
+
+  // Show current name
+  function showName() {
+    nameText.textContent = currentServer ? currentServer.name : '';
+    nameText.style.display = '';
+    editBtn.style.display = '';
+    nameInput.style.display = 'none';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+  }
+
+  // Show input for editing
+  function showInput() {
+    nameInput.value = currentServer ? currentServer.name : '';
+    nameText.style.display = 'none';
+    editBtn.style.display = 'none';
+    nameInput.style.display = '';
+    saveBtn.style.display = '';
+    cancelBtn.style.display = '';
+    nameInput.focus();
+  }
+
+  editBtn.onclick = showInput;
+  cancelBtn.onclick = showName;
+  nameInput.onkeydown = (e) => { if (e.key === 'Escape') showName(); };
+  saveBtn.onclick = async () => {
+    const newName = nameInput.value.trim();
+    if (!newName || !currentServer) return;
+    if (newName === currentServer.name) { showName(); return; }
+    saveBtn.disabled = true;
+    await supabase.from('servers').update({ name: newName }).eq('id', currentServer.id);
+    currentServer.name = newName;
+    showName();
+    // Update preview card
+    const preview = document.getElementById('server-settings-name-preview');
+    if (preview) preview.textContent = newName;
+    renderServersList();
+    saveBtn.disabled = false;
+  };
+
+  // On modal open, always show name
+  showName();
+}
+
+function setupServerIdCopy() {
+  const idSpan = document.getElementById('server-settings-id-preview');
+  const copyBtn = document.getElementById('server-settings-copy-id-btn');
+  const feedback = document.getElementById('server-settings-copy-id-feedback');
+  if (!idSpan || !copyBtn || !feedback) return;
+  idSpan.textContent = currentServer ? currentServer.id : '';
+  copyBtn.onclick = () => {
+    if (!currentServer) return;
+    navigator.clipboard.writeText(currentServer.id);
+    feedback.style.display = 'inline-block';
+    setTimeout(() => { feedback.style.display = 'none'; }, 1200);
+  };
+}
+
+// Call setupServerNameEdit when opening the server settings modal
+const serverSettingsModal = document.getElementById('server-settings-modal-overlay');
+if (serverSettingsModal) {
+  serverSettingsModal.addEventListener('transitionend', (e) => {
+    if (serverSettingsModal.classList.contains('active')) {
+      setupServerNameEdit();
+      setupServerIdCopy();
+    }
+  });
+}
+
 // --- Export nothing (vanilla JS, not a module) ---
 // All functions are global for now 
+
+async function fetchServerInvites() {
+  if (!currentServer) return;
+  const { data: invites, error } = await supabase
+    .from('server_invites')
+    .select('id, user_id, status')
+    .eq('server_id', currentServer.id)
+    .eq('status', 'pending');
+  const list = document.getElementById('server-invites-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (error) {
+    list.innerHTML = '<div class="friend-request-item">Error loading invites</div>';
+    return;
+  }
+  if (!invites.length) {
+    list.innerHTML = '<div class="friend-request-item">No pending join requests</div>';
+    return;
+  }
+  for (const invite of invites) {
+    const info = await getUserInfo(invite.user_id);
+    list.innerHTML += `
+      <div class="friend-request-item">
+        <img class="friend-request-avatar" src="${info.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+        <span class="friend-request-username">${info.username}</span>
+        <button class="friend-request-accept" data-id="${invite.id}" data-user="${invite.user_id}">Accept</button>
+        <button class="friend-request-reject" data-id="${invite.id}">Reject</button>
+      </div>
+    `;
+  }
+  // Accept/Reject handlers
+  document.querySelectorAll('.friend-request-accept').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const userId = btn.getAttribute('data-user');
+      // Add to server_members
+      await supabase.from('server_members').insert([
+        { server_id: currentServer.id, user_id: userId, role: 'member' }
+      ]);
+      // Mark invite as accepted
+      await supabase.from('server_invites').update({ status: 'accepted' }).eq('id', id);
+      fetchServerInvites();
+      renderServersList();
+    };
+  });
+  document.querySelectorAll('.friend-request-reject').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      await supabase.from('server_invites').update({ status: 'rejected' }).eq('id', id);
+      fetchServerInvites();
+    };
+  });
+}
+
+// Show Invites section when nav-link is clicked
+const invitesNavBtn = document.querySelector('.nav-link[data-section="invites"]');
+if (invitesNavBtn) {
+  invitesNavBtn.addEventListener('click', () => {
+    document.querySelectorAll('.profile-modal-content > .modal-stagger').forEach(sec => sec.style.display = 'none');
+    const invitesSection = document.getElementById('server-settings-section-invites');
+    if (invitesSection) {
+      invitesSection.style.display = '';
+      fetchServerInvites();
+    }
+  });
+}
+
+let serverInvitesRealtimeSub = null;
+
+function setupServerInvitesRealtime() {
+  if (serverInvitesRealtimeSub) return;
+  if (!currentServer) return;
+  serverInvitesRealtimeSub = supabase.channel('server-invites-rt')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'server_invites',
+      filter: `server_id=eq.${currentServer.id}`
+    }, payload => {
+      const invitesSection = document.getElementById('server-settings-section-invites');
+      if (invitesSection && invitesSection.style.display !== 'none') {
+        fetchServerInvites();
+      }
+    })
+    .subscribe();
+}
+
+function cleanupServerInvitesRealtime() {
+  if (serverInvitesRealtimeSub) {
+    supabase.removeChannel(serverInvitesRealtimeSub);
+    serverInvitesRealtimeSub = null;
+  }
+}
+
+// Setup/cleanup subscription on modal open/close
+if (serverSettingsModal) {
+  serverSettingsModal.addEventListener('transitionend', (e) => {
+    if (serverSettingsModal.classList.contains('active')) {
+      setupServerInvitesRealtime();
+    } else {
+      cleanupServerInvitesRealtime();
+    }
+  });
+} 
