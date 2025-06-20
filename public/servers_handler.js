@@ -162,13 +162,7 @@ async function openServerChannel(serverId, channelId) {
   // Fetch messages for the channel
   const chat = serverChatSection.querySelector('.chat-messages');
   if (chat) {
-    // Show skeletons instead of loading text
-    chat.innerHTML = Array(4).fill('').map(() => `
-      <div class='server-message-skeleton'>
-        <div class='server-message-skeleton-avatar'></div>
-        <div class='server-message-skeleton-bubble'></div>
-      </div>
-    `).join('');
+    chat.innerHTML = '';
   }
   const { data: messages, error } = await supabase
     .from('channel_messages')
@@ -180,7 +174,6 @@ async function openServerChannel(serverId, channelId) {
   console.log('Fetching messages for', { serverId, channelId });
   console.log('Supabase error:', error);
   console.log('Supabase data:', messages);
-  if (chat) chat.innerHTML = '';
   if (error || !messages) {
     if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
     return;
@@ -231,43 +224,9 @@ async function openServerChannel(serverId, channelId) {
 }
 
 // --- Realtime for Channel Messages ---
-let channelMessagesRealtimeSub = null;
-function setupChannelMessagesRealtime(serverId, channelId) {
-  cleanupChannelMessagesRealtime();
-  if (!serverId || !channelId) return;
-  channelMessagesRealtimeSub = supabase.channel('channel-messages-rt-' + serverId + '-' + channelId)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'channel_messages',
-      filter: `server_id=eq.${serverId},channel_id=eq.${channelId}`
-    }, async payload => {
-      // Only update if this channel is open
-      if (!currentServer || !currentChannel || currentServer.id !== serverId || currentChannel.id !== channelId) return;
-      if (payload.eventType === 'INSERT') {
-        const msg = payload.new;
-        appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
-      } else if (payload.eventType === 'DELETE') {
-        // Optionally, remove message from UI if needed
-      } else if (payload.eventType === 'UPDATE') {
-        // Optionally, update message in UI if needed
-      }
-    })
-    .subscribe();
-}
-function cleanupChannelMessagesRealtime() {
-  if (channelMessagesRealtimeSub) {
-    supabase.removeChannel(channelMessagesRealtimeSub);
-    channelMessagesRealtimeSub = null;
-  }
-}
-// Patch openServerChannel to setup/cleanup realtime
-const _openServerChannel = openServerChannel;
-openServerChannel = async function(serverId, channelId) {
-  cleanupChannelMessagesRealtime();
-  await _openServerChannel(serverId, channelId);
-  setupChannelMessagesRealtime(serverId, channelId);
-};
+// Remove Supabase Realtime for channel messages
+// Delete setupChannelMessagesRealtime, cleanupChannelMessagesRealtime, and the patching of openServerChannel
+// Only use Socket.IO for live updates
 
 // --- Premium Server Message Rendering ---
 let lastServerMsgUser = null;
@@ -289,6 +248,8 @@ function getUserColor(userId) {
 async function appendServerMessage(msg, who = 'them') {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
+  // Prevent duplicate messages
+  if (chat.querySelector(`[data-timestamp="${msg.timestamp}"][data-user-id="${msg.user_id}"]`)) return;
   let userInfo = { username: msg.user_id, avatar_url: '' };
   if (msg.user_id) {
     userInfo = await getUserInfo(msg.user_id);
@@ -305,7 +266,7 @@ async function appendServerMessage(msg, who = 'them') {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'wa-message ' + who + (grouped ? ' grouped' : '');
   msgDiv.dataset.timestamp = msg.timestamp;
-  // WhatsApp style: no avatar, sender name above message (for others, not for 'me'), color sender name, right/left align
+  msgDiv.dataset.userId = msg.user_id;
   msgDiv.innerHTML = `
     <div class="wa-message-body">
       ${who === 'me' || grouped ? '' : `<div class="wa-message-username" style="color:${getUserColor(msg.user_id)};">${userInfo.username}</div>`}
