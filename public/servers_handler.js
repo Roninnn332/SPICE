@@ -234,7 +234,9 @@ async function openServerChannel(serverId, channelId) {
 let lastServerMsgUser = null;
 let lastServerMsgTime = null;
 async function appendServerMessage(msg, who = 'them') {
+  console.log('Appending message:', msg, who);
   const chat = document.querySelector('.chat-messages');
+  console.log('chat element:', chat);
   if (!chat) return;
   // Fetch user info for avatar/username
   let userInfo = { username: msg.user_id, avatar_url: '' };
