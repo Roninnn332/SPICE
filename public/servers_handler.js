@@ -214,8 +214,7 @@ async function openServerChannel(serverId, channelId) {
         // Store in Supabase for persistence
         const { error: insertError } = await supabase.from('channel_messages').insert([msgObj]);
         if (insertError) console.error('Insert error:', insertError);
-        // Optionally, append immediately for sender
-        appendServerMessage(msgObj, 'me');
+        // Do NOT append immediately for sender; rely on Socket.IO event
       };
     } else {
       footer.innerHTML = '';
