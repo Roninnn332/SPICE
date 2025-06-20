@@ -111,82 +111,73 @@
     <div class="profile-modal-container">
       <aside class="profile-modal-sidebar modal-slide-in-left">
         <nav class="profile-settings-nav">
-          <div class="nav-section">USER SETTINGS</div>
           <button class="nav-link active">My Account</button>
-          <button class="nav-link">Profiles</button>
-          <button class="nav-link">Content & Social</button>
-          <button class="nav-link">Data & Privacy</button>
-          <button class="nav-link">Family Center</button>
-          <button class="nav-link">Authorized Apps</button>
-          <button class="nav-link">Devices</button>
-          <button class="nav-link">Connections</button>
-          <button class="nav-link">Clips</button>
-          <div class="nav-section">BILLING SETTINGS</div>
-          <button class="nav-link">Nitro</button>
-          <button class="nav-link">Server Boost</button>
-          <button class="nav-link">Subscriptions</button>
-          <button class="nav-link">Gift Inventory</button>
-          <button class="nav-link">Billing</button>
-          <div class="nav-section">APP SETTINGS</div>
-          <button class="nav-link">Appearance</button>
-          <button class="nav-link">Accessibility</button>
-          <button class="nav-link">Voice & Video</button>
+          <button class="nav-link">Join Servers</button>
         </nav>
       </aside>
       <section class="profile-modal-content">
         <header class="profile-modal-header modal-fade-in">
-          <h2>Profiles</h2>
+          <h2 id="profile-modal-title">My Account</h2>
           <button class="profile-modal-close" id="close-profile-modal" title="Close">&times;</button>
         </header>
         <div class="modal-stagger">
-          <nav class="profile-tabs">
-            <button class="tab-link active">Main Profile</button>
-            <button class="tab-link">Per-server Profiles</button>
-          </nav>
-          <div class="profile-banner-promo">
-            <div class="banner-img"></div>
-            <div class="banner-text">
-              <div class="banner-title">Give your profile a fresh look</div>
-              <div class="banner-desc">Check out the latest avatar decorations, profile effects, and nameplates and collect your favorite styles.</div>
+          <div id="profile-section-my-account">
+            <nav class="profile-tabs">
+              <button class="tab-link active">Main Profile</button>
+            </nav>
+            <div class="profile-banner-promo">
+              <div class="banner-img"></div>
+              <div class="banner-text">
+                <div class="banner-title">Give your profile a fresh look</div>
+                <div class="banner-desc">Check out the latest avatar decorations, profile effects, and nameplates and collect your favorite styles.</div>
+              </div>
+              <button class="banner-cta">Go to Shop</button>
             </div>
-            <button class="banner-cta">Go to Shop</button>
+            <form class="profile-form">
+              <label>Display Name
+                <input type="text" class="profile-input" placeholder="Display Name">
+              </label>
+              <label>Pronouns
+                <input type="text" class="profile-input" placeholder="Add your pronouns">
+              </label>
+              <div class="profile-avatar-controls">
+                <span>Avatar</span>
+                <button class="profile-btn">Change Avatar</button>
+                <button class="profile-btn secondary">Remove Avatar</button>
+              </div>
+            </form>
+            <div class="profile-preview-section">
+              <div class="profile-preview-card">
+                <div class="profile-banner">
+                  <button class="profile-change-banner-btn" title="Change Banner"><i class="fa-solid fa-camera"></i></button>
+                </div>
+                <div class="profile-avatar-stack">
+                  <img class="profile-avatar-img" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar">
+                  <span class="profile-status-badge"><i class="fa-solid fa-minus"></i></span>
+                  <button class="profile-add-status" disabled><i class="fa-solid fa-plus"></i> Add Status</button>
+                </div>
+                <div class="profile-info">
+                  <div class="profile-displayname">NAVANEETH REDDY</div>
+                  <div class="profile-username">rffastral <span class="profile-tag">#</span></div>
+                </div>
+                <div class="profile-action">
+                  <button class="profile-action-btn">Example Button</button>
+                </div>
+              </div>
+            </div>
+            <div class="profile-nameplate-preview">
+              <div class="nameplate-avatar"></div>
+              <div class="nameplate-name"></div>
+              <button class="nameplate-btn">Try it out</button>
+            </div>
           </div>
-          <form class="profile-form">
-            <label>Display Name
-              <input type="text" class="profile-input" placeholder="Display Name">
-            </label>
-            <label>Pronouns
-              <input type="text" class="profile-input" placeholder="Add your pronouns">
-            </label>
-            <div class="profile-avatar-controls">
-              <span>Avatar</span>
-              <button class="profile-btn">Change Avatar</button>
-              <button class="profile-btn secondary">Remove Avatar</button>
-            </div>
-          </form>
-          <div class="profile-preview-section">
-            <div class="profile-preview-card">
-              <div class="profile-banner">
-                <button class="profile-change-banner-btn" title="Change Banner"><i class="fa-solid fa-camera"></i></button>
-              </div>
-              <div class="profile-avatar-stack">
-                <img class="profile-avatar-img" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar">
-                <span class="profile-status-badge"><i class="fa-solid fa-minus"></i></span>
-                <button class="profile-add-status" disabled><i class="fa-solid fa-plus"></i> Add Status</button>
-              </div>
-              <div class="profile-info">
-                <div class="profile-displayname">NAVANEETH REDDY</div>
-                <div class="profile-username">rffastral <span class="profile-tag">#</span></div>
-              </div>
-              <div class="profile-action">
-                <button class="profile-action-btn">Example Button</button>
-              </div>
-            </div>
-          </div>
-          <div class="profile-nameplate-preview">
-            <div class="nameplate-avatar"></div>
-            <div class="nameplate-name"></div>
-            <button class="nameplate-btn">Try it out</button>
+          <div id="profile-section-join-servers" style="display:none;">
+            <form id="join-server-form" class="profile-form">
+              <label for="join-server-code">Enter Server Invite Code</label>
+              <input type="text" id="join-server-code" class="profile-input" placeholder="Invite Code (e.g. ABC123)" required />
+              <button type="submit" class="profile-btn">Join Server</button>
+            </form>
+            <div id="join-server-feedback" class="add-friend-feedback"></div>
           </div>
         </div>
       </section>
@@ -316,6 +307,65 @@
           </div>
         </form>
       </div>
+    </div>
+  </div>
+
+  <!-- Server Settings Modal (hidden by default) -->
+  <div id="server-settings-modal-overlay" class="profile-modal-overlay" style="display:none;z-index:3000;">
+    <div class="profile-modal-container" style="max-width:1600px;">
+      <aside class="profile-modal-sidebar modal-slide-in-left">
+        <div class="nav-section">SERVER SETTINGS</div>
+        <nav class="profile-settings-nav">
+          <button class="nav-link active" data-section="server-profile">Server Profile</button>
+          <button class="nav-link" data-section="emoji">Emoji</button>
+          <button class="nav-link" data-section="members">Members</button>
+          <button class="nav-link" data-section="roles">Roles</button>
+          <button class="nav-link" data-section="invites">Invites</button>
+        </nav>
+      </aside>
+      <section class="profile-modal-content">
+        <header class="profile-modal-header modal-fade-in">
+          <h2 id="server-settings-title">Server Profile</h2>
+          <button class="profile-modal-close" id="close-server-settings-modal" title="Close">&times;</button>
+        </header>
+        <div id="server-settings-section-server-profile" class="modal-stagger">
+          <form class="profile-form">
+            <label>Server Name
+              <input type="text" id="server-settings-name" class="profile-input" placeholder="Server Name">
+            </label>
+            <label>Icon
+              <input type="file" id="server-settings-icon" accept="image/*" style="display:none;" />
+              <button type="button" class="profile-btn" id="server-settings-change-icon">Change Server Icon</button>
+              <img id="server-settings-icon-preview" src="" alt="Server Icon" style="width:64px;height:64px;border-radius:50%;margin-top:0.7rem;display:none;" />
+            </label>
+            <label>Banner</label>
+            <div id="server-settings-banner-colors" style="display:flex;gap:1rem;flex-wrap:wrap;">
+              <button type="button" class="profile-btn" style="background:#23272a;"></button>
+              <button type="button" class="profile-btn" style="background:#ff73fa;"></button>
+              <button type="button" class="profile-btn" style="background:#f04747;"></button>
+              <button type="button" class="profile-btn" style="background:#faa61a;"></button>
+              <button type="button" class="profile-btn" style="background:#43b581;"></button>
+              <button type="button" class="profile-btn" style="background:#5865f2;"></button>
+              <button type="button" class="profile-btn" style="background:#00b0f4;"></button>
+              <button type="button" class="profile-btn" style="background:#3ba55d;"></button>
+              <button type="button" class="profile-btn" style="background:#ffd600;"></button>
+            </div>
+          </form>
+          <div class="profile-preview-section">
+            <div class="profile-preview-card" style="max-width:420px;">
+              <div class="profile-banner" id="server-settings-banner-preview"></div>
+              <div class="profile-avatar-stack">
+                <img class="profile-avatar-img" id="server-settings-icon-preview-card" src="" alt="Server Icon">
+              </div>
+              <div class="profile-info">
+                <div class="profile-displayname" id="server-settings-name-preview">Server Name</div>
+                <div class="profile-username" id="server-settings-meta-preview">1 Online • 1 Member<br>Est. Jun 2025</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Other sections (Emoji, Members, etc.) can be added here -->
+      </section>
     </div>
   </div>
 

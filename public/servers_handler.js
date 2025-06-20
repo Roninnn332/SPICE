@@ -62,6 +62,16 @@ async function renderServersList() {
       renderServersList(); // re-render to update active
       renderChannelsList(server.id);
     };
+    // Add double-click event for owner to open server settings modal
+    btn.ondblclick = () => {
+      if (user && server.owner_id === user.user_id) {
+        const modal = document.getElementById('server-settings-modal-overlay');
+        if (modal) {
+          modal.style.display = 'flex';
+          setTimeout(() => modal.classList.add('active'), 10);
+        }
+      }
+    };
     serversListDiv.appendChild(btn);
   });
 }
@@ -268,6 +278,15 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         await renderChannelsList(server.id);
       }
+    };
+  }
+  // Add close logic for server settings modal
+  const closeServerSettingsBtn = document.getElementById('close-server-settings-modal');
+  const serverSettingsModal = document.getElementById('server-settings-modal-overlay');
+  if (closeServerSettingsBtn && serverSettingsModal) {
+    closeServerSettingsBtn.onclick = () => {
+      serverSettingsModal.classList.remove('active');
+      setTimeout(() => { serverSettingsModal.style.display = 'none'; }, 400);
     };
   }
 });

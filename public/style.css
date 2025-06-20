@@ -2725,3 +2725,156 @@ input:checked + .slider:before {
   }
 }
 /* ... existing code ... */
+
+/* --- Server Settings Modal Specific Styles --- */
+#server-settings-modal-overlay {
+  z-index: 3000;
+  background: rgba(10,10,10,0.96);
+}
+
+#server-settings-modal-overlay .profile-modal-container {
+  max-width: 1600px;
+  min-width: 900px;
+  min-height: 700px;
+}
+
+#server-settings-modal-overlay .profile-modal-sidebar {
+  min-width: 270px;
+  border-right: 2.5px solid var(--primary-blue);
+  background: var(--pure-black);
+  padding-top: 2.5rem;
+}
+
+#server-settings-modal-overlay .nav-section {
+  color: var(--gray);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 1.2rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+#server-settings-modal-overlay .profile-settings-nav {
+  gap: 0.3rem;
+}
+
+#server-settings-modal-overlay .nav-link {
+  font-size: 1.13rem;
+  font-weight: 700;
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.7rem;
+  margin-bottom: 0.1rem;
+  background: none;
+  color: var(--white);
+  transition: background 0.18s, color 0.18s;
+}
+
+#server-settings-modal-overlay .nav-link.active,
+#server-settings-modal-overlay .nav-link:hover,
+#server-settings-modal-overlay .nav-link:focus {
+  background: var(--primary-blue-dark);
+  color: var(--accent);
+}
+
+#server-settings-modal-overlay .profile-modal-content {
+  padding: 2.5rem 3.5rem 2rem 3.5rem;
+}
+
+#server-settings-modal-overlay .profile-form label {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--gray);
+  margin-bottom: 0.5rem;
+}
+
+#server-settings-modal-overlay .profile-btn {
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+  padding: 0.5em 1.2em;
+}
+
+#server-settings-modal-overlay #server-settings-banner-colors {
+  margin-top: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+#server-settings-modal-overlay #server-settings-banner-colors .profile-btn {
+  width: 48px;
+  height: 32px;
+  min-width: 48px;
+  min-height: 32px;
+  border-radius: 0.7rem;
+  border: 2.5px solid transparent;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+  transition: border 0.18s, transform 0.13s;
+  padding: 0;
+}
+
+#server-settings-modal-overlay #server-settings-banner-colors .profile-btn.selected,
+#server-settings-modal-overlay #server-settings-banner-colors .profile-btn:focus {
+  border: 2.5px solid var(--accent);
+  transform: scale(1.08);
+}
+
+#server-settings-modal-overlay .profile-preview-card {
+  margin-top: 2.2rem;
+  min-width: 340px;
+  max-width: 420px;
+  box-shadow: 0 4px 24px 0 rgba(37,99,235,0.13);
+}
+
+#server-settings-modal-overlay .profile-banner {
+  min-height: 90px;
+  border-radius: 1.1rem 1.1rem 0 0;
+}
+
+#server-settings-modal-overlay .profile-avatar-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px solid var(--pure-black);
+  margin-top: -36px;
+  background: var(--off-black);
+  object-fit: cover;
+}
+
+#server-settings-modal-overlay .profile-modal-close {
+  font-size: 2.2rem;
+  color: var(--gray);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 2.7rem;
+  height: 2.7rem;
+  transition: background 0.18s, color 0.18s;
+}
+
+#server-settings-modal-overlay .profile-modal-close:hover,
+#server-settings-modal-overlay .profile-modal-close:focus {
+  background: var(--primary-blue-dark);
+  color: var(--white);
+}
+
+@media (max-width: 1100px) {
+  #server-settings-modal-overlay .profile-modal-container {
+    flex-direction: column;
+    min-width: 0;
+    max-width: 98vw;
+    min-height: 0;
+    height: 98vh;
+  }
+  #server-settings-modal-overlay .profile-modal-sidebar {
+    min-width: 0;
+    width: 100%;
+    border-right: none;
+    border-bottom: 2.5px solid var(--primary-blue);
+    flex-direction: row;
+    gap: 1.2rem;
+    padding: 1.2rem 0.7rem;
+  }
+  #server-settings-modal-overlay .profile-modal-content {
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+}
+
+</code_block_to_apply_changes_from>
