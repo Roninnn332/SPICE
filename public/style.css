@@ -3056,36 +3056,25 @@ input:checked + .slider:before {
   align-items: flex-start;
   gap: 0.6rem;
   margin-bottom: 0.18rem;
-  width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
 }
 .server-message.me {
   flex-direction: row-reverse;
   justify-content: flex-end;
+  align-self: flex-end;
   margin-right: 0.7rem;
 }
 .server-message.them {
   flex-direction: row;
   justify-content: flex-start;
+  align-self: flex-start;
   margin-left: 0.7rem;
-}
-.server-message-avatar-wrap {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.1rem;
 }
 .server-message-body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   min-width: 0;
-  width: 100%;
   max-width: 420px;
 }
 .server-message.me .server-message-body {
