@@ -234,9 +234,7 @@ async function openServerChannel(serverId, channelId) {
 let lastServerMsgUser = null;
 let lastServerMsgTime = null;
 async function appendServerMessage(msg, who = 'them') {
-  console.log('Appending message:', msg, who);
   const chat = document.querySelector('.chat-messages');
-  console.log('chat element:', chat);
   if (!chat) return;
   // Fetch user info for avatar/username
   let userInfo = { username: msg.user_id, avatar_url: '' };
@@ -272,10 +270,6 @@ async function appendServerMessage(msg, who = 'them') {
   void msgDiv.offsetWidth;
   msgDiv.classList.add('server-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  // Force visibility for debugging
-  msgDiv.style.opacity = '1';
-  msgDiv.style.transform = 'none';
-  console.log('Message element after append:', msgDiv.outerHTML);
 }
 
 // --- Server Creation/Join ---
