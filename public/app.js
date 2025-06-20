@@ -526,6 +526,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const joinServersSection = document.getElementById('profile-section-join-servers');
   const modalTitle = document.getElementById('profile-modal-title');
   if (navLinks.length && myAccountSection && joinServersSection && modalTitle) {
+    // Always show My Account by default
+    myAccountSection.style.display = '';
+    joinServersSection.style.display = 'none';
+    modalTitle.textContent = 'My Account';
     navLinks.forEach(link => {
       link.onclick = () => {
         navLinks.forEach(l => l.classList.remove('active'));
@@ -541,6 +545,25 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       };
     });
+  }
+  // When opening the modal, always reset to My Account
+  if (profileBtn) {
+    profileBtn.onclick = () => {
+      const profileModal = document.getElementById('profile-modal');
+      if (!profileModal) return;
+      profileModal.style.display = 'flex';
+      setTimeout(() => {
+        profileModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        profileModal.focus();
+        // Reset to My Account tab/section
+        navLinks.forEach(l => l.classList.remove('active'));
+        navLinks[0].classList.add('active');
+        myAccountSection.style.display = '';
+        joinServersSection.style.display = 'none';
+        modalTitle.textContent = 'My Account';
+      }, 10);
+    };
   }
 });
 
