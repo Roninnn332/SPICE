@@ -22,11 +22,15 @@ window.addEventListener('DOMContentLoaded', () => {
   serversSidebar = document.querySelector('.servers-sidebar');
   channelsSidebar = document.querySelector('.channels-sidebar');
   serverChatSection = document.querySelector('.chat-section');
+  // Set current user ID globally for correct sender detection
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (user && user.user_id) {
+    window.currentUserId = user.user_id;
+  }
   // TODO: Fetch and render servers for the user
   // renderServersList();
   setupServerMembersRealtime();
   // Setup server socket after login if user exists
-  const user = JSON.parse(localStorage.getItem('spice_user'));
   if (user && user.user_id) {
     setupServerSocketIO(user.user_id);
   }
@@ -181,7 +185,7 @@ async function openServerChannel(serverId, channelId) {
   }
   // Render messages
   for (const msg of messages) {
-    appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
+    appendServerMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
   }
   // Render message input in footer ONLY for text channels
   const footer = serverChatSection.querySelector('.chat-input-area');
@@ -1062,7 +1066,7 @@ function setupServerSocketIO(userId) {
       msg.server_id === currentServer.id &&
       msg.channel_id === currentChannel.id
     ) {
-      appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
+      appendServerMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
     }
   });
 } 
