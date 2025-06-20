@@ -1123,6 +1123,20 @@ if (joinServerForm) {
       cleanupJoinRequestRealtime();
       return;
     }
+    // Prevent owner from sending join request to their own server
+    const { data: ownedServer, error: ownerErr } = await supabase
+      .from('servers')
+      .select('id')
+      .eq('id', serverId)
+      .eq('owner_id', user.user_id)
+      .maybeSingle();
+    if (ownedServer) {
+      feedback.textContent = 'You are the owner of this server. You cannot send a join request to your own server.';
+      feedback.className = 'add-friend-feedback error';
+      if (statusDiv) statusDiv.textContent = '';
+      cleanupJoinRequestRealtime();
+      return;
+    }
     // Check for existing request
     const { data: existing, error: fetchErr } = await supabase.from('server_invites')
       .select('*')

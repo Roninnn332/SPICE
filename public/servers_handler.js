@@ -893,4 +893,11 @@ function openServerSettingsModal() {
       if (modalTitle) modalTitle.textContent = 'Server Profile';
     }, 10);
   }
+}
+
+// --- Helper to fetch user info by user_id (copied from app.js for use here) ---
+async function getUserInfo(user_id) {
+  const { data, error } = await supabase.from('users').select('username,avatar_url').eq('user_id', user_id).single();
+  if (error || !data) return { username: user_id, avatar_url: '' };
+  return data;
 } 
