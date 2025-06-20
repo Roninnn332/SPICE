@@ -786,4 +786,48 @@ if (serverSettingsModal) {
       cleanupServerInvitesRealtime();
     }
   });
+}
+
+// Show Members section when nav-link is clicked
+const membersNavBtn = document.querySelector('.nav-link[data-section="members"]');
+if (membersNavBtn) {
+  membersNavBtn.addEventListener('click', () => {
+    document.querySelectorAll('.profile-modal-content > .modal-stagger').forEach(sec => sec.style.display = 'none');
+    const membersSection = document.getElementById('server-settings-section-members');
+    if (membersSection) {
+      membersSection.style.display = '';
+      fetchServerMembers();
+    }
+  });
+}
+
+// Fetch and render server members
+async function fetchServerMembers() {
+  if (!currentServer) return;
+  const { data: members, error } = await supabase
+    .from('server_members')
+    .select('user_id, role, users:users(user_id, username, avatar_url)')
+    .eq('server_id', currentServer.id);
+  const list = document.getElementById('server-members-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (error) {
+    list.innerHTML = '<div class="friend-request-item">Error loading members</div>';
+    return;
+  }
+  if (!members.length) {
+    list.innerHTML = '<div class="friend-request-item">No members found</div>';
+    return;
+  }
+  for (const member of members) {
+    const user = member.users || {};
+    const isOwner = member.role === 'owner';
+    list.innerHTML += `
+      <div class="friend-request-item" style="display:flex;align-items:center;gap:1.1rem;">
+        <img class="friend-request-avatar" src="${user.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+        <span class="friend-request-username" style="font-size:1.13rem;font-weight:700;">${user.username || member.user_id}</span>
+        ${isOwner ? '<span class="owner-gold-tag" style="background:linear-gradient(90deg,#FFD700,#E6C200,#BFA14A);color:#fff;font-weight:800;padding:0.18em 0.8em;border-radius:0.7em;font-size:0.98em;margin-left:0.7em;letter-spacing:0.5px;box-shadow:0 2px 8px 0 rgba(255,215,0,0.13);">OWNER</span>' : ''}
+      </div>
+    `;
+  }
 } 

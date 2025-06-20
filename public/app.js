@@ -519,6 +519,28 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     document.head.appendChild(script);
   }
+
+  // Profile Modal Tab Switch Logic
+  const navLinks = document.querySelectorAll('.profile-settings-nav .nav-link');
+  const myAccountSection = document.getElementById('profile-section-my-account');
+  const joinServersSection = document.getElementById('profile-section-join-servers');
+  const modalTitle = document.getElementById('profile-modal-title');
+  if (navLinks.length === 2 && myAccountSection && joinServersSection && modalTitle) {
+    navLinks[0].onclick = () => {
+      navLinks[0].classList.add('active');
+      navLinks[1].classList.remove('active');
+      myAccountSection.style.display = '';
+      joinServersSection.style.display = 'none';
+      modalTitle.textContent = 'My Account';
+    };
+    navLinks[1].onclick = () => {
+      navLinks[1].classList.add('active');
+      navLinks[0].classList.remove('active');
+      myAccountSection.style.display = 'none';
+      joinServersSection.style.display = '';
+      modalTitle.textContent = 'Join Servers';
+    };
+  }
 });
 
 // Optional: Prevent form submission (for now)

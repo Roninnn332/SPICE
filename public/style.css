@@ -2954,3 +2954,17 @@ input:checked + .slider:before {
   margin-bottom: 0.7rem;
 }
 
+.owner-gold-tag {
+  background: linear-gradient(90deg, #FFD700, #E6C200, #BFA14A);
+  color: #fff;
+  font-weight: 800;
+  padding: 0.18em 0.8em;
+  border-radius: 0.7em;
+  font-size: 0.98em;
+  margin-left: 0.7em;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px 0 rgba(255,215,0,0.13);
+  display: inline-block;
+  vertical-align: middle;
+}
+
