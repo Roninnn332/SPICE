@@ -244,15 +244,17 @@ async function appendServerMessage(msg, who = 'them') {
   // Grouping logic: hide avatar/username if previous message is from same user within 5 minutes
   let showAvatar = true;
   let showUsername = true;
+  let grouped = false;
   const msgTime = new Date(msg.timestamp).getTime();
   if (lastServerMsgUser === msg.user_id && lastServerMsgTime && (msgTime - lastServerMsgTime < 5 * 60 * 1000)) {
     showAvatar = false;
     showUsername = false;
+    grouped = true;
   }
   lastServerMsgUser = msg.user_id;
   lastServerMsgTime = msgTime;
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'server-message ' + who + (showAvatar ? '' : ' grouped');
+  msgDiv.className = 'server-message ' + who + (grouped ? ' grouped' : '');
   msgDiv.dataset.timestamp = msg.timestamp;
   msgDiv.innerHTML = `
     ${showAvatar ? `<div class=\"server-message-avatar-wrap\"><img class=\"server-message-avatar\" src=\"${userInfo.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\"></div>` : `<div class=\"server-message-avatar-wrap\"></div>`}
