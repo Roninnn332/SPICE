@@ -176,6 +176,10 @@ async function openServerChannel(serverId, channelId) {
     .eq('server_id', serverId)
     .eq('channel_id', channelId)
     .order('timestamp', { ascending: true });
+  // Debug logging
+  console.log('Fetching messages for', { serverId, channelId });
+  console.log('Supabase error:', error);
+  console.log('Supabase data:', messages);
   if (chat) chat.innerHTML = '';
   if (error || !messages) {
     if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
@@ -215,7 +219,8 @@ async function openServerChannel(serverId, channelId) {
           serverSocket.emit('server-message', { ...msgObj, room: currentServerRoom });
         }
         // Store in Supabase for persistence
-        await supabase.from('channel_messages').insert([msgObj]);
+        const { error: insertError } = await supabase.from('channel_messages').insert([msgObj]);
+        if (insertError) console.error('Insert error:', insertError);
         // Optionally, append immediately for sender
         appendServerMessage(msgObj, 'me');
       };
