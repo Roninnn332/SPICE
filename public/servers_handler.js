@@ -8,6 +8,10 @@ let currentChannel = null;
 let serversList = [];
 let channelsList = [];
 
+// --- Socket.IO for Server Chat ---
+let serverSocket = null;
+let currentServerRoom = null;
+
 // --- DOM Elements (to be set on page load) ---
 let serversSidebar = null;
 let channelsSidebar = null;
@@ -20,6 +24,12 @@ window.addEventListener('DOMContentLoaded', () => {
   serverChatSection = document.querySelector('.chat-section');
   // TODO: Fetch and render servers for the user
   // renderServersList();
+  setupServerMembersRealtime();
+  // Setup server socket after login if user exists
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (user && user.user_id) {
+    setupServerSocketIO(user.user_id);
+  }
 });
 
 // --- Server List UI ---
@@ -132,6 +142,15 @@ async function renderChannelsList(serverId) {
 // --- Server Chat UI ---
 async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
+  // Leave previous room if any
+  if (serverSocket && currentServerRoom) {
+    serverSocket.emit('leave-room', currentServerRoom);
+  }
+  // Set new room and join
+  currentServerRoom = `server-${serverId}-channel-${channelId}`;
+  if (serverSocket) {
+    serverSocket.emit('join-room', currentServerRoom);
+  }
   // Fetch channel info
   const channel = channelsList.find(c => c.id === channelId);
   // Render channel name in header
@@ -153,14 +172,7 @@ async function openServerChannel(serverId, channelId) {
   }
   // Render messages
   for (const msg of messages) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'server-message';
-    msgDiv.innerHTML = `
-      <span class="server-message-user">${msg.user_id}</span>
-      <span class="server-message-content">${msg.content || ''}</span>
-      <span class="server-message-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-    `;
-    chat.appendChild(msgDiv);
+    appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
   }
   // Render message input in footer ONLY for text channels
   const footer = serverChatSection.querySelector('.chat-input-area');
@@ -180,21 +192,76 @@ async function openServerChannel(serverId, channelId) {
         const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
         input.value = '';
-        await supabase.from('channel_messages').insert([
-          {
-            server_id: serverId,
-            channel_id: channelId,
-            user_id: user.user_id,
-            content,
-            timestamp: new Date().toISOString()
-          }
-        ]);
-        openServerChannel(serverId, channelId); // re-fetch messages
+        const msgObj = {
+          server_id: serverId,
+          channel_id: channelId,
+          user_id: user.user_id,
+          content,
+          timestamp: new Date().toISOString()
+        };
+        // Emit via Socket.IO for real-time
+        if (serverSocket && currentServerRoom) {
+          serverSocket.emit('server-message', { ...msgObj, room: currentServerRoom });
+        }
+        // Store in Supabase for persistence
+        await supabase.from('channel_messages').insert([msgObj]);
+        // Optionally, append immediately for sender
+        appendServerMessage(msgObj, 'me');
       };
     } else {
       footer.innerHTML = '';
     }
   }
+  // Setup Socket.IO receive handler (only once per channel open)
+  if (serverSocket) {
+    serverSocket.off && serverSocket.off('server-message'); // Remove previous handler if any
+    serverSocket.on('server-message', async (msg) => {
+      // Only append if for this channel
+      if (msg.server_id === serverId && msg.channel_id === channelId) {
+        appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
+      }
+    });
+  }
+}
+
+// --- Premium Server Message Rendering ---
+let lastServerMsgUser = null;
+let lastServerMsgTime = null;
+async function appendServerMessage(msg, who = 'them') {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat) return;
+  // Fetch user info for avatar/username
+  let userInfo = { username: msg.user_id, avatar_url: '' };
+  if (msg.user_id) {
+    userInfo = await getUserInfo(msg.user_id);
+  }
+  // Grouping logic: hide avatar/username if previous message is from same user within 5 minutes
+  let showAvatar = true;
+  let showUsername = true;
+  const msgTime = new Date(msg.timestamp).getTime();
+  if (lastServerMsgUser === msg.user_id && lastServerMsgTime && (msgTime - lastServerMsgTime < 5 * 60 * 1000)) {
+    showAvatar = false;
+    showUsername = false;
+  }
+  lastServerMsgUser = msg.user_id;
+  lastServerMsgTime = msgTime;
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'server-message ' + who + (showAvatar ? '' : ' grouped');
+  msgDiv.dataset.timestamp = msg.timestamp;
+  msgDiv.innerHTML = `
+    ${showAvatar ? `<div class=\"server-message-avatar-wrap\"><img class=\"server-message-avatar\" src=\"${userInfo.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\"></div>` : `<div class=\"server-message-avatar-wrap\"></div>`}
+    <div class=\"server-message-bubble\">
+      <div class=\"server-message-header\">
+        ${showUsername ? `<span class=\"server-message-username\">${userInfo.username}</span>` : ''}
+        <span class=\"server-message-time\">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+      </div>
+      <span class=\"server-message-content\">${msg.content || ''}</span>
+    </div>
+  `;
+  chat.appendChild(msgDiv);
+  void msgDiv.offsetWidth;
+  msgDiv.classList.add('server-message-animate-in');
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
 // --- Server Creation/Join ---
@@ -791,6 +858,7 @@ if (membersNavBtn) {
     if (membersSection) {
       membersSection.style.display = '';
       fetchServerMembers();
+      setupServerMembersRealtimeForServer();
     }
   });
 }
@@ -900,4 +968,71 @@ async function getUserInfo(user_id) {
   const { data, error } = await supabase.from('users').select('username,avatar_url').eq('user_id', user_id).single();
   if (error || !data) return { username: user_id, avatar_url: '' };
   return data;
+}
+
+// --- Real-time Updates for Server Memberships ---
+let serverMembersRealtimeSub = null;
+let serverMembersRealtimeSubForServer = null;
+
+function setupServerMembersRealtime() {
+  if (serverMembersRealtimeSub) return;
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (!user || !user.user_id) return;
+  serverMembersRealtimeSub = supabase.channel('server-members-rt')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'server_members',
+      filter: `user_id=eq.${user.user_id}`
+    }, payload => {
+      renderServersList();
+    })
+    .subscribe();
+}
+
+function setupServerMembersRealtimeForServer() {
+  cleanupServerMembersRealtimeForServer();
+  if (!currentServer) return;
+  serverMembersRealtimeSubForServer = supabase.channel('server-members-rt-server')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'server_members',
+      filter: `server_id=eq.${currentServer.id}`
+    }, payload => {
+      // Only update if the members section is visible
+      const membersSection = document.getElementById('server-settings-section-members');
+      if (membersSection && membersSection.style.display !== 'none') {
+        fetchServerMembers();
+      }
+    })
+    .subscribe();
+}
+
+function cleanupServerMembersRealtime() {
+  if (serverMembersRealtimeSub) {
+    supabase.removeChannel(serverMembersRealtimeSub);
+    serverMembersRealtimeSub = null;
+  }
+}
+
+function cleanupServerMembersRealtimeForServer() {
+  if (serverMembersRealtimeSubForServer) {
+    supabase.removeChannel(serverMembersRealtimeSubForServer);
+    serverMembersRealtimeSubForServer = null;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  setupServerMembersRealtime();
+});
+
+function setupServerSocketIO(userId) {
+  if (!window.io) return;
+  if (serverSocket) serverSocket.disconnect();
+  const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+  serverSocket = window.io(socketUrl);
+  serverSocket.on('connect', () => {
+    serverSocket.emit('join-server', userId);
+  });
 } 
