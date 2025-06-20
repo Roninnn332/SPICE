@@ -68,6 +68,33 @@ io.on('connection', (socket) => {
     io.to(user2).emit('delete', timestamp);
   });
 
+  // --- Server/Group Chat Logic ---
+  socket.on('join-room', (room) => {
+    socket.join(room);
+    socket.currentRoom = room;
+    console.log(`Socket ${socket.id} joined room ${room}`);
+  });
+  socket.on('leave-room', (room) => {
+    socket.leave(room);
+    if (socket.currentRoom === room) delete socket.currentRoom;
+    console.log(`Socket ${socket.id} left room ${room}`);
+  });
+  socket.on('server-message', async (msg) => {
+    // Save to Supabase
+    const { error } = await supabase.from('channel_messages').insert([{
+      server_id: msg.server_id,
+      channel_id: msg.channel_id,
+      user_id: msg.user_id,
+      content: msg.content,
+      timestamp: msg.timestamp
+    }]);
+    if (error) console.error('Supabase insert error:', error);
+    // Broadcast to all users in the room except sender
+    if (msg.room) {
+      socket.to(msg.room).emit('server-message', msg);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
