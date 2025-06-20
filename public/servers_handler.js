@@ -214,7 +214,8 @@ async function openServerChannel(serverId, channelId) {
         // Store in Supabase for persistence
         const { error: insertError } = await supabase.from('channel_messages').insert([msgObj]);
         if (insertError) console.error('Insert error:', insertError);
-        // Do NOT append immediately for sender; rely on Socket.IO event
+        // Optionally, append immediately for sender
+        appendServerMessage(msgObj, 'me');
       };
     } else {
       footer.innerHTML = '';
@@ -223,9 +224,43 @@ async function openServerChannel(serverId, channelId) {
 }
 
 // --- Realtime for Channel Messages ---
-// Remove Supabase Realtime for channel messages
-// Delete setupChannelMessagesRealtime, cleanupChannelMessagesRealtime, and the patching of openServerChannel
-// Only use Socket.IO for live updates
+let channelMessagesRealtimeSub = null;
+function setupChannelMessagesRealtime(serverId, channelId) {
+  cleanupChannelMessagesRealtime();
+  if (!serverId || !channelId) return;
+  channelMessagesRealtimeSub = supabase.channel('channel-messages-rt-' + serverId + '-' + channelId)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'channel_messages',
+      filter: `server_id=eq.${serverId},channel_id=eq.${channelId}`
+    }, async payload => {
+      // Only update if this channel is open
+      if (!currentServer || !currentChannel || currentServer.id !== serverId || currentChannel.id !== channelId) return;
+      if (payload.eventType === 'INSERT') {
+        const msg = payload.new;
+        appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
+      } else if (payload.eventType === 'DELETE') {
+        // Optionally, remove message from UI if needed
+      } else if (payload.eventType === 'UPDATE') {
+        // Optionally, update message in UI if needed
+      }
+    })
+    .subscribe();
+}
+function cleanupChannelMessagesRealtime() {
+  if (channelMessagesRealtimeSub) {
+    supabase.removeChannel(channelMessagesRealtimeSub);
+    channelMessagesRealtimeSub = null;
+  }
+}
+// Patch openServerChannel to setup/cleanup realtime
+const _openServerChannel = openServerChannel;
+openServerChannel = async function(serverId, channelId) {
+  cleanupChannelMessagesRealtime();
+  await _openServerChannel(serverId, channelId);
+  setupChannelMessagesRealtime(serverId, channelId);
+};
 
 // --- Premium Server Message Rendering ---
 let lastServerMsgUser = null;
