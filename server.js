@@ -25,7 +25,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Socket.IO DM logic
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('[Socket.IO] New connection:', socket.id);
 
   // Join a room for each user (userId sent from client)
   socket.on('join', (userId) => {
