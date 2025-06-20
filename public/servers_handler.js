@@ -64,13 +64,7 @@ async function renderServersList() {
     };
     // Add double-click event for owner to open server settings modal
     btn.ondblclick = () => {
-      if (user && server.owner_id === user.user_id) {
-        const modal = document.getElementById('server-settings-modal-overlay');
-        if (modal) {
-          modal.style.display = 'flex';
-          setTimeout(() => modal.classList.add('active'), 10);
-        }
-      }
+      openServerSettingsModal();
     };
     serversListDiv.appendChild(btn);
   });
@@ -829,5 +823,74 @@ async function fetchServerMembers() {
         ${isOwner ? '<span class="owner-gold-tag" style="background:linear-gradient(90deg,#FFD700,#E6C200,#BFA14A);color:#fff;font-weight:800;padding:0.18em 0.8em;border-radius:0.7em;font-size:0.98em;margin-left:0.7em;letter-spacing:0.5px;box-shadow:0 2px 8px 0 rgba(255,215,0,0.13);">OWNER</span>' : ''}
       </div>
     `;
+  }
+}
+
+// --- Server Settings Modal Section Switch Logic ---
+window.addEventListener('DOMContentLoaded', () => {
+  const navLinks = document.querySelectorAll('#server-settings-modal-overlay .profile-settings-nav .nav-link');
+  const sectionMap = {
+    'server-profile': {
+      section: document.getElementById('server-settings-section-server-profile'),
+      title: 'Server Profile',
+    },
+    'emoji': {
+      section: document.getElementById('server-settings-section-emoji'),
+      title: 'Emoji',
+    },
+    'members': {
+      section: document.getElementById('server-settings-section-members'),
+      title: 'Members',
+    },
+    'roles': {
+      section: document.getElementById('server-settings-section-roles'),
+      title: 'Roles',
+    },
+    'invites': {
+      section: document.getElementById('server-settings-section-invites'),
+      title: 'Invites',
+    },
+  };
+  const modalTitle = document.getElementById('server-settings-title');
+  navLinks.forEach(link => {
+    link.onclick = () => {
+      // Remove active from all
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      // Hide all sections
+      Object.values(sectionMap).forEach(obj => { if (obj.section) obj.section.style.display = 'none'; });
+      // Show selected section
+      const key = link.getAttribute('data-section');
+      if (sectionMap[key] && sectionMap[key].section) {
+        sectionMap[key].section.style.display = '';
+        if (modalTitle) modalTitle.textContent = sectionMap[key].title;
+        // Call fetchers if needed
+        if (key === 'invites') fetchServerInvites();
+        if (key === 'members') fetchServerMembers();
+      }
+    };
+  });
+});
+
+// Patch: Always reset server settings modal to Server Profile section and tab when opening
+function openServerSettingsModal() {
+  const modal = document.getElementById('server-settings-modal-overlay');
+  if (modal) {
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      modal.classList.add('active');
+      // Reset to Server Profile tab/section
+      const navLinks = modal.querySelectorAll('.profile-settings-nav .nav-link');
+      navLinks.forEach(l => l.classList.remove('active'));
+      const profileTab = modal.querySelector('.profile-settings-nav .nav-link[data-section="server-profile"]');
+      if (profileTab) profileTab.classList.add('active');
+      // Hide all sections
+      const allSections = modal.querySelectorAll('.profile-modal-content > .modal-stagger');
+      allSections.forEach(sec => sec.style.display = 'none');
+      const profileSection = document.getElementById('server-settings-section-server-profile');
+      if (profileSection) profileSection.style.display = '';
+      const modalTitle = document.getElementById('server-settings-title');
+      if (modalTitle) modalTitle.textContent = 'Server Profile';
+    }, 10);
   }
 } 
