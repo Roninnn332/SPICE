@@ -146,6 +146,9 @@ async function openServerChannel(serverId, channelId) {
   if (serverSocket && currentServerRoom) {
     serverSocket.emit('leave-room', currentServerRoom);
   }
+  // Set new currentServer/currentChannel
+  currentServer = serversList.find(s => s.id === serverId) || currentServer;
+  currentChannel = channelsList.find(c => c.id === channelId) || currentChannel;
   // Set new room and join
   currentServerRoom = `server-${serverId}-channel-${channelId}`;
   if (serverSocket) {
@@ -220,16 +223,6 @@ async function openServerChannel(serverId, channelId) {
       footer.innerHTML = '';
     }
   }
-  // Setup Socket.IO receive handler (only once per channel open)
-  if (serverSocket) {
-    serverSocket.off && serverSocket.off('server-message'); // Remove previous handler if any
-    serverSocket.on('server-message', async (msg) => {
-      // Only append if for this channel
-      if (msg.server_id === serverId && msg.channel_id === channelId) {
-        appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
-      }
-    });
-  }
 }
 
 // --- Premium Server Message Rendering ---
@@ -258,12 +251,14 @@ async function appendServerMessage(msg, who = 'them') {
   msgDiv.dataset.timestamp = msg.timestamp;
   msgDiv.innerHTML = `
     ${showAvatar ? `<div class=\"server-message-avatar-wrap\"><img class=\"server-message-avatar\" src=\"${userInfo.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\"></div>` : `<div class=\"server-message-avatar-wrap\"></div>`}
-    <div class=\"server-message-bubble\">
-      <div class=\"server-message-header\">
+    <div class=\"server-message-body\">
+      <div class=\"server-message-meta-row\">
         ${showUsername ? `<span class=\"server-message-username\">${userInfo.username}</span>` : ''}
         <span class=\"server-message-time\">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
-      <span class=\"server-message-content\">${msg.content || ''}</span>
+      <div class=\"server-message-bubble\">
+        <span class=\"server-message-content\">${msg.content || ''}</span>
+      </div>
     </div>
   `;
   chat.appendChild(msgDiv);
@@ -1042,5 +1037,16 @@ function setupServerSocketIO(userId) {
   serverSocket = window.io(socketUrl);
   serverSocket.on('connect', () => {
     serverSocket.emit('join-server', userId);
+  });
+  // Set up the message handler ONCE
+  serverSocket.on('server-message', async (msg) => {
+    if (
+      currentServer &&
+      currentChannel &&
+      msg.server_id === currentServer.id &&
+      msg.channel_id === currentChannel.id
+    ) {
+      appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
+    }
   });
 } 
