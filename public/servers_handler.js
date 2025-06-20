@@ -272,6 +272,10 @@ async function appendServerMessage(msg, who = 'them') {
   void msgDiv.offsetWidth;
   msgDiv.classList.add('server-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  // Force visibility for debugging
+  msgDiv.style.opacity = '1';
+  msgDiv.style.transform = 'none';
+  console.log('Message element after append:', msgDiv.outerHTML);
 }
 
 // --- Server Creation/Join ---
