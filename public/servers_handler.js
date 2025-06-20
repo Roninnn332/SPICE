@@ -151,6 +151,7 @@ async function openServerChannel(serverId, channelId) {
   currentChannel = channelsList.find(c => c.id === channelId) || currentChannel;
   // Set new room and join
   currentServerRoom = `server-${serverId}-channel-${channelId}`;
+  console.log('[Socket.IO] Joining room', currentServerRoom);
   if (serverSocket) {
     serverSocket.emit('join-room', currentServerRoom);
   }
@@ -207,6 +208,7 @@ async function openServerChannel(serverId, channelId) {
           content,
           timestamp: new Date().toISOString()
         };
+        console.log('[Socket.IO] Emitting server-message', msgObj, currentServerRoom);
         // Emit via Socket.IO for real-time
         if (serverSocket && currentServerRoom) {
           serverSocket.emit('server-message', { ...msgObj, room: currentServerRoom });
@@ -224,43 +226,7 @@ async function openServerChannel(serverId, channelId) {
 }
 
 // --- Realtime for Channel Messages ---
-let channelMessagesRealtimeSub = null;
-function setupChannelMessagesRealtime(serverId, channelId) {
-  cleanupChannelMessagesRealtime();
-  if (!serverId || !channelId) return;
-  channelMessagesRealtimeSub = supabase.channel('channel-messages-rt-' + serverId + '-' + channelId)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'channel_messages',
-      filter: `server_id=eq.${serverId},channel_id=eq.${channelId}`
-    }, async payload => {
-      // Only update if this channel is open
-      if (!currentServer || !currentChannel || currentServer.id !== serverId || currentChannel.id !== channelId) return;
-      if (payload.eventType === 'INSERT') {
-        const msg = payload.new;
-        appendServerMessage(msg, msg.user_id === JSON.parse(localStorage.getItem('spice_user')).user_id ? 'me' : 'them');
-      } else if (payload.eventType === 'DELETE') {
-        // Optionally, remove message from UI if needed
-      } else if (payload.eventType === 'UPDATE') {
-        // Optionally, update message in UI if needed
-      }
-    })
-    .subscribe();
-}
-function cleanupChannelMessagesRealtime() {
-  if (channelMessagesRealtimeSub) {
-    supabase.removeChannel(channelMessagesRealtimeSub);
-    channelMessagesRealtimeSub = null;
-  }
-}
-// Patch openServerChannel to setup/cleanup realtime
-const _openServerChannel = openServerChannel;
-openServerChannel = async function(serverId, channelId) {
-  cleanupChannelMessagesRealtime();
-  await _openServerChannel(serverId, channelId);
-  setupChannelMessagesRealtime(serverId, channelId);
-};
+// (REMOVE ALL CODE for setupChannelMessagesRealtime, cleanupChannelMessagesRealtime, and the patching of openServerChannel)
 
 // --- Premium Server Message Rendering ---
 let lastServerMsgUser = null;
@@ -1090,6 +1056,7 @@ function setupServerSocketIO(userId) {
   });
   // Set up the message handler ONCE
   serverSocket.on('server-message', async (msg) => {
+    console.log('[Socket.IO] Received server-message', msg);
     if (
       currentServer &&
       currentChannel &&
