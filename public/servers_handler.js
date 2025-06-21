@@ -213,7 +213,7 @@ async function openServerChannel(serverId, channelId) {
     .select('*')
     .eq('server_id', serverId)
     .eq('channel_id', channelId)
-    .order('timestamp', { ascending: true });
+    .order('created_at', { ascending: true });
   if (chat) chat.innerHTML = '';
   if (error || !messages) {
     if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
