@@ -259,6 +259,14 @@ async function openServerChannel(serverId, channelId) {
           content,
           timestamp: Date.now()
         });
+        // Save in Supabase
+        await supabaseClient.from('channel_messages').insert([
+          {
+            channel_id: channelId,
+            user_id: user.user_id,
+            content: content
+          }
+        ]);
         // Optimistically append as 'me'
         appendChannelMessage({
           userId: user.user_id,
