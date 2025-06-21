@@ -282,10 +282,10 @@ async function appendServerMessage(msg, who = 'them') {
       ${who === 'me' || grouped ? '' : `<div class="wa-message-username" style="color:${getUserColor(msg.user_id)};">${userInfo.username}</div>`}
       <div class="wa-message-bubble">
         <span class="wa-message-content">${msg.content || ''}</span>
-        <span class="wa-message-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        <span class="wa-message-time">$${msg.created_at ? `{{new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}}` : `{{new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}}`}</span>
       </div>
     </div>
-  `;
+  `.replace(/\$\{\{([^}]+)\}\}/g, (_, code) => eval(code));
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
   msgDiv.classList.add('wa-message-animate-in');
