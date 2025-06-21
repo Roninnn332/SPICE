@@ -55,7 +55,12 @@ io.on('connection', (socket) => {
   socket.on('channel_message', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp }) => {
     // Save to Supabase
     const { error } = await supabase.from('channel_messages').insert([
-      { server_id: serverId, channel_id: channelId, user_id: userId, username, avatar_url, content, timestamp }
+      {
+        channel_id: channelId,
+        user_id: userId,
+        content,
+        created_at: new Date().toISOString()
+      }
     ]);
     if (error) console.error('Supabase insert error (channel_message):', error);
     // Broadcast to all in the channel room
