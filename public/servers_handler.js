@@ -8,48 +8,19 @@ let currentChannel = null;
 let serversList = [];
 let channelsList = [];
 
-// --- Socket.IO for Server Chat ---
-let serverSocket = null;
-let currentServerRoom = null;
-
 // --- DOM Elements (to be set on page load) ---
 let serversSidebar = null;
 let channelsSidebar = null;
 let serverChatSection = null;
-
-// --- State Management ---
-let activeServer = null;
-let activeChannel = null;
-const messages = {};
 
 // --- Initialization ---
 window.addEventListener('DOMContentLoaded', () => {
   serversSidebar = document.querySelector('.servers-sidebar');
   channelsSidebar = document.querySelector('.channels-sidebar');
   serverChatSection = document.querySelector('.chat-section');
-  // Set current user ID and username globally for correct sender detection
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  if (user && user.user_id) {
-    window.currentUserId = String(user.user_id);
-    window.currentUsername = user.username || user.user_id;
-  } else {
-    window.currentUserId = null;
-    window.currentUsername = null;
-    console.warn('No current user ID found in localStorage!');
-  }
   // TODO: Fetch and render servers for the user
   // renderServersList();
   setupServerMembersRealtime();
-  // Setup server socket after login if user exists and Socket.IO is loaded
-  if (window.io) {
-    trySetupServerSocketIO();
-  } else {
-    // Dynamically load Socket.IO client if not present
-    const script = document.createElement('script');
-    script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
-    script.onload = trySetupServerSocketIO;
-    document.head.appendChild(script);
-  }
 });
 
 // --- Server List UI ---
@@ -159,138 +130,139 @@ async function renderChannelsList(serverId) {
   }
 }
 
-// --- Server Chat UI ---
-async function openServerChannel(serverId, channelId) {
-  if (!serverId || !channelId || !serverChatSection) return;
-  activeServer = serversList.find(s => s.id === serverId) || activeServer;
-  activeChannel = channelsList.find(c => c.id === channelId) || activeChannel;
-  const header = serverChatSection.querySelector('.chat-header');
-  const channel = channelsList.find(c => c.id === channelId);
-  if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  const chat = serverChatSection.querySelector('.chat-messages');
-  const footer = serverChatSection.querySelector('.chat-input-area');
-  if (channel && channel.type === 'text') {
-    // Join Socket.IO room
-    if (window.serverSocket) {
-      if (window.currentServerRoom) window.serverSocket.emit('leave-room', window.currentServerRoom);
-      window.currentServerRoom = `server-${serverId}-channel-${channelId}`;
-      window.serverSocket.emit('join-room', window.currentServerRoom);
-    }
-    // Fetch messages from Supabase
-    const { data: msgs, error } = await supabase
-      .from('channel_messages')
-      .select('*')
-      .eq('server_id', serverId)
-      .eq('channel_id', channelId)
-      .order('id', { ascending: true });
-    messages[channelId] = msgs || [];
-    renderChannelMessages();
-    if (footer) {
-      footer.innerHTML = `
-        <form class="text-channel-input-form">
-          <input type="text" class="text-channel-input" placeholder="Message #${channel.name}" autocomplete="off" />
-          <button type="submit" class="text-channel-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-        </form>
-      `;
-      const form = footer.querySelector('.text-channel-input-form');
-      if (form) {
-        form.onsubmit = (e) => {
-          e.preventDefault();
-          const input = form.querySelector('.text-channel-input');
-          const content = input.value.trim();
-          if (!content) return;
-          input.value = '';
-          const user = JSON.parse(localStorage.getItem('spice_user'));
-          const msgObj = {
-            server_id: serverId,
-            channel_id: channelId,
-            user_id: user.user_id,
-            content,
-            created_at: new Date().toISOString(),
-            // id will be set by backend
-          };
-          // Debug log before emitting
-          if (window.serverSocket && window.currentServerRoom) {
-            console.log('Emitting server-message', msgObj, window.currentServerRoom);
-            window.serverSocket.emit('server-message', { ...msgObj, room: window.currentServerRoom });
-          }
-        };
-      }
-    }
-  } else {
-    if (chat) chat.innerHTML = '';
-    if (footer) footer.innerHTML = '';
-  }
-}
+// --- Socket.IO for Channel Chat ---
+let channelSocket = null;
+let currentChannelRoom = null;
 
-// Helper: Render all messages for the active channel
-function renderChannelMessages() {
-  const chat = document.querySelector('.chat-messages');
-  if (!chat || !activeChannel) return;
-  chat.innerHTML = '';
-  const msgs = messages[activeChannel.id] || [];
-  msgs.forEach(msg => {
-    renderChannelMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
+function setupChannelSocketIO(serverId, channelId, user) {
+  if (!window.io) return;
+  if (!channelSocket) {
+    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+    channelSocket = window.io(socketUrl);
+  }
+  // Leave previous room
+  if (currentChannelRoom) {
+    channelSocket.emit('leave_channel', currentChannelRoom);
+    channelSocket.off('channel_message');
+  }
+  // Join new room
+  currentChannelRoom = { serverId, channelId };
+  channelSocket.emit('join_channel', { serverId, channelId });
+  // Listen for new messages
+  channelSocket.on('channel_message', (msg) => {
+    if (!msg || msg.channelId !== channelId) return;
+    const isMe = msg.userId === user.user_id;
+    appendChannelMessage(msg, isMe ? 'me' : 'them');
   });
 }
 
-// Helper: Render a single message (with animation, left/right)
-function renderChannelMessage(msg, who = 'them') {
+// --- Premium Message Rendering ---
+async function appendChannelMessage(msg, who) {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
-  // Prevent duplicate
-  if (msg.id && chat.querySelector(`[data-msg-id="${msg.id}"]`)) return;
+  // Get user info for avatar/username
+  let username = msg.username || msg.userId || '';
+  let avatar_url = msg.avatar_url || '';
+  if (!username || !avatar_url) {
+    const info = await getUserInfo(msg.userId);
+    username = info.username;
+    avatar_url = info.avatar_url;
+  }
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'channel-message ' + who + ' channel-message-animate-in';
-  msgDiv.dataset.msgId = msg.id;
-  // Fetch user info for username (cache for perf in future)
-  let username = msg.user_id;
-  if (window.currentUserId && msg.user_id === window.currentUserId && window.currentUsername) {
-    username = window.currentUsername;
-  }
-  // Right side (me): username, then time+message
-  // Left side (them): username, then message+time
-  if (who === 'me') {
-    msgDiv.innerHTML = `
-      <div class="channel-message-meta">${username}</div>
-      <div class="channel-message-row">
-        <span class="channel-message-time">${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
-        <span class="channel-message-bubble">${msg.content || ''}</span>
+  msgDiv.className = 'dm-message ' + who;
+  msgDiv.dataset.timestamp = msg.timestamp;
+  msgDiv.innerHTML = `
+    <div class="dm-message-bubble">
+      <div style="display:flex;align-items:center;gap:0.7em;margin-bottom:0.2em;">
+        <img class="dm-chat-avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">
+        <span class="dm-chat-username" style="font-size:1.01em;">${username}</span>
+        <span class="dm-message-time" style="font-size:0.93em;color:var(--gray);margin-left:0.7em;">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
-    `;
-  } else {
-    msgDiv.innerHTML = `
-      <div class="channel-message-meta">${username}</div>
-      <div class="channel-message-row">
-        <span class="channel-message-bubble">${msg.content || ''}</span>
-        <span class="channel-message-time">${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
-      </div>
-    `;
-  }
+      <span class="dm-message-text">${msg.content || ''}</span>
+    </div>
+  `;
   chat.appendChild(msgDiv);
-  setTimeout(() => { msgDiv.classList.remove('channel-message-animate-in'); }, 700);
+  void msgDiv.offsetWidth;
+  msgDiv.classList.add('dm-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
-// --- Realtime for Channel Messages ---
-// (REMOVE ALL CODE for setupChannelMessagesRealtime, cleanupChannelMessagesRealtime, and the patching of openServerChannel)
-
-// --- Premium Server Message Rendering ---
-let lastServerMsgUser = null;
-let lastServerMsgTime = null;
-let lastServerMsgDiv = null;
-const userColorMap = {};
-const colorPalette = [
-  '#60a5fa', '#f472b6', '#fbbf24', '#34d399', '#a78bfa', '#f87171', '#38bdf8', '#facc15', '#4ade80', '#818cf8', '#fb7185', '#f472b6', '#f59e42', '#10b981', '#6366f1', '#eab308', '#22d3ee', '#f43f5e', '#a3e635', '#f472b6'
-];
-function getUserColor(userId) {
-  if (!userColorMap[userId]) {
-    // Hash userId to pick a color
-    let hash = 0;
-    for (let i = 0; i < userId.length; i++) hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-    userColorMap[userId] = colorPalette[Math.abs(hash) % colorPalette.length];
+// --- Refactor openServerChannel for Real-time & Premium UI ---
+async function openServerChannel(serverId, channelId) {
+  if (!serverId || !channelId || !serverChatSection) return;
+  // Fetch channel info
+  const channel = channelsList.find(c => c.id === channelId);
+  // Render channel name in header
+  const header = serverChatSection.querySelector('.chat-header');
+  if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
+  // Fetch messages for the channel
+  const chat = serverChatSection.querySelector('.chat-messages');
+  if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
+  const { data: messages, error } = await supabase
+    .from('channel_messages')
+    .select('*')
+    .eq('server_id', serverId)
+    .eq('channel_id', channelId)
+    .order('timestamp', { ascending: true });
+  if (chat) chat.innerHTML = '';
+  if (error || !messages) {
+    if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
+    return;
   }
-  return userColorMap[userId];
+  // Render messages with premium UI
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  for (const msg of messages) {
+    const isMe = msg.user_id === user.user_id;
+    await appendChannelMessage({
+      userId: msg.user_id,
+      username: msg.username,
+      avatar_url: msg.avatar_url,
+      content: msg.content,
+      timestamp: msg.timestamp
+    }, isMe ? 'me' : 'them');
+  }
+  // Setup Socket.IO for real-time
+  setupChannelSocketIO(serverId, channelId, user);
+  // Render message input in footer ONLY for text channels
+  const footer = serverChatSection.querySelector('.chat-input-area');
+  if (footer) {
+    if (channel && channel.type === 'text') {
+      footer.innerHTML = `
+        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
+          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
+          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
+        </form>
+      `;
+      const form = footer.querySelector('.server-chat-input-form');
+      const input = footer.querySelector('.server-chat-input');
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const content = input.value.trim();
+        if (!user || !user.user_id || !content) return;
+        input.value = '';
+        // Send via Socket.IO
+        channelSocket.emit('channel_message', {
+          serverId,
+          channelId,
+          userId: user.user_id,
+          username: user.username,
+          avatar_url: user.avatar_url,
+          content,
+          timestamp: Date.now()
+        });
+        // Optimistically append as 'me'
+        appendChannelMessage({
+          userId: user.user_id,
+          username: user.username,
+          avatar_url: user.avatar_url,
+          content,
+          timestamp: Date.now()
+        }, 'me');
+      };
+    } else {
+      footer.innerHTML = '';
+    }
+  }
 }
 
 // --- Server Creation/Join ---
@@ -897,7 +869,7 @@ async function fetchServerMembers() {
   if (!currentServer) return;
   const { data: members, error } = await supabase
     .from('server_members')
-    .select('user_id, role, user:user_id(username, avatar_url)')
+    .select('user_id, role, users:users(user_id, username, avatar_url)')
     .eq('server_id', currentServer.id);
   const list = document.getElementById('server-members-list');
   if (!list) return;
@@ -911,7 +883,7 @@ async function fetchServerMembers() {
     return;
   }
   for (const member of members) {
-    const user = member.user || {};
+    const user = member.users || {};
     const isOwner = member.role === 'owner';
     list.innerHTML += `
       <div class="friend-request-item" style="display:flex;align-items:center;gap:1.1rem;">
@@ -1054,80 +1026,4 @@ function cleanupServerMembersRealtimeForServer() {
 
 window.addEventListener('DOMContentLoaded', () => {
   setupServerMembersRealtime();
-});
-
-function trySetupServerSocketIO() {
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  if (user && user.user_id && window.io) {
-    console.log('[Spice] Calling setupServerSocketIO with user:', user.user_id);
-    setupServerSocketIO(user.user_id);
-  } else if (!window.io) {
-    console.warn('[Spice] Socket.IO client not loaded yet.');
-  } else {
-    console.warn('[Spice] No user found for Socket.IO setup');
-  }
-}
-
-function setupServerSocketIO(userId) {
-  console.log('[Spice] setupServerSocketIO called, window.io:', !!window.io, 'userId:', userId);
-  if (!window.io) return;
-  if (serverSocket) serverSocket.disconnect();
-  const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
-  serverSocket = window.io(socketUrl);
-  serverSocket.on('connect', () => {
-    console.log('[Spice] Connected to server socket, emitting join-server', userId);
-    serverSocket.emit('join-server', userId);
-  });
-  // Real-time handler for server messages
-  serverSocket.on('server-message', (msg) => {
-    if (!msg || !msg.channel_id) return;
-    if (!messages[msg.channel_id]) messages[msg.channel_id] = [];
-    // Deduplicate by id
-    if (msg.id && messages[msg.channel_id].some(m => m.id === msg.id)) return;
-    messages[msg.channel_id].push(msg);
-    if (activeChannel && msg.channel_id === activeChannel.id) {
-      renderChannelMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
-    }
-  });
-  // Error handler for failed message sends
-  serverSocket.on('server-message-error', (err) => {
-    alert('Message failed: ' + (err?.error || 'Unknown error'));
-    console.error('[Spice] server-message-error:', err);
-  });
-}
-
-// Update appendGroupMessage for robust duplicate prevention
-async function appendGroupMessage(msg, who = 'them') {
-  const chat = document.querySelector('.chat-messages');
-  if (!chat) return;
-  // Prevent duplicate messages (prefer id, fallback to timestamp+user_id)
-  if (msg.id && chat.querySelector(`[data-msg-id="${msg.id}"]`)) return;
-  if (!msg.id && chat.querySelector(`[data-timestamp="${msg.timestamp}"][data-user-id="${msg.user_id}"]`)) return;
-  let userInfo = { username: msg.user_id, avatar_url: '' };
-  if (msg.user_id) {
-    userInfo = await getUserInfo(msg.user_id);
-  }
-  const msgDiv = document.createElement('div');
-  msgDiv.className = 'server-message ' + who;
-  if (msg.id) msgDiv.dataset.msgId = msg.id;
-  msgDiv.dataset.timestamp = msg.timestamp;
-  msgDiv.dataset.userId = msg.user_id;
-  msgDiv.innerHTML = `
-    <div class="server-message-avatar-wrap">
-      <img class="server-message-avatar" src="${userInfo.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
-    </div>
-    <div class="server-message-body">
-      <div class="server-message-meta-row">
-        <span class="server-message-username">${userInfo.username}</span>
-        <span class="server-message-time">${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-      </div>
-      <div class="server-message-bubble">
-        <span class="server-message-content">${msg.content || ''}</span>
-      </div>
-    </div>
-  `;
-  chat.appendChild(msgDiv);
-  void msgDiv.offsetWidth;
-  msgDiv.classList.add('server-message-animate-in');
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-} 
+}); 

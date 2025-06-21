@@ -25,13 +25,44 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Socket.IO DM logic
 io.on('connection', (socket) => {
-  console.log('[Socket.IO] New connection:', socket.id);
+  console.log('User connected:', socket.id);
 
   // Join a room for each user (userId sent from client)
   socket.on('join', (userId) => {
     socket.join(userId);
     socket.userId = userId;
     console.log(`User ${userId} joined their room.`);
+  });
+
+  // --- CHANNEL CHAT LOGIC ---
+  // Join a channel room
+  socket.on('join_channel', ({ serverId, channelId }) => {
+    const room = `server-${serverId}-channel-${channelId}`;
+    socket.join(room);
+    socket.currentChannelRoom = room;
+    console.log(`Socket ${socket.id} joined channel room ${room}`);
+  });
+
+  // Leave a channel room
+  socket.on('leave_channel', ({ serverId, channelId }) => {
+    const room = `server-${serverId}-channel-${channelId}`;
+    socket.leave(room);
+    if (socket.currentChannelRoom === room) delete socket.currentChannelRoom;
+    console.log(`Socket ${socket.id} left channel room ${room}`);
+  });
+
+  // Handle sending a channel message
+  socket.on('channel_message', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp }) => {
+    // Save to Supabase
+    const { error } = await supabase.from('channel_messages').insert([
+      { server_id: serverId, channel_id: channelId, user_id: userId, username, avatar_url, content, timestamp }
+    ]);
+    if (error) console.error('Supabase insert error (channel_message):', error);
+    // Broadcast to all in the channel room
+    const room = `server-${serverId}-channel-${channelId}`;
+    io.to(room).emit('channel_message', {
+      serverId, channelId, userId, username, avatar_url, content, timestamp
+    });
   });
 
   // Handle sending a DM
@@ -66,39 +97,6 @@ io.on('connection', (socket) => {
     const [user1, user2] = dm_id.split('-');
     io.to(user1).emit('delete', timestamp);
     io.to(user2).emit('delete', timestamp);
-  });
-
-  // Join a text channel room
-  socket.on('join-room', (room) => {
-    socket.join(room);
-    socket.currentRoom = room;
-  });
-
-  // Leave a text channel room
-  socket.on('leave-room', (room) => {
-    socket.leave(room);
-    if (socket.currentRoom === room) socket.currentRoom = null;
-  });
-
-  // Handle sending a server (group) message
-  socket.on('server-message', async (msg) => {
-    console.log('[Socket.IO] Received server-message', msg);
-    // Save to Supabase
-    const { data, error } = await supabase.from('channel_messages').insert([{
-      server_id: msg.server_id,
-      channel_id: msg.channel_id,
-      user_id: msg.user_id,
-      content: msg.content,
-      created_at: new Date().toISOString()
-    }]).select().single();
-    if (error) {
-      socket.emit('server-message-error', { error: error.message });
-      return;
-    }
-    // Broadcast to everyone in the room
-    if (msg.room) {
-      io.to(msg.room).emit('server-message', data);
-    }
   });
 
   socket.on('disconnect', () => {
