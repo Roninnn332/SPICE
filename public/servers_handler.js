@@ -259,22 +259,6 @@ async function openServerChannel(serverId, channelId) {
           content,
           timestamp: Date.now()
         });
-        // Save in Supabase
-        await supabaseClient.from('channel_messages').insert([
-          {
-            channel_id: channelId,
-            user_id: Number(user.user_id),
-            content: content
-          }
-        ]);
-        // Optimistically append as 'me'
-        appendChannelMessage({
-          userId: user.user_id,
-          username: user.username,
-          avatar_url: user.avatar_url,
-          content,
-          timestamp: Date.now()
-        }, 'me');
       };
     } else {
       footer.innerHTML = '';
