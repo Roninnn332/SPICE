@@ -17,6 +17,11 @@ let serversSidebar = null;
 let channelsSidebar = null;
 let serverChatSection = null;
 
+// --- State Management ---
+let activeServer = null;
+let activeChannel = null;
+const messages = {};
+
 // --- Initialization ---
 window.addEventListener('DOMContentLoaded', () => {
   serversSidebar = document.querySelector('.servers-sidebar');
@@ -149,25 +154,38 @@ async function renderChannelsList(serverId) {
 // --- Server Chat UI ---
 async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
-  currentServer = serversList.find(s => s.id === serverId) || currentServer;
-  currentChannel = channelsList.find(c => c.id === channelId) || currentChannel;
+  activeServer = serversList.find(s => s.id === serverId) || activeServer;
+  activeChannel = channelsList.find(c => c.id === channelId) || activeChannel;
   const header = serverChatSection.querySelector('.chat-header');
   const channel = channelsList.find(c => c.id === channelId);
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  // Show animated placeholder in chat area
   const chat = serverChatSection.querySelector('.chat-messages');
-  if (chat) {
-    chat.innerHTML = '<div class="text-channel-placeholder">Text channel messages coming soon</div>';
-  }
-  // Show animated input area
   const footer = serverChatSection.querySelector('.chat-input-area');
-  if (footer) {
-    footer.innerHTML = `
-      <form class="text-channel-input-form">
-        <input type="text" class="text-channel-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" />
-        <button type="submit" class="text-channel-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-      </form>
-    `;
+  if (channel && channel.type === 'text') {
+    // Prepare for future: messages[activeChannel.id] = ...
+    if (chat) {
+      chat.innerHTML = '<div class="text-channel-placeholder">Text channel messages coming soon</div>';
+    }
+    if (footer) {
+      footer.innerHTML = `
+        <form class="text-channel-input-form">
+          <input type="text" class="text-channel-input" placeholder="Message #${channel.name}" autocomplete="off" />
+          <button type="submit" class="text-channel-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      `;
+      const form = footer.querySelector('.text-channel-input-form');
+      if (form) {
+        form.onsubmit = (e) => {
+          e.preventDefault();
+          if (chat) {
+            chat.innerHTML = '<div class="text-channel-placeholder">Text channel messages coming soon</div>';
+          }
+        };
+      }
+    }
+  } else {
+    if (chat) chat.innerHTML = '';
+    if (footer) footer.innerHTML = '';
   }
 }
 
