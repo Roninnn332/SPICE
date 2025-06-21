@@ -40,9 +40,15 @@ window.addEventListener('DOMContentLoaded', () => {
   // TODO: Fetch and render servers for the user
   // renderServersList();
   setupServerMembersRealtime();
-  // Setup server socket after login if user exists
-  if (user && user.user_id) {
-    setupServerSocketIO(user.user_id);
+  // Setup server socket after login if user exists and Socket.IO is loaded
+  if (window.io) {
+    trySetupServerSocketIO();
+  } else {
+    // Dynamically load Socket.IO client if not present
+    const script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+    script.onload = trySetupServerSocketIO;
+    document.head.appendChild(script);
   }
 });
 
@@ -1050,16 +1056,31 @@ window.addEventListener('DOMContentLoaded', () => {
   setupServerMembersRealtime();
 });
 
+function trySetupServerSocketIO() {
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (user && user.user_id && window.io) {
+    console.log('[Spice] Calling setupServerSocketIO with user:', user.user_id);
+    setupServerSocketIO(user.user_id);
+  } else if (!window.io) {
+    console.warn('[Spice] Socket.IO client not loaded yet.');
+  } else {
+    console.warn('[Spice] No user found for Socket.IO setup');
+  }
+}
+
 function setupServerSocketIO(userId) {
+  console.log('[Spice] setupServerSocketIO called, window.io:', !!window.io, 'userId:', userId);
   if (!window.io) return;
   if (serverSocket) serverSocket.disconnect();
   const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
   serverSocket = window.io(socketUrl);
   serverSocket.on('connect', () => {
+    console.log('[Spice] Connected to server socket, emitting join-server', userId);
     serverSocket.emit('join-server', userId);
   });
   // Real-time handler for server messages
   serverSocket.on('server-message', (msg) => {
+    console.log('[Spice] Received server-message:', msg);
     if (!msg.channel_id) return;
     if (!messages[msg.channel_id]) messages[msg.channel_id] = [];
     messages[msg.channel_id].push(msg);
