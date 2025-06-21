@@ -174,18 +174,22 @@ async function openServerChannel(serverId, channelId) {
     .select('*')
     .eq('server_id', serverId)
     .eq('channel_id', channelId)
-    .order('timestamp', { ascending: true });
+    .order('id', { ascending: true });
   // Debug logging
   console.log('Fetching messages for', { serverId, channelId });
   console.log('Supabase error:', error);
-  console.log('Supabase data:', messages);
+  console.log('Supabase data (ordered by id):', messages);
   if (error || !messages) {
     if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
     return;
   }
   // Render messages
   for (const msg of messages) {
-    appendServerMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
+    const who = msg.user_id === window.currentUserId ? 'me' : 'them';
+    if (who === 'me' && msg.user_id !== window.currentUserId) {
+      console.warn('Attribution mismatch: message should be mine but user_id does not match currentUserId', msg);
+    }
+    appendServerMessage(msg, who);
   }
   // Render message input in footer ONLY for text channels
   const footer = serverChatSection.querySelector('.chat-input-area');
