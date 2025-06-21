@@ -203,8 +203,9 @@ async function openServerChannel(serverId, channelId) {
             created_at: new Date().toISOString(),
             // id will be set by backend
           };
-          // Do NOT optimistically render. Wait for server echo.
+          // Debug log before emitting
           if (window.serverSocket && window.currentServerRoom) {
+            console.log('Emitting server-message', msgObj, window.currentServerRoom);
             window.serverSocket.emit('server-message', { ...msgObj, room: window.currentServerRoom });
           }
         };

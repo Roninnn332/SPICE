@@ -82,6 +82,7 @@ io.on('connection', (socket) => {
 
   // Handle sending a server (group) message
   socket.on('server-message', async (msg) => {
+    console.log('[Socket.IO] Received server-message', msg);
     // Save to Supabase
     const { data, error } = await supabase.from('channel_messages').insert([{
       server_id: msg.server_id,
