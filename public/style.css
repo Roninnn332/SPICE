@@ -3299,4 +3299,15 @@ input:checked + .slider:before {
   }
 } 
 
+/* ... existing code ... */
+/* Remove all CSS related to .chat-messages, .server-message, .wa-message, .server-chat-input, .server-chat-input-form, etc. Keep only general layout, sidebar, and .server-error styles. */
+/* Keep .server-error for placeholder message */
+.server-error {
+  text-align: center;
+  padding: 2rem 0;
+  font-size: 1.2rem;
+  color: var(--primary-blue);
+}
+/* ... existing code ... */ 
+
  

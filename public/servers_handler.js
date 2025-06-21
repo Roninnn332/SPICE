@@ -149,87 +149,21 @@ async function renderChannelsList(serverId) {
 // --- Server Chat UI ---
 async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
-  // Leave previous room if any
-  if (serverSocket && currentServerRoom) {
-    serverSocket.emit('leave-room', currentServerRoom);
-  }
   // Set new currentServer/currentChannel
   currentServer = serversList.find(s => s.id === serverId) || currentServer;
   currentChannel = channelsList.find(c => c.id === channelId) || currentChannel;
-  // Set new room and join
-  currentServerRoom = `server-${serverId}-channel-${channelId}`;
-  console.log('[Socket.IO] Joining room', currentServerRoom);
-  if (serverSocket) {
-    serverSocket.emit('join-room', currentServerRoom);
-  }
-  // Fetch channel info
-  const channel = channelsList.find(c => c.id === channelId);
   // Render channel name in header
   const header = serverChatSection.querySelector('.chat-header');
+  const channel = channelsList.find(c => c.id === channelId);
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  // Fetch messages for the channel
+  // Show placeholder in chat area
   const chat = serverChatSection.querySelector('.chat-messages');
   if (chat) {
-    chat.innerHTML = '';
+    chat.innerHTML = '<div class="server-error" style="text-align:center;padding:2rem 0;font-size:1.2rem;color:var(--primary-blue);">Text channel messages coming soon</div>';
   }
-  const { data: messages, error } = await supabase
-    .from('channel_messages')
-    .select('*')
-    .eq('server_id', serverId)
-    .eq('channel_id', channelId)
-    .order('id', { ascending: true });
-  // Debug logging
-  console.log('Fetching messages for', { serverId, channelId });
-  console.log('Supabase error:', error);
-  console.log('Supabase data (ordered by id):', messages);
-  if (error || !messages) {
-    if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
-    return;
-  }
-  // Render messages
-  for (const msg of messages) {
-    const who = String(msg.user_id) === String(window.currentUserId) ? 'me' : 'them';
-    appendGroupMessage(msg, who);
-  }
-  // Render message input in footer ONLY for text channels
+  // Remove message input
   const footer = serverChatSection.querySelector('.chat-input-area');
-  if (footer) {
-    if (channel && channel.type === 'text') {
-      footer.innerHTML = `
-        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
-          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
-        </form>
-      `;
-      const form = footer.querySelector('.server-chat-input-form');
-      const input = footer.querySelector('.server-chat-input');
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        const content = input.value.trim();
-        if (!user || !user.user_id || !content) return;
-        input.value = '';
-        const msgObj = {
-          server_id: serverId,
-          channel_id: channelId,
-          user_id: user.user_id,
-          content,
-          timestamp: new Date().toISOString()
-        };
-        console.log('[Socket.IO] Emitting server-message', msgObj, currentServerRoom);
-        // Emit via Socket.IO for real-time
-        if (serverSocket && currentServerRoom) {
-          serverSocket.emit('server-message', { ...msgObj, room: currentServerRoom });
-        }
-        // Store in Supabase for persistence (optional, can be handled by server)
-        // const { error: insertError } = await supabase.from('channel_messages').insert([msgObj]);
-        // if (insertError) console.error('Insert error:', insertError);
-        // Do NOT append immediately; wait for server echo
-      };
-    } else {
-      footer.innerHTML = '';
-    }
-  }
+  if (footer) footer.innerHTML = '';
 }
 
 // --- Realtime for Channel Messages ---
