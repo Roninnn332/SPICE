@@ -1060,13 +1060,19 @@ function setupServerSocketIO(userId) {
   // Set up the message handler ONCE
   serverSocket.on('server-message', async (msg) => {
     console.log('[Socket.IO] Received server-message', msg);
-    if (
-      currentServer &&
-      currentChannel &&
-      msg.server_id === currentServer.id &&
-      msg.channel_id === currentChannel.id
-    ) {
-      appendServerMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
+    console.log('[Socket.IO] Current server:', currentServer, 'Current channel:', currentChannel);
+    // Always show your own message, even if state is out of sync
+    const isOwnMessage = msg.user_id === window.currentUserId;
+    const isCorrectChannel = currentServer && currentChannel && msg.server_id === currentServer.id && msg.channel_id === currentChannel.id;
+    if (isCorrectChannel) {
+      appendServerMessage(msg, isOwnMessage ? 'me' : 'them');
+    } else if (isOwnMessage) {
+      // Fallback: If it's your own message, force it into the chat
+      console.warn('[Socket.IO] Own message received but channel/server mismatch. Forcing render.');
+      appendServerMessage(msg, 'me');
+    } else {
+      // Not for this channel/server, ignore
+      console.log('[Socket.IO] Message ignored: not for this channel/server.');
     }
   });
 } 
