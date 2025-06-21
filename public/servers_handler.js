@@ -25,7 +25,10 @@ window.addEventListener('DOMContentLoaded', () => {
   // Set current user ID globally for correct sender detection
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (user && user.user_id) {
-    window.currentUserId = user.user_id;
+    window.currentUserId = String(user.user_id);
+  } else {
+    window.currentUserId = null;
+    console.warn('No current user ID found in localStorage!');
   }
   // TODO: Fetch and render servers for the user
   // renderServersList();
@@ -185,8 +188,8 @@ async function openServerChannel(serverId, channelId) {
   }
   // Render messages
   for (const msg of messages) {
-    const who = msg.user_id === window.currentUserId ? 'me' : 'them';
-    if (who === 'me' && msg.user_id !== window.currentUserId) {
+    const who = String(msg.user_id) === String(window.currentUserId) ? 'me' : 'them';
+    if (who === 'me' && String(msg.user_id) !== String(window.currentUserId)) {
       console.warn('Attribution mismatch: message should be mine but user_id does not match currentUserId', msg);
     }
     appendServerMessage(msg, who);
@@ -1066,7 +1069,7 @@ function setupServerSocketIO(userId) {
     console.log('[Socket.IO] Received server-message', msg);
     console.log('[Socket.IO] Current server:', currentServer, 'Current channel:', currentChannel);
     // Always show your own message, even if state is out of sync
-    const isOwnMessage = msg.user_id === window.currentUserId;
+    const isOwnMessage = String(msg.user_id) === String(window.currentUserId);
     const isCorrectChannel = currentServer && currentChannel && msg.server_id === currentServer.id && msg.channel_id === currentChannel.id;
     if (isCorrectChannel) {
       appendServerMessage(msg, isOwnMessage ? 'me' : 'them');
