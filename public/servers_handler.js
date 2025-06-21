@@ -1089,6 +1089,11 @@ function setupServerSocketIO(userId) {
       renderChannelMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
     }
   });
+  // Error handler for failed message sends
+  serverSocket.on('server-message-error', (err) => {
+    alert('Message failed: ' + (err?.error || 'Unknown error'));
+    console.error('[Spice] server-message-error:', err);
+  });
 }
 
 // Update appendGroupMessage for robust duplicate prevention
