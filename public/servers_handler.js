@@ -253,7 +253,7 @@ async function openServerChannel(serverId, channelId) {
         channelSocket.emit('channel_message', {
           serverId,
           channelId,
-          userId: user.user_id,
+          userId: Number(user.user_id),
           username: user.username,
           avatar_url: user.avatar_url,
           content,
@@ -263,7 +263,7 @@ async function openServerChannel(serverId, channelId) {
         await supabaseClient.from('channel_messages').insert([
           {
             channel_id: channelId,
-            user_id: user.user_id,
+            user_id: Number(user.user_id),
             content: content
           }
         ]);
