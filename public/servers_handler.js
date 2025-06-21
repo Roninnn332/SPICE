@@ -223,7 +223,7 @@ async function openServerChannel(serverId, channelId) {
   }
 }
 
-// Helper: Render all messages for the active channel
+// Helper: Render all messages for the active channel (text channels)
 function renderChannelMessages() {
   const chat = document.querySelector('.chat-messages');
   if (!chat || !activeChannel) return;
@@ -234,7 +234,7 @@ function renderChannelMessages() {
   });
 }
 
-// Helper: Render a single message (with animation, left/right)
+// Helper: Render a single message in a text channel (modern style)
 function renderChannelMessage(msg, who = 'them') {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
@@ -1078,7 +1078,7 @@ function setupServerSocketIO(userId) {
     console.log('[Spice] Connected to server socket, emitting join-server', userId);
     serverSocket.emit('join-server', userId);
   });
-  // Real-time handler for server messages
+  // Real-time handler for server messages (text channels)
   serverSocket.on('server-message', (msg) => {
     console.log('[Spice] Received server-message:', msg);
     if (!msg.channel_id) return;
