@@ -68,6 +68,38 @@ io.on('connection', (socket) => {
     io.to(user2).emit('delete', timestamp);
   });
 
+  // Join a text channel room
+  socket.on('join-room', (room) => {
+    socket.join(room);
+    socket.currentRoom = room;
+  });
+
+  // Leave a text channel room
+  socket.on('leave-room', (room) => {
+    socket.leave(room);
+    if (socket.currentRoom === room) socket.currentRoom = null;
+  });
+
+  // Handle sending a server (group) message
+  socket.on('server-message', async (msg) => {
+    // Save to Supabase
+    const { data, error } = await supabase.from('channel_messages').insert([{
+      server_id: msg.server_id,
+      channel_id: msg.channel_id,
+      user_id: msg.user_id,
+      content: msg.content,
+      created_at: new Date().toISOString()
+    }]).select().single();
+    if (error) {
+      socket.emit('server-message-error', { error: error.message });
+      return;
+    }
+    // Broadcast to everyone in the room
+    if (msg.room) {
+      io.to(msg.room).emit('server-message', data);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });

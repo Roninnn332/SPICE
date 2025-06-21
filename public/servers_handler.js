@@ -162,10 +162,21 @@ async function openServerChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'text') {
-    // Prepare for future: messages[activeChannel.id] = ...
-    if (chat) {
-      chat.innerHTML = '<div class="text-channel-placeholder">Text channel messages coming soon</div>';
+    // Join Socket.IO room
+    if (window.serverSocket) {
+      if (window.currentServerRoom) window.serverSocket.emit('leave-room', window.currentServerRoom);
+      window.currentServerRoom = `server-${serverId}-channel-${channelId}`;
+      window.serverSocket.emit('join-room', window.currentServerRoom);
     }
+    // Fetch messages from Supabase
+    const { data: msgs, error } = await supabase
+      .from('channel_messages')
+      .select('*')
+      .eq('server_id', serverId)
+      .eq('channel_id', channelId)
+      .order('id', { ascending: true });
+    messages[channelId] = msgs || [];
+    renderChannelMessages();
     if (footer) {
       footer.innerHTML = `
         <form class="text-channel-input-form">
@@ -177,8 +188,24 @@ async function openServerChannel(serverId, channelId) {
       if (form) {
         form.onsubmit = (e) => {
           e.preventDefault();
-          if (chat) {
-            chat.innerHTML = '<div class="text-channel-placeholder">Text channel messages coming soon</div>';
+          const input = form.querySelector('.text-channel-input');
+          const content = input.value.trim();
+          if (!content) return;
+          input.value = '';
+          const user = JSON.parse(localStorage.getItem('spice_user'));
+          const msgObj = {
+            server_id: serverId,
+            channel_id: channelId,
+            user_id: user.user_id,
+            content,
+            created_at: new Date().toISOString(),
+            // id will be set by backend
+          };
+          // Optimistically render
+          renderChannelMessage(msgObj, 'me');
+          // Emit via Socket.IO
+          if (window.serverSocket && window.currentServerRoom) {
+            window.serverSocket.emit('server-message', { ...msgObj, room: window.currentServerRoom });
           }
         };
       }
@@ -187,6 +214,55 @@ async function openServerChannel(serverId, channelId) {
     if (chat) chat.innerHTML = '';
     if (footer) footer.innerHTML = '';
   }
+}
+
+// Helper: Render all messages for the active channel
+function renderChannelMessages() {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat || !activeChannel) return;
+  chat.innerHTML = '';
+  const msgs = messages[activeChannel.id] || [];
+  msgs.forEach(msg => {
+    renderChannelMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
+  });
+}
+
+// Helper: Render a single message (with animation, left/right)
+function renderChannelMessage(msg, who = 'them') {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat) return;
+  // Prevent duplicate
+  if (msg.id && chat.querySelector(`[data-msg-id="${msg.id}"]`)) return;
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'channel-message ' + who + ' channel-message-animate-in';
+  msgDiv.dataset.msgId = msg.id;
+  // Fetch user info for username (cache for perf in future)
+  let username = msg.user_id;
+  if (window.currentUserId && msg.user_id === window.currentUserId && window.currentUsername) {
+    username = window.currentUsername;
+  }
+  // Right side (me): username, then time+message
+  // Left side (them): username, then message+time
+  if (who === 'me') {
+    msgDiv.innerHTML = `
+      <div class="channel-message-meta">${username}</div>
+      <div class="channel-message-row">
+        <span class="channel-message-time">${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+        <span class="channel-message-bubble">${msg.content || ''}</span>
+      </div>
+    `;
+  } else {
+    msgDiv.innerHTML = `
+      <div class="channel-message-meta">${username}</div>
+      <div class="channel-message-row">
+        <span class="channel-message-bubble">${msg.content || ''}</span>
+        <span class="channel-message-time">${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+      </div>
+    `;
+  }
+  chat.appendChild(msgDiv);
+  setTimeout(() => { msgDiv.classList.remove('channel-message-animate-in'); }, 700);
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
 // --- Realtime for Channel Messages ---
