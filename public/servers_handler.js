@@ -161,7 +161,7 @@ function setupChannelSocketIO(serverId, channelId, user) {
   // Listen for new messages
   channelSocket.on('channel_message', (msg) => {
     if (!msg || msg.channelId !== channelId) return;
-    const isMe = msg.userId === user.user_id;
+    const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
   });
 }
