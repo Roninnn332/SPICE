@@ -189,10 +189,7 @@ async function openServerChannel(serverId, channelId) {
   // Render messages
   for (const msg of messages) {
     const who = String(msg.user_id) === String(window.currentUserId) ? 'me' : 'them';
-    if (who === 'me' && String(msg.user_id) !== String(window.currentUserId)) {
-      console.warn('Attribution mismatch: message should be mine but user_id does not match currentUserId', msg);
-    }
-    appendServerMessage(msg, who);
+    appendGroupMessage(msg, who);
   }
   // Render message input in footer ONLY for text channels
   const footer = serverChatSection.querySelector('.chat-input-area');
@@ -254,43 +251,6 @@ function getUserColor(userId) {
     userColorMap[userId] = colorPalette[Math.abs(hash) % colorPalette.length];
   }
   return userColorMap[userId];
-}
-async function appendServerMessage(msg, who = 'them') {
-  const chat = document.querySelector('.chat-messages');
-  if (!chat) return;
-  // Prevent duplicate messages
-  if (chat.querySelector(`[data-timestamp="${msg.timestamp}"][data-user-id="${msg.user_id}"]`)) return;
-  let userInfo = { username: msg.user_id, avatar_url: '' };
-  if (msg.user_id) {
-    userInfo = await getUserInfo(msg.user_id);
-  }
-  // WhatsApp-style grouping: group if previous message is from same user within 5 min
-  const msgTime = new Date(msg.timestamp).getTime();
-  let grouped = false;
-  if (lastServerMsgUser === msg.user_id && lastServerMsgTime && (msgTime - lastServerMsgTime < 5 * 60 * 1000)) {
-    grouped = true;
-  }
-  lastServerMsgUser = msg.user_id;
-  lastServerMsgTime = msgTime;
-  // Create message div
-  const msgDiv = document.createElement('div');
-  msgDiv.className = 'wa-message ' + who + (grouped ? ' grouped' : '');
-  msgDiv.dataset.timestamp = msg.timestamp;
-  msgDiv.dataset.userId = msg.user_id;
-  msgDiv.innerHTML = `
-    <div class="wa-message-body">
-      ${who === 'me' || grouped ? '' : `<div class="wa-message-username" style="color:${getUserColor(msg.user_id)};">${userInfo.username}</div>`}
-      <div class="wa-message-bubble">
-        <span class="wa-message-content">${msg.content || ''}</span>
-        <span class="wa-message-time">$${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-      </div>
-    </div>
-  `;
-  chat.appendChild(msgDiv);
-  void msgDiv.offsetWidth;
-  msgDiv.classList.add('wa-message-animate-in');
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  lastServerMsgDiv = msgDiv;
 }
 
 // --- Server Creation/Join ---
@@ -1072,14 +1032,48 @@ function setupServerSocketIO(userId) {
     const isOwnMessage = String(msg.user_id) === String(window.currentUserId);
     const isCorrectChannel = currentServer && currentChannel && msg.server_id === currentServer.id && msg.channel_id === currentChannel.id;
     if (isCorrectChannel) {
-      appendServerMessage(msg, isOwnMessage ? 'me' : 'them');
+      appendGroupMessage(msg, isOwnMessage ? 'me' : 'them');
     } else if (isOwnMessage) {
-      // Fallback: If it's your own message, force it into the chat
-      console.warn('[Socket.IO] Own message received but channel/server mismatch. Forcing render.');
-      appendServerMessage(msg, 'me');
+      appendGroupMessage(msg, 'me');
     } else {
       // Not for this channel/server, ignore
       console.log('[Socket.IO] Message ignored: not for this channel/server.');
     }
   });
+}
+
+// Update appendGroupMessage for robust duplicate prevention
+async function appendGroupMessage(msg, who = 'them') {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat) return;
+  // Prevent duplicate messages (prefer id, fallback to timestamp+user_id)
+  if (msg.id && chat.querySelector(`[data-msg-id="${msg.id}"]`)) return;
+  if (!msg.id && chat.querySelector(`[data-timestamp="${msg.timestamp}"][data-user-id="${msg.user_id}"]`)) return;
+  let userInfo = { username: msg.user_id, avatar_url: '' };
+  if (msg.user_id) {
+    userInfo = await getUserInfo(msg.user_id);
+  }
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'server-message ' + who;
+  if (msg.id) msgDiv.dataset.msgId = msg.id;
+  msgDiv.dataset.timestamp = msg.timestamp;
+  msgDiv.dataset.userId = msg.user_id;
+  msgDiv.innerHTML = `
+    <div class="server-message-avatar-wrap">
+      <img class="server-message-avatar" src="${userInfo.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+    </div>
+    <div class="server-message-body">
+      <div class="server-message-meta-row">
+        <span class="server-message-username">${userInfo.username}</span>
+        <span class="server-message-time">${msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+      </div>
+      <div class="server-message-bubble">
+        <span class="server-message-content">${msg.content || ''}</span>
+      </div>
+    </div>
+  `;
+  chat.appendChild(msgDiv);
+  void msgDiv.offsetWidth;
+  msgDiv.classList.add('server-message-animate-in');
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 } 
