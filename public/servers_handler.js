@@ -2,18 +2,14 @@
 // Handles all logic for servers (group chats), channels, and server chat UI
 // This keeps app.js focused on DMs/friends only
 
-// --- Supabase Safe Initialization Guard ---
-if (typeof supabase === 'undefined' || !supabase.createClient) {
-  // Prevent any further code from running if Supabase is not loaded
-  console.error('Supabase library not loaded! Make sure to include the CDN script before this file.');
-  // Stop script execution
-  throw new Error('Supabase library not loaded!');
+// --- Supabase Initialization ---
+let supabaseClient = null;
+if (typeof supabase !== 'undefined' && supabase.createClient) {
+  const SUPABASE_URL = 'https://qhbeexkqftbhjkeuruiy.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoYmVleGtxZnRiaGprZXVydWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzAxMTEsImV4cCI6MjA2NTg0NjExMX0.swpojIxW47IIPX097X45l3LYe5OiDZijGlAMXfCD30I';
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = supabaseClient;
 }
-
-const SUPABASE_URL = 'https://qhbeexkqftbhjkeuruiy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoYmVleGtxZnRiaGprZXVydWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzAxMTEsImV4cCI6MjA2NTg0NjExMX0.swpojIxW47IIPX097X45l3LYe5OiDZijGlAMXfCD30I';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supabase = supabaseClient;
 
 // --- Server State ---
 let currentServer = null;
@@ -32,7 +28,6 @@ window.addEventListener('DOMContentLoaded', () => {
   channelsSidebar = document.querySelector('.channels-sidebar');
   serverChatSection = document.querySelector('.chat-section');
   setupServerMembersRealtime();
-  // Only call renderServersList after serversSidebar is set
   if (serversSidebar) {
     renderServersList();
   }
@@ -40,11 +35,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // --- Server List UI ---
 async function renderServersList() {
-  if (typeof supabase === 'undefined' || !serversSidebar) return;
+  if (!supabaseClient || !serversSidebar) return;
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (!user || !user.user_id || !serversSidebar) return;
-  // Fetch servers where user is a member
-  const { data: memberships, error: memErr } = await supabase
+  const { data: memberships, error: memErr } = await supabaseClient
     .from('server_members')
     .select('server_id, role, servers!inner(id, name, icon_url, owner_id)')
     .eq('user_id', user.user_id);
@@ -91,7 +85,7 @@ async function renderServersList() {
 async function renderChannelsList(serverId) {
   if (!serverId || !channelsSidebar) return;
   // Fetch channels for the selected server
-  const { data: channels, error } = await supabase
+  const { data: channels, error } = await supabaseClient
     .from('channels')
     .select('*')
     .eq('server_id', serverId)
@@ -214,7 +208,7 @@ async function openServerChannel(serverId, channelId) {
   // Fetch messages for the channel
   const chat = serverChatSection.querySelector('.chat-messages');
   if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
-  const { data: messages, error } = await supabase
+  const { data: messages, error } = await supabaseClient
     .from('channel_messages')
     .select('*')
     .eq('server_id', serverId)
@@ -330,19 +324,19 @@ window.addEventListener('DOMContentLoaded', () => {
       const icon_url = document.getElementById('server-icon-url').value.trim();
       if (!user || !user.user_id || !name) return;
       // Create server
-      const { data: server, error } = await supabase.from('servers').insert([
+      const { data: server, error } = await supabaseClient.from('servers').insert([
         { name, icon_url: icon_url || null, owner_id: user.user_id }
       ]).select().single();
       if (error || !server) return;
       // Add owner as member
-      await supabase.from('server_members').insert([
+      await supabaseClient.from('server_members').insert([
         { server_id: server.id, user_id: user.user_id, role: 'owner' }
       ]);
       // Create default channels
-      const { data: textChannel } = await supabase.from('channels').insert([
+      const { data: textChannel } = await supabaseClient.from('channels').insert([
         { server_id: server.id, name: 'general', type: 'text' }
       ]).select().single();
-      const { data: voiceChannel } = await supabase.from('channels').insert([
+      const { data: voiceChannel } = await supabaseClient.from('channels').insert([
         { server_id: server.id, name: 'General', type: 'voice' }
       ]).select().single();
       closeCreateServerModal();
@@ -447,7 +441,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const type = typeText && typeText.querySelector('input').checked ? 'text' : 'voice';
       if (!name) return;
       // Create channel in Supabase
-      const { data: channel, error } = await supabase.from('channels').insert([
+      const { data: channel, error } = await supabaseClient.from('channels').insert([
         { server_id: currentServer.id, name, type }
       ]).select().single();
       if (error || !channel) return;
@@ -555,7 +549,7 @@ if (serverIconCropConfirm) {
           document.getElementById('server-settings-icon-preview').style.display = 'block';
           document.getElementById('server-settings-icon-preview-card').src = data.secure_url;
           // Save to Supabase
-          await supabase.from('servers').update({ icon_url: data.secure_url }).eq('id', currentServer.id);
+          await supabaseClient.from('servers').update({ icon_url: data.secure_url }).eq('id', currentServer.id);
           currentServer.icon_url = data.secure_url;
           renderServersList();
         } else {
@@ -584,7 +578,7 @@ if (bannerColorsDiv) {
       document.getElementById('server-settings-banner-preview').style.background = color;
       // Save to Supabase
       if (currentServer) {
-        await supabase.from('servers').update({ banner_url: null, banner_color: color }).eq('id', currentServer.id);
+        await supabaseClient.from('servers').update({ banner_url: null, banner_color: color }).eq('id', currentServer.id);
         currentServer.banner_url = null;
         currentServer.banner_color = color;
         renderServersList();
@@ -665,7 +659,7 @@ if (serverBannerCropConfirm) {
           document.getElementById('server-settings-banner-preview').style.backgroundSize = 'cover';
           document.getElementById('server-settings-banner-preview').style.backgroundPosition = 'center';
           // Save to Supabase
-          await supabase.from('servers').update({ banner_url: data.secure_url, banner_color: null }).eq('id', currentServer.id);
+          await supabaseClient.from('servers').update({ banner_url: data.secure_url, banner_color: null }).eq('id', currentServer.id);
           currentServer.banner_url = data.secure_url;
           currentServer.banner_color = null;
           renderServersList();
@@ -720,7 +714,7 @@ function setupServerNameEdit() {
     if (!newName || !currentServer) return;
     if (newName === currentServer.name) { showName(); return; }
     saveBtn.disabled = true;
-    await supabase.from('servers').update({ name: newName }).eq('id', currentServer.id);
+    await supabaseClient.from('servers').update({ name: newName }).eq('id', currentServer.id);
     currentServer.name = newName;
     showName();
     // Update preview card
@@ -764,7 +758,7 @@ if (serverSettingsModal) {
 
 async function fetchServerInvites() {
   if (!currentServer) return;
-  const { data: invites, error } = await supabase
+  const { data: invites, error } = await supabaseClient
     .from('server_invites')
     .select('id, user_id, status')
     .eq('server_id', currentServer.id)
@@ -797,11 +791,11 @@ async function fetchServerInvites() {
       const id = btn.getAttribute('data-id');
       const userId = btn.getAttribute('data-user');
       // Add to server_members
-      await supabase.from('server_members').insert([
+      await supabaseClient.from('server_members').insert([
         { server_id: currentServer.id, user_id: userId, role: 'member' }
       ]);
       // Mark invite as accepted
-      await supabase.from('server_invites').update({ status: 'accepted' }).eq('id', id);
+      await supabaseClient.from('server_invites').update({ status: 'accepted' }).eq('id', id);
       fetchServerInvites();
       renderServersList();
     };
@@ -809,7 +803,7 @@ async function fetchServerInvites() {
   document.querySelectorAll('.friend-request-reject').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.getAttribute('data-id');
-      await supabase.from('server_invites').update({ status: 'rejected' }).eq('id', id);
+      await supabaseClient.from('server_invites').update({ status: 'rejected' }).eq('id', id);
       fetchServerInvites();
     };
   });
@@ -833,7 +827,7 @@ let serverInvitesRealtimeSub = null;
 function setupServerInvitesRealtime() {
   if (serverInvitesRealtimeSub) return;
   if (!currentServer) return;
-  serverInvitesRealtimeSub = supabase.channel('server-invites-rt')
+  serverInvitesRealtimeSub = supabaseClient.channel('server-invites-rt')
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -850,7 +844,7 @@ function setupServerInvitesRealtime() {
 
 function cleanupServerInvitesRealtime() {
   if (serverInvitesRealtimeSub) {
-    supabase.removeChannel(serverInvitesRealtimeSub);
+    supabaseClient.removeChannel(serverInvitesRealtimeSub);
     serverInvitesRealtimeSub = null;
   }
 }
@@ -883,7 +877,7 @@ if (membersNavBtn) {
 // Fetch and render server members
 async function fetchServerMembers() {
   if (!currentServer) return;
-  const { data: members, error } = await supabase
+  const { data: members, error } = await supabaseClient
     .from('server_members')
     .select('user_id, role, users:users(user_id, username, avatar_url)')
     .eq('server_id', currentServer.id);
@@ -982,7 +976,7 @@ function openServerSettingsModal() {
 
 // --- Helper to fetch user info by user_id (copied from app.js for use here) ---
 async function getUserInfo(user_id) {
-  const { data, error } = await supabase.from('users').select('username,avatar_url').eq('user_id', user_id).single();
+  const { data, error } = await supabaseClient.from('users').select('username,avatar_url').eq('user_id', user_id).single();
   if (error || !data) return { username: user_id, avatar_url: '' };
   return data;
 }
@@ -995,7 +989,7 @@ function setupServerMembersRealtime() {
   if (serverMembersRealtimeSub) return;
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (!user || !user.user_id) return;
-  serverMembersRealtimeSub = supabase.channel('server-members-rt')
+  serverMembersRealtimeSub = supabaseClient.channel('server-members-rt')
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -1010,7 +1004,7 @@ function setupServerMembersRealtime() {
 function setupServerMembersRealtimeForServer() {
   cleanupServerMembersRealtimeForServer();
   if (!currentServer) return;
-  serverMembersRealtimeSubForServer = supabase.channel('server-members-rt-server')
+  serverMembersRealtimeSubForServer = supabaseClient.channel('server-members-rt-server')
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -1028,14 +1022,14 @@ function setupServerMembersRealtimeForServer() {
 
 function cleanupServerMembersRealtime() {
   if (serverMembersRealtimeSub) {
-    supabase.removeChannel(serverMembersRealtimeSub);
+    supabaseClient.removeChannel(serverMembersRealtimeSub);
     serverMembersRealtimeSub = null;
   }
 }
 
 function cleanupServerMembersRealtimeForServer() {
   if (serverMembersRealtimeSubForServer) {
-    supabase.removeChannel(serverMembersRealtimeSubForServer);
+    supabaseClient.removeChannel(serverMembersRealtimeSubForServer);
     serverMembersRealtimeSubForServer = null;
   }
 }
