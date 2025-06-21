@@ -211,7 +211,6 @@ async function openServerChannel(serverId, channelId) {
   const { data: messages, error } = await supabaseClient
     .from('channel_messages')
     .select('*')
-    .eq('server_id', serverId)
     .eq('channel_id', channelId)
     .order('created_at', { ascending: true });
   if (chat) chat.innerHTML = '';
