@@ -27,12 +27,14 @@ window.addEventListener('DOMContentLoaded', () => {
   serversSidebar = document.querySelector('.servers-sidebar');
   channelsSidebar = document.querySelector('.channels-sidebar');
   serverChatSection = document.querySelector('.chat-section');
-  // Set current user ID globally for correct sender detection
+  // Set current user ID and username globally for correct sender detection
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (user && user.user_id) {
     window.currentUserId = String(user.user_id);
+    window.currentUsername = user.username || user.user_id;
   } else {
     window.currentUserId = null;
+    window.currentUsername = null;
     console.warn('No current user ID found in localStorage!');
   }
   // TODO: Fetch and render servers for the user
@@ -201,9 +203,7 @@ async function openServerChannel(serverId, channelId) {
             created_at: new Date().toISOString(),
             // id will be set by backend
           };
-          // Optimistically render
-          renderChannelMessage(msgObj, 'me');
-          // Emit via Socket.IO
+          // Do NOT optimistically render. Wait for server echo.
           if (window.serverSocket && window.currentServerRoom) {
             window.serverSocket.emit('server-message', { ...msgObj, room: window.currentServerRoom });
           }
@@ -1057,20 +1057,14 @@ function setupServerSocketIO(userId) {
   serverSocket.on('connect', () => {
     serverSocket.emit('join-server', userId);
   });
-  // Set up the message handler ONCE
-  serverSocket.on('server-message', async (msg) => {
-    console.log('[Socket.IO] Received server-message', msg);
-    console.log('[Socket.IO] Current server:', currentServer, 'Current channel:', currentChannel);
-    // Always show your own message, even if state is out of sync
-    const isOwnMessage = String(msg.user_id) === String(window.currentUserId);
-    const isCorrectChannel = currentServer && currentChannel && msg.server_id === currentServer.id && msg.channel_id === currentChannel.id;
-    if (isCorrectChannel) {
-      appendGroupMessage(msg, isOwnMessage ? 'me' : 'them');
-    } else if (isOwnMessage) {
-      appendGroupMessage(msg, 'me');
-    } else {
-      // Not for this channel/server, ignore
-      console.log('[Socket.IO] Message ignored: not for this channel/server.');
+  // Real-time handler for server messages
+  serverSocket.on('server-message', (msg) => {
+    if (!msg.channel_id) return;
+    if (!messages[msg.channel_id]) messages[msg.channel_id] = [];
+    messages[msg.channel_id].push(msg);
+    // Only render if this is the active channel
+    if (activeChannel && msg.channel_id === activeChannel.id) {
+      renderChannelMessage(msg, msg.user_id === window.currentUserId ? 'me' : 'them');
     }
   });
 }
