@@ -149,21 +149,26 @@ async function renderChannelsList(serverId) {
 // --- Server Chat UI ---
 async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
-  // Set new currentServer/currentChannel
   currentServer = serversList.find(s => s.id === serverId) || currentServer;
   currentChannel = channelsList.find(c => c.id === channelId) || currentChannel;
-  // Render channel name in header
   const header = serverChatSection.querySelector('.chat-header');
   const channel = channelsList.find(c => c.id === channelId);
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  // Show placeholder in chat area
+  // Show animated placeholder in chat area
   const chat = serverChatSection.querySelector('.chat-messages');
   if (chat) {
-    chat.innerHTML = '<div class="server-error" style="text-align:center;padding:2rem 0;font-size:1.2rem;color:var(--primary-blue);">Text channel messages coming soon</div>';
+    chat.innerHTML = '<div class="text-channel-placeholder">Text channel messages coming soon</div>';
   }
-  // Remove message input
+  // Show animated input area
   const footer = serverChatSection.querySelector('.chat-input-area');
-  if (footer) footer.innerHTML = '';
+  if (footer) {
+    footer.innerHTML = `
+      <form class="text-channel-input-form">
+        <input type="text" class="text-channel-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" />
+        <button type="submit" class="text-channel-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+      </form>
+    `;
+  }
 }
 
 // --- Realtime for Channel Messages ---
