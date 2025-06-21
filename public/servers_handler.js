@@ -221,13 +221,13 @@ async function openServerChannel(serverId, channelId) {
   // Render messages with premium UI
   const user = JSON.parse(localStorage.getItem('spice_user'));
   for (const msg of messages) {
-    const isMe = msg.user_id === user.user_id;
+    const isMe = String(msg.user_id) === String(user.user_id);
     await appendChannelMessage({
       userId: msg.user_id,
       username: msg.username,
       avatar_url: msg.avatar_url,
       content: msg.content,
-      timestamp: msg.timestamp
+      timestamp: msg.created_at
     }, isMe ? 'me' : 'them');
   }
   // Setup Socket.IO for real-time
