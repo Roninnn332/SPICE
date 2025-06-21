@@ -986,6 +986,7 @@ let serverMembersRealtimeSub = null;
 let serverMembersRealtimeSubForServer = null;
 
 function setupServerMembersRealtime() {
+  if (!supabaseClient) return;
   if (serverMembersRealtimeSub) return;
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (!user || !user.user_id) return;
