@@ -2,10 +2,14 @@
 // Handles all logic for servers (group chats), channels, and server chat UI
 // This keeps app.js focused on DMs/friends only
 
+if (typeof supabase === 'undefined' || !supabase.createClient) {
+  throw new Error('Supabase library not loaded! Make sure to include the CDN script before this file.');
+}
+
 const SUPABASE_URL = 'https://qhbeexkqftbhjkeuruiy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoYmVleGtxZnRiaGprZXVydWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzAxMTEsImV4cCI6MjA2NTg0NjExMX0.swpojIxW47IIPX097X45l3LYe5OiDZijGlAMXfCD30I';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supabase = supabase;
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabase = supabaseClient;
 
 // --- Server State ---
 let currentServer = null;
@@ -23,13 +27,16 @@ window.addEventListener('DOMContentLoaded', () => {
   serversSidebar = document.querySelector('.servers-sidebar');
   channelsSidebar = document.querySelector('.channels-sidebar');
   serverChatSection = document.querySelector('.chat-section');
-  // TODO: Fetch and render servers for the user
-  // renderServersList();
   setupServerMembersRealtime();
+  // Only call renderServersList after serversSidebar is set
+  if (serversSidebar) {
+    renderServersList();
+  }
 });
 
 // --- Server List UI ---
 async function renderServersList() {
+  if (typeof supabase === 'undefined' || !serversSidebar) return;
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (!user || !user.user_id || !serversSidebar) return;
   // Fetch servers where user is a member
