@@ -2,8 +2,12 @@
 // Handles all logic for servers (group chats), channels, and server chat UI
 // This keeps app.js focused on DMs/friends only
 
+// --- Supabase Safe Initialization Guard ---
 if (typeof supabase === 'undefined' || !supabase.createClient) {
-  throw new Error('Supabase library not loaded! Make sure to include the CDN script before this file.');
+  // Prevent any further code from running if Supabase is not loaded
+  console.error('Supabase library not loaded! Make sure to include the CDN script before this file.');
+  // Stop script execution
+  throw new Error('Supabase library not loaded!');
 }
 
 const SUPABASE_URL = 'https://qhbeexkqftbhjkeuruiy.supabase.co';
