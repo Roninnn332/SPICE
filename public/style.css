@@ -3287,4 +3287,65 @@ input:checked + .slider:before {
   display: block;
 }
 
+/* Voice Channel Row and Join Voice Button */
+.voice-channel-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.3rem;
+}
+.join-voice-btn {
+  background: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 0.7rem;
+  padding: 0.3em 1em;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.98rem;
+  cursor: pointer;
+  margin-left: 0.7rem;
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.join-voice-btn:hover, .join-voice-btn:focus {
+  background: var(--accent);
+  color: var(--pure-black);
+  transform: scale(1.04);
+}
+/* Placeholder for live user list and speaking indicators */
+.voice-user-list {
+  margin-top: 1.1rem;
+  padding: 0.7rem 1rem;
+  background: var(--off-black);
+  border-radius: 0.8rem;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.voice-user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.voice-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-blue);
+  background: var(--off-black);
+}
+.voice-user-speaking {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.voice-user-name {
+  color: var(--white);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
  

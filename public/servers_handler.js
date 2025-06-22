@@ -146,6 +146,8 @@ async function renderChannelsList(serverId) {
     voiceHeader.textContent = 'Voice Channels';
     channelsListDiv.appendChild(voiceHeader);
     voiceChannels.forEach(channel => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'voice-channel-row';
       const btn = document.createElement('button');
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
       btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> ${channel.name}`;
@@ -154,9 +156,26 @@ async function renderChannelsList(serverId) {
         renderChannelsList(serverId); // re-render to update active
         openServerChannel(serverId, channel.id);
       };
-      channelsListDiv.appendChild(btn);
+      // Join Voice button
+      const joinBtn = document.createElement('button');
+      joinBtn.className = 'join-voice-btn';
+      joinBtn.innerHTML = `<i class='fa-solid fa-headphones'></i> Join Voice`;
+      joinBtn.onclick = (e) => {
+        e.stopPropagation();
+        joinVoiceChannel(channel);
+      };
+      wrapper.appendChild(btn);
+      wrapper.appendChild(joinBtn);
+      channelsListDiv.appendChild(wrapper);
     });
   }
+}
+
+// --- Placeholder for joinVoiceChannel and live user list ---
+function joinVoiceChannel(channel) {
+  // TODO: Implement WebRTC/Socket.IO logic
+  alert('Joining voice channel: ' + channel.name);
+  // Show live user list and speaking indicators (to be implemented)
 }
 
 // --- Socket.IO for Channel Chat ---
