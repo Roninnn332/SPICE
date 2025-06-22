@@ -3287,65 +3287,53 @@ input:checked + .slider:before {
   display: block;
 }
 
-/* Voice Channel Row and Join Voice Button */
-.voice-channel-row {
+/* Voice Channel Join Button (Live Gradient Animation) */
+.voice-join-btn {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.3rem;
-}
-.join-voice-btn {
-  background: var(--primary-blue);
-  color: var(--white);
-  border: none;
-  border-radius: 0.7rem;
-  padding: 0.3em 1em;
+  justify-content: center;
+  gap: 0.8em;
+  width: 100%;
+  max-width: 420px;
+  margin: 2.2rem auto 1.2rem auto;
+  padding: 1.1em 2.2em;
+  font-size: 1.25rem;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 0.98rem;
+  font-weight: 800;
+  color: #fff;
+  border: none;
+  border-radius: 1.2em;
+  background: linear-gradient(90deg, #2563eb, #60a5fa, #43b581, #ff73fa, #2563eb);
+  background-size: 300% 300%;
+  box-shadow: 0 4px 24px 0 rgba(37,99,235,0.18);
   cursor: pointer;
-  margin-left: 0.7rem;
-  transition: background 0.18s, color 0.18s, transform 0.13s;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
+  position: relative;
+  overflow: hidden;
+  animation: voiceLiveGradient 2.5s linear infinite;
+  transition: box-shadow 0.18s, transform 0.13s;
 }
-.join-voice-btn:hover, .join-voice-btn:focus {
-  background: var(--accent);
-  color: var(--pure-black);
+.voice-join-btn:hover, .voice-join-btn:focus {
+  box-shadow: 0 8px 32px 0 rgba(96,165,250,0.22);
   transform: scale(1.04);
 }
-/* Placeholder for live user list and speaking indicators */
-.voice-user-list {
-  margin-top: 1.1rem;
-  padding: 0.7rem 1rem;
-  background: var(--off-black);
-  border-radius: 0.8rem;
-  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
+@keyframes voiceLiveGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
-.voice-user-row {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-.voice-user-avatar {
-  width: 32px;
-  height: 32px;
+.voice-join-btn .live-dot {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--primary-blue);
-  background: var(--off-black);
+  background: #43b581;
+  box-shadow: 0 0 0 0 rgba(67,181,129,0.7);
+  animation: liveDotPulse 1.2s infinite cubic-bezier(.4,2,.6,1);
+  margin-right: 0.5em;
 }
-.voice-user-speaking {
-  box-shadow: 0 0 0 3px var(--accent);
-}
-.voice-user-name {
-  color: var(--white);
-  font-weight: 700;
-  font-size: 1.05rem;
+@keyframes liveDotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(67,181,129,0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(67,181,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(67,181,129,0); }
 }
 
  

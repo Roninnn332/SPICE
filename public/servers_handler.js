@@ -146,8 +146,6 @@ async function renderChannelsList(serverId) {
     voiceHeader.textContent = 'Voice Channels';
     channelsListDiv.appendChild(voiceHeader);
     voiceChannels.forEach(channel => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'voice-channel-row';
       const btn = document.createElement('button');
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
       btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> ${channel.name}`;
@@ -156,26 +154,9 @@ async function renderChannelsList(serverId) {
         renderChannelsList(serverId); // re-render to update active
         openServerChannel(serverId, channel.id);
       };
-      // Join Voice button
-      const joinBtn = document.createElement('button');
-      joinBtn.className = 'join-voice-btn';
-      joinBtn.innerHTML = `<i class='fa-solid fa-headphones'></i> Join Voice`;
-      joinBtn.onclick = (e) => {
-        e.stopPropagation();
-        joinVoiceChannel(channel);
-      };
-      wrapper.appendChild(btn);
-      wrapper.appendChild(joinBtn);
-      channelsListDiv.appendChild(wrapper);
+      channelsListDiv.appendChild(btn);
     });
   }
-}
-
-// --- Placeholder for joinVoiceChannel and live user list ---
-function joinVoiceChannel(channel) {
-  // TODO: Implement WebRTC/Socket.IO logic
-  alert('Joining voice channel: ' + channel.name);
-  // Show live user list and speaking indicators (to be implemented)
 }
 
 // --- Socket.IO for Channel Chat ---
@@ -235,74 +216,41 @@ async function appendChannelMessage(msg, who) {
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
+// --- Voice Channel Join Button UI ---
+function showVoiceJoinButton(channel) {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat || !channel || channel.type !== 'voice') return;
+  // Remove any previous join button
+  const prevBtn = chat.querySelector('.voice-join-btn');
+  if (prevBtn) prevBtn.remove();
+  // Create join button
+  const btn = document.createElement('button');
+  btn.className = 'voice-join-btn';
+  btn.innerHTML = `<span class='live-dot'></span> Join <b>${channel.name}</b> Voice Channel`;
+  btn.onclick = () => {
+    // TODO: Implement join voice logic
+    btn.textContent = 'Joining...';
+    btn.disabled = true;
+  };
+  chat.prepend(btn);
+}
+
 // --- Refactor openServerChannel for Real-time & Premium UI ---
-async function openServerChannel(serverId, channelId) {
-  if (!serverId || !channelId || !serverChatSection) return;
-  // Fetch channel info
+const origOpenServerChannel = openServerChannel;
+openServerChannel = async function(serverId, channelId) {
+  await origOpenServerChannel.apply(this, arguments);
   const channel = channelsList.find(c => c.id === channelId);
-  // Render channel name in header
-  const header = serverChatSection.querySelector('.chat-header');
-  if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  // Fetch messages for the channel
-  const chat = serverChatSection.querySelector('.chat-messages');
-  if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
-  const { data: messages, error } = await supabaseClient
-    .from('channel_messages')
-    .select('*')
-    .eq('channel_id', channelId)
-    .order('created_at', { ascending: true });
-  if (chat) chat.innerHTML = '';
-  if (error || !messages) {
-    if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
-    return;
-  }
-  // Render messages with premium UI
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  for (const msg of messages) {
-    const isMe = String(msg.user_id) === String(user.user_id);
-    await appendChannelMessage({
-      userId: msg.user_id,
-      username: msg.username,
-      avatar_url: msg.avatar_url,
-      content: msg.content,
-      timestamp: msg.created_at
-    }, isMe ? 'me' : 'them');
-  }
-  // Setup Socket.IO for real-time
-  setupChannelSocketIO(serverId, channelId, user);
-  // Render message input in footer ONLY for text channels
-  const footer = serverChatSection.querySelector('.chat-input-area');
-  if (footer) {
-    if (channel && channel.type === 'text') {
-      footer.innerHTML = `
-        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
-          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
-        </form>
-      `;
-      const form = footer.querySelector('.server-chat-input-form');
-      const input = footer.querySelector('.server-chat-input');
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        const content = input.value.trim();
-        if (!user || !user.user_id || !content) return;
-        input.value = '';
-        // Send via Socket.IO
-        channelSocket.emit('channel_message', {
-          serverId,
-          channelId,
-          userId: Number(user.user_id),
-          username: user.username,
-          avatar_url: user.avatar_url,
-          content,
-          timestamp: Date.now()
-        });
-      };
-    } else {
-      footer.innerHTML = '';
+  if (channel && channel.type === 'voice') {
+    showVoiceJoinButton(channel);
+  } else {
+    // Remove any previous join button if not a voice channel
+    const chat = document.querySelector('.chat-messages');
+    if (chat) {
+      const prevBtn = chat.querySelector('.voice-join-btn');
+      if (prevBtn) prevBtn.remove();
     }
   }
-}
+};
 
 // --- Server Creation/Join ---
 function openCreateServerModal() {
