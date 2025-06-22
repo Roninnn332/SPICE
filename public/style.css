@@ -3275,4 +3275,16 @@ input:checked + .slider:before {
   animation: layoutFadeInUp 0.7s cubic-bezier(.4,2,.6,1) both;
 }
 
+/* Server sidebar avatar (server icon in sidebar) */
+.server-sidebar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--primary-blue);
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+  background: var(--off-black);
+  display: block;
+}
+
  

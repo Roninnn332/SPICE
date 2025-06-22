@@ -83,7 +83,7 @@ async function renderServersList() {
     btn.className = 'server-btn' + (currentServer && currentServer.id === server.id ? ' active' : '');
     btn.title = server.name;
     if (server.icon_url) {
-      btn.innerHTML = `<img src="${server.icon_url}" alt="${server.name}" class="user-avatar-initial" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`;
+      btn.innerHTML = `<img src="${server.icon_url}" alt="${server.name}" class="server-sidebar-avatar" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`;
     } else {
       btn.innerHTML = `<span class="user-avatar-initial">${server.name[0] ? server.name[0].toUpperCase() : '?'}</span>`;
     }
