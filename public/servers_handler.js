@@ -59,7 +59,7 @@ async function renderServersList() {
   if (!user || !user.user_id || !serversSidebar) return;
   const { data: memberships, error: memErr } = await supabaseClient
     .from('server_members')
-    .select('server_id, role, servers!inner(id, name, icon_url, owner_id)')
+    .select('server_id, role, servers!inner(id, name, icon_url, owner_id, banner_url, banner_color)')
     .eq('user_id', user.user_id);
   if (memErr || !memberships) return;
   serversList = memberships.map(m => m.servers);
@@ -361,14 +361,35 @@ if (createServerAvatarInput) {
   createServerAvatarInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // No cropping, just upload directly
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = function (ev) {
-      // Optionally show preview immediately
-      createServerAvatarUrlInput.value = ev.target.result;
-      updateCreateServerAvatarPreview();
+      createServerAvatarPreviewDiv.style.backgroundImage = `url('${ev.target.result}')`;
+      createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview uploaded';
+      createServerAvatarPreviewDiv.innerHTML = `<span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>`;
     };
     reader.readAsDataURL(file);
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'user_media');
+    fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.secure_url) {
+          createServerAvatarUrlInput.value = data.secure_url;
+        } else {
+          alert('Avatar upload failed.');
+          createServerAvatarUrlInput.value = '';
+        }
+      })
+      .catch(() => {
+        alert('Avatar upload error.');
+        createServerAvatarUrlInput.value = '';
+      });
   });
 }
 
@@ -507,6 +528,10 @@ function updateServerSettingsPreview(server) {
       bannerDiv.style.backgroundImage = `url('${server.banner_url}')`;
       bannerDiv.style.backgroundSize = 'cover';
       bannerDiv.style.backgroundPosition = 'center';
+      bannerDiv.style.backgroundColor = '';
+    } else if (server.banner_color) {
+      bannerDiv.style.backgroundImage = '';
+      bannerDiv.style.backgroundColor = server.banner_color;
     } else {
       bannerDiv.style.backgroundImage = '';
       bannerDiv.style.backgroundColor = 'var(--primary-blue-dark)';
@@ -647,11 +672,11 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const user = JSON.parse(localStorage.getItem('spice_user'));
       const name = document.getElementById('server-name').value.trim();
-      const icon_url = document.getElementById('create-server-avatar-url').value.trim() || 'assets/server-default.png';
+      const icon_url = document.getElementById('create-server-avatar-url').value.trim() || null;
       if (!user || !user.user_id || !name) return;
       // Create server
       const { data: server, error } = await supabaseClient.from('servers').insert([
-        { name, icon_url: icon_url || null, owner_id: user.user_id }
+        { name, icon_url, owner_id: user.user_id }
       ]).select().single();
       if (error || !server) return;
       // Add owner as member
@@ -867,4 +892,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (closeBtn) {
     closeBtn.onclick = closeServerSettingsModal;
   }
-}); 
+});
+
+// --- Server Banner Color Selection Logic ---
+const bannerColorsRow = document.getElementById('server-settings-banner-colors');
+if (bannerColorsRow) {
+  bannerColorsRow.querySelectorAll('.profile-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const color = btn.style.backgroundColor || btn.getAttribute('style').split(':')[1];
+      if (!currentServer) return;
+      await supabaseClient.from('servers').update({ banner_color: color }).eq('id', currentServer.id);
+      currentServer.banner_color = color;
+      updateServerSettingsPreview(currentServer);
+      // Mark selected
+      bannerColorsRow.querySelectorAll('.profile-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+  });
+} 
