@@ -849,4 +849,22 @@ function cleanupServerInvitesRealtime() {
     supabaseClient.removeChannel(serverInvitesRealtimeSub);
     serverInvitesRealtimeSub = null;
   }
-} 
+}
+
+function closeServerSettingsModal() {
+  const modal = document.getElementById('server-settings-modal-overlay');
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => { modal.style.display = 'none'; }, 350);
+    cleanupServerInvitesRealtime();
+    // Add any other cleanup if needed
+  }
+}
+
+// Wire up close button for server settings modal
+window.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('close-server-settings-modal');
+  if (closeBtn) {
+    closeBtn.onclick = closeServerSettingsModal;
+  }
+}); 
