@@ -275,6 +275,17 @@
     </div>
   </div>
 
+  <!-- Server Icon Crop Modal (hidden by default) -->
+  <div id="server-icon-crop-modal" class="avatar-crop-modal" style="display:none;">
+    <div class="avatar-crop-modal-content">
+      <div id="server-icon-crop-area"></div>
+      <div class="avatar-crop-actions">
+        <button id="server-icon-crop-confirm" class="profile-btn">Crop & Upload</button>
+        <button id="server-icon-crop-cancel" class="profile-btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Create Channel Modal (hidden by default) -->
   <div class="modal-overlay" id="create-channel-modal-overlay" style="display:none;">
     <div class="modal" id="create-channel-modal">
@@ -404,17 +415,6 @@
 
   <!-- Server Icon Upload Input (hidden) -->
   <input type="file" id="server-icon-upload-input" accept="image/*" style="display:none;" />
-
-  <!-- Server Icon Crop Modal (hidden by default) -->
-  <div id="server-icon-crop-modal" class="avatar-crop-modal" style="display:none;">
-    <div class="avatar-crop-modal-content">
-      <div id="server-icon-crop-area"></div>
-      <div class="avatar-crop-actions">
-        <button id="server-icon-crop-confirm" class="profile-btn">Crop & Upload</button>
-        <button id="server-icon-crop-cancel" class="profile-btn secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Server Icon Upload Loading Spinner (hidden by default) -->
   <div id="server-icon-upload-loading" class="avatar-upload-loading" style="display:none;">

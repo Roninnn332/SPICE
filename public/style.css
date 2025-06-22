@@ -3239,4 +3239,17 @@ input:checked + .slider:before {
   pointer-events: none;
 } 
 
+#server-settings-modal-overlay .profile-banner {
+  z-index: 1;
+  position: relative;
+}
+#server-settings-modal-overlay .profile-avatar-stack {
+  z-index: 3;
+  position: relative;
+}
+#server-settings-modal-overlay .profile-avatar-img {
+  z-index: 4;
+  position: relative;
+}
+
  

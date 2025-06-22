@@ -11,6 +11,10 @@ if (typeof supabase !== 'undefined' && supabase.createClient) {
   window.supabase = supabaseClient;
 }
 
+// --- Server Members Realtime Subscriptions (move to top to avoid TDZ error) ---
+let serverMembersRealtimeSub = null;
+let serverMembersRealtimeSubForServer = null;
+
 // --- Server State ---
 let currentServer = null;
 let currentChannel = null;
@@ -608,9 +612,6 @@ async function getUserInfo(user_id) {
 }
 
 // --- Real-time Updates for Server Memberships ---
-let serverMembersRealtimeSub = null;
-let serverMembersRealtimeSubForServer = null;
-
 function setupServerMembersRealtime() {
   if (!supabaseClient) return;
   if (serverMembersRealtimeSub) return;
@@ -790,4 +791,10 @@ if (serverBannerCropConfirm) {
       }
     }, 'image/jpeg', 0.95);
   };
+}
+
+// --- Wire up close button for create server modal ---
+const closeCreateServerModalBtn = document.getElementById('close-create-server-modal');
+if (closeCreateServerModalBtn) {
+  closeCreateServerModalBtn.onclick = closeCreateServerModal;
 } 
