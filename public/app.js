@@ -565,6 +565,16 @@ window.addEventListener('DOMContentLoaded', () => {
       }, 10);
     };
   }
+
+  // Animate main app layout sections on load
+  const serversSidebar = document.querySelector('.servers-sidebar');
+  const channelsSidebar = document.querySelector('.channels-sidebar');
+  const chatSection = document.querySelector('.chat-section');
+  const usersSidebar = document.querySelector('.users-sidebar');
+  if (serversSidebar) serversSidebar.classList.add('layout-animate-in-left');
+  if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left');
+  if (chatSection) chatSection.classList.add('layout-animate-in-up');
+  if (usersSidebar) usersSidebar.classList.add('layout-animate-in-right');
 });
 
 // Optional: Prevent form submission (for now)

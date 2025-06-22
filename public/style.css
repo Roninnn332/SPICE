@@ -3252,4 +3252,27 @@ input:checked + .slider:before {
   position: relative;
 }
 
+/* --- Main App Layout Entrance Animations --- */
+@keyframes layoutFadeInLeft {
+  0% { opacity: 0; transform: translateX(-40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes layoutFadeInRight {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes layoutFadeInUp {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.layout-animate-in-left {
+  animation: layoutFadeInLeft 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+.layout-animate-in-right {
+  animation: layoutFadeInRight 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+.layout-animate-in-up {
+  animation: layoutFadeInUp 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+
  
