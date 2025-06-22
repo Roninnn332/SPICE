@@ -481,11 +481,21 @@ window.addEventListener('DOMContentLoaded', () => {
         sectionMap[key].section.style.display = '';
         if (modalTitle) modalTitle.textContent = sectionMap[key].title;
         // Call fetchers if needed
-        if (key === 'invites') fetchServerInvites();
+        if (key === 'invites') {
+          fetchServerInvites();
+          setupServerInvitesRealtime();
+        } else {
+          cleanupServerInvitesRealtime();
+        }
         if (key === 'members') fetchServerMembers();
       }
     };
   });
+  // Clean up on modal close
+  const closeBtn = document.getElementById('close-server-settings-modal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', cleanupServerInvitesRealtime);
+  }
 });
 
 // --- Server Settings Modal Preview Update ---
@@ -760,8 +770,83 @@ if (serverBannerCropConfirm) {
   };
 }
 
-// --- Wire up close button for create server modal ---
-const closeCreateServerModalBtn = document.getElementById('close-create-server-modal');
-if (closeCreateServerModalBtn) {
-  closeCreateServerModalBtn.onclick = closeCreateServerModal;
+// --- Advanced Server Invites (Join Requests) ---
+let serverInvitesRealtimeSub = null;
+
+async function fetchServerInvites() {
+  if (!currentServer) return;
+  const invitesList = document.getElementById('server-invites-list');
+  if (!invitesList) return;
+  invitesList.innerHTML = '<div>Loading...</div>';
+  // Fetch pending invites for this server
+  const { data: invites, error } = await supabaseClient
+    .from('server_invites')
+    .select('*')
+    .eq('server_id', currentServer.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true });
+  if (error) {
+    invitesList.innerHTML = '<div>Error loading invites.</div>';
+    return;
+  }
+  if (!invites || !invites.length) {
+    invitesList.innerHTML = '<div>No pending join requests.</div>';
+    return;
+  }
+  // Fetch user info for all invitees
+  const userIds = invites.map(i => i.user_id);
+  const { data: users } = await supabaseClient
+    .from('users')
+    .select('user_id,username,avatar_url')
+    .in('user_id', userIds);
+  // Render invites
+  invitesList.innerHTML = '';
+  for (const invite of invites) {
+    const user = users.find(u => u.user_id === invite.user_id) || {};
+    invitesList.innerHTML += `
+      <div class="friend-request-item">
+        <img class="friend-request-avatar" src="${user.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+        <span class="friend-request-username">${user.username || invite.user_id}</span>
+        <span class="friend-request-status">Pending</span>
+        <button class="friend-request-accept" data-id="${invite.id}">Accept</button>
+        <button class="friend-request-reject" data-id="${invite.id}">Reject</button>
+      </div>
+    `;
+  }
+  // Add Accept/Reject handlers
+  invitesList.querySelectorAll('.friend-request-accept').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      await supabaseClient.from('server_invites').update({ status: 'accepted' }).eq('id', id);
+      fetchServerInvites();
+    };
+  });
+  invitesList.querySelectorAll('.friend-request-reject').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      await supabaseClient.from('server_invites').update({ status: 'rejected' }).eq('id', id);
+      fetchServerInvites();
+    };
+  });
+}
+
+function setupServerInvitesRealtime() {
+  if (!currentServer) return;
+  cleanupServerInvitesRealtime();
+  serverInvitesRealtimeSub = supabaseClient.channel('server-invites-rt')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'server_invites',
+      filter: `server_id=eq.${currentServer.id}`
+    }, payload => {
+      fetchServerInvites();
+    })
+    .subscribe();
+}
+function cleanupServerInvitesRealtime() {
+  if (serverInvitesRealtimeSub) {
+    supabaseClient.removeChannel(serverInvitesRealtimeSub);
+    serverInvitesRealtimeSub = null;
+  }
 } 
