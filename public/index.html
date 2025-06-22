@@ -256,8 +256,12 @@
         <form id="create-server-form" autocomplete="off">
           <div class="server-avatar-upload-section">
             <div class="server-avatar-preview-wrapper">
-              <img id="create-server-avatar-preview" class="profile-avatar-img" src="assets/server-default.png" alt="Server Avatar" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--primary-blue);background:var(--off-black);object-fit:cover;" />
-              <button type="button" id="create-server-avatar-upload-btn" class="profile-btn secondary" style="margin-top:0.7rem;">Upload Avatar</button>
+              <div id="create-server-avatar-preview" class="server-avatar-upload-preview">
+                <span class="server-avatar-upload-icon"><i class="fa-solid fa-camera"></i></span>
+                <span class="server-avatar-upload-text">UPLOAD</span>
+                <span class="server-avatar-upload-plus"><i class="fa-solid fa-plus"></i></span>
+              </div>
+              <button type="button" id="create-server-avatar-upload-btn" class="profile-btn secondary" style="margin-top:0.7rem;display:none;">Upload Avatar</button>
             </div>
             <input type="file" id="create-server-avatar-input" accept="image/*" style="display:none;" />
             <input type="hidden" id="create-server-avatar-url" name="server-avatar-url" />
@@ -353,6 +357,10 @@
               <img id="server-settings-icon-preview" src="" alt="Server Icon" style="width:64px;height:64px;border-radius:50%;margin-top:0.7rem;display:none;" />
             </label>
             <label>Banner</label>
+            <div id="server-settings-banner-row" style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.7rem;">
+              <button type="button" class="profile-btn" id="server-settings-change-banner">Change Banner</button>
+              <input type="file" id="server-settings-banner-input" accept="image/*" style="display:none;" />
+            </div>
             <div id="server-settings-banner-colors" style="display:flex;gap:1rem;flex-wrap:wrap;">
               <button type="button" class="profile-btn" style="background:#23272a;"></button>
               <button type="button" class="profile-btn" style="background:#ff73fa;"></button>
@@ -389,7 +397,8 @@
         </div>
         <div id="server-settings-section-members" class="modal-stagger" style="display:none;">
           <h3>Server Members</h3>
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 
@@ -417,18 +426,18 @@
   <input type="file" id="server-banner-upload-input" accept="image/*" style="display:none;" />
 
   <!-- Server Banner Crop Modal (hidden by default) -->
-  <div id="server-banner-crop-modal" class="avatar-crop-modal" style="display:none;">
+  <div id="server-settings-banner-crop-modal" class="avatar-crop-modal" style="display:none;">
     <div class="avatar-crop-modal-content">
-      <div id="server-banner-crop-area" style="border-radius:0.8rem;width:360px;height:90px;"></div>
+      <div id="server-settings-banner-crop-area" style="border-radius:0.8rem;width:360px;height:90px;"></div>
       <div class="avatar-crop-actions">
-        <button id="server-banner-crop-confirm" class="profile-btn">Crop & Upload</button>
-        <button id="server-banner-crop-cancel" class="profile-btn secondary">Cancel</button>
+        <button id="server-settings-banner-crop-confirm" class="profile-btn">Crop & Upload</button>
+        <button id="server-settings-banner-crop-cancel" class="profile-btn secondary">Cancel</button>
       </div>
     </div>
   </div>
 
   <!-- Server Banner Upload Loading Spinner (hidden by default) -->
-  <div id="server-banner-upload-loading" class="avatar-upload-loading" style="display:none;">
+  <div id="server-settings-banner-upload-loading" class="avatar-upload-loading" style="display:none;">
     <div class="spinner"></div>
     <span>Uploading...</span>
   </div>

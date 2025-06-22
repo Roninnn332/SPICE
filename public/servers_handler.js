@@ -289,6 +289,9 @@ function openCreateServerModal() {
   }
   const nameInput = document.getElementById('server-name');
   if (nameInput) nameInput.focus();
+  if (createServerAvatarUrlInput) createServerAvatarUrlInput.value = '';
+  if (serverNameInput) serverNameInput.value = '';
+  updateCreateServerAvatarPreview();
 }
 
 function closeCreateServerModal() {
@@ -298,24 +301,42 @@ function closeCreateServerModal() {
   setTimeout(() => { overlay.style.display = 'none'; }, 350);
 }
 
-// --- Create Server Modal Avatar Upload & Celebration Logic ---
-let createServerAvatarCropper = null;
+// --- Create Server Modal Avatar Upload & Preview Logic ---
+const createServerAvatarPreviewDiv = document.getElementById('create-server-avatar-preview');
 const createServerAvatarInput = document.getElementById('create-server-avatar-input');
-const createServerAvatarPreview = document.getElementById('create-server-avatar-preview');
-const createServerAvatarUploadBtn = document.getElementById('create-server-avatar-upload-btn');
 const createServerAvatarUrlInput = document.getElementById('create-server-avatar-url');
-const serverIconCropModal = document.getElementById('server-icon-crop-modal');
-const serverIconCropArea = document.getElementById('server-icon-crop-area');
-const serverIconCropConfirm = document.getElementById('server-icon-crop-confirm');
-const serverIconCropCancel = document.getElementById('server-icon-crop-cancel');
-const serverIconLoading = document.getElementById('server-icon-upload-loading');
+const serverNameInput = document.getElementById('server-name');
 
-if (createServerAvatarUploadBtn && createServerAvatarInput) {
-  createServerAvatarUploadBtn.onclick = (e) => {
-    e.preventDefault();
+function updateCreateServerAvatarPreview() {
+  const url = createServerAvatarUrlInput.value;
+  const name = serverNameInput.value.trim();
+  if (url) {
+    createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview uploaded';
+    createServerAvatarPreviewDiv.style.backgroundImage = `url('${url}')`;
+    createServerAvatarPreviewDiv.innerHTML = `<span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>`;
+  } else if (name) {
+    createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview letter';
+    createServerAvatarPreviewDiv.style.backgroundImage = '';
+    createServerAvatarPreviewDiv.textContent = name[0].toUpperCase();
+  } else {
+    createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview';
+    createServerAvatarPreviewDiv.style.backgroundImage = '';
+    createServerAvatarPreviewDiv.innerHTML = `
+      <span class='server-avatar-upload-icon'><i class='fa-solid fa-camera'></i></span>
+      <span class='server-avatar-upload-text'>UPLOAD</span>
+      <span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>
+    `;
+  }
+}
+
+if (createServerAvatarPreviewDiv && createServerAvatarInput) {
+  createServerAvatarPreviewDiv.onclick = () => {
     createServerAvatarInput.value = '';
     createServerAvatarInput.click();
   };
+}
+if (serverNameInput) {
+  serverNameInput.addEventListener('input', updateCreateServerAvatarPreview);
 }
 if (createServerAvatarInput) {
   createServerAvatarInput.addEventListener('change', (e) => {
@@ -348,12 +369,7 @@ if (createServerAvatarInput) {
     reader.readAsDataURL(file);
   });
 }
-if (serverIconCropCancel) {
-  serverIconCropCancel.onclick = () => {
-    serverIconCropModal.style.display = 'none';
-    if (createServerAvatarCropper) { createServerAvatarCropper.destroy(); createServerAvatarCropper = null; }
-  };
-}
+// After upload/crop, update preview
 if (serverIconCropConfirm) {
   serverIconCropConfirm.onclick = async () => {
     if (!createServerAvatarCropper) return;
@@ -370,8 +386,8 @@ if (serverIconCropConfirm) {
         });
         const data = await res.json();
         if (data.secure_url) {
-          createServerAvatarPreview.src = data.secure_url;
           createServerAvatarUrlInput.value = data.secure_url;
+          updateCreateServerAvatarPreview();
         } else {
           alert('Upload failed.');
         }
@@ -501,7 +517,65 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Patch: Always reset server settings modal to Server Profile section and tab when opening
+// --- Server Settings Modal Preview Update ---
+function updateServerSettingsPreview(server) {
+  // Banner
+  const bannerDiv = document.getElementById('server-settings-banner-preview');
+  if (bannerDiv) {
+    if (server.banner_url) {
+      bannerDiv.style.backgroundImage = `url('${server.banner_url}')`;
+      bannerDiv.style.backgroundSize = 'cover';
+      bannerDiv.style.backgroundPosition = 'center';
+    } else {
+      bannerDiv.style.backgroundImage = '';
+      bannerDiv.style.backgroundColor = 'var(--primary-blue-dark)';
+    }
+  }
+  // Avatar/Icon
+  const iconImg = document.getElementById('server-settings-icon-preview-card');
+  if (iconImg) {
+    if (server.icon_url) {
+      iconImg.style.display = '';
+      iconImg.src = server.icon_url;
+      iconImg.alt = server.name;
+      // Remove any fallback initial if present
+      if (iconImg.nextSibling && iconImg.nextSibling.classList && iconImg.nextSibling.classList.contains('user-avatar-initial')) {
+        iconImg.nextSibling.remove();
+      }
+    } else {
+      iconImg.style.display = 'none';
+      // Add fallback initial if not present
+      if (!iconImg.nextSibling || !iconImg.nextSibling.classList || !iconImg.nextSibling.classList.contains('user-avatar-initial')) {
+        const span = document.createElement('span');
+        span.className = 'user-avatar-initial';
+        span.style.width = '72px';
+        span.style.height = '72px';
+        span.style.display = 'flex';
+        span.style.alignItems = 'center';
+        span.style.justifyContent = 'center';
+        span.style.fontSize = '2.2rem';
+        span.style.position = 'absolute';
+        span.style.left = '0';
+        span.style.top = '0';
+        span.style.background = 'var(--primary-blue)';
+        span.style.color = 'var(--white)';
+        span.style.borderRadius = '50%';
+        span.style.border = '4px solid var(--pure-black)';
+        span.textContent = server.name && server.name[0] ? server.name[0].toUpperCase() : '?';
+        iconImg.parentNode.appendChild(span);
+      }
+    }
+  }
+  // Name
+  const nameDiv = document.getElementById('server-settings-name-preview');
+  if (nameDiv) nameDiv.textContent = server.name || '';
+  // ID
+  const idSpan = document.getElementById('server-settings-id-preview');
+  if (idSpan) idSpan.textContent = server.id || '';
+  // Meta (optional, e.g. member count)
+  // You can update #server-settings-meta-preview here if you want
+}
+
 function openServerSettingsModal() {
   const modal = document.getElementById('server-settings-modal-overlay');
   if (modal) {
@@ -520,6 +594,8 @@ function openServerSettingsModal() {
       if (profileSection) profileSection.style.display = '';
       const modalTitle = document.getElementById('server-settings-title');
       if (modalTitle) modalTitle.textContent = 'Server Profile';
+      // Update preview card with current server details
+      if (currentServer) updateServerSettingsPreview(currentServer);
     }, 10);
   }
 }
@@ -625,4 +701,93 @@ window.addEventListener('DOMContentLoaded', () => {
       showCreateServerSuccess(name);
     };
   }
-}); 
+});
+
+// --- Server Banner Upload Logic ---
+let serverBannerCropper = null;
+const serverBannerInput = document.getElementById('server-settings-banner-input');
+const serverBannerCropModal = document.getElementById('server-settings-banner-crop-modal');
+const serverBannerCropArea = document.getElementById('server-settings-banner-crop-area');
+const serverBannerCropConfirm = document.getElementById('server-settings-banner-crop-confirm');
+const serverBannerCropCancel = document.getElementById('server-settings-banner-crop-cancel');
+const serverBannerLoading = document.getElementById('server-settings-banner-upload-loading');
+const serverBannerChangeBtn = document.getElementById('server-settings-change-banner');
+
+if (serverBannerChangeBtn && serverBannerInput) {
+  serverBannerChangeBtn.onclick = (e) => {
+    e.preventDefault();
+    serverBannerInput.value = '';
+    serverBannerInput.click();
+  };
+}
+if (serverBannerInput) {
+  serverBannerInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      serverBannerCropArea.innerHTML = `<img id="server-banner-crop-img" src="${ev.target.result}" style="max-width:100%;max-height:100%;display:block;" />`;
+      serverBannerCropModal.style.display = 'flex';
+      setTimeout(() => {
+        const img = document.getElementById('server-banner-crop-img');
+        if (serverBannerCropper) serverBannerCropper.destroy();
+        serverBannerCropper = new window.Cropper(img, {
+          aspectRatio: 4,
+          viewMode: 1,
+          background: false,
+          dragMode: 'move',
+          guides: false,
+          autoCropArea: 1,
+          movable: true,
+          zoomable: true,
+          rotatable: false,
+          scalable: false,
+          cropBoxResizable: true,
+          minCropBoxWidth: 200,
+          minCropBoxHeight: 50,
+        });
+      }, 100);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+if (serverBannerCropCancel) {
+  serverBannerCropCancel.onclick = () => {
+    serverBannerCropModal.style.display = 'none';
+    if (serverBannerCropper) { serverBannerCropper.destroy(); serverBannerCropper = null; }
+  };
+}
+if (serverBannerCropConfirm) {
+  serverBannerCropConfirm.onclick = async () => {
+    if (!serverBannerCropper) return;
+    serverBannerCropModal.style.display = 'none';
+    serverBannerLoading.style.display = 'flex';
+    serverBannerCropper.getCroppedCanvas({ width: 1200, height: 300 }).toBlob(async (blob) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', 'user_media');
+        const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          // Save to Supabase
+          if (currentServer) {
+            await supabaseClient.from('servers').update({ banner_url: data.secure_url }).eq('id', currentServer.id);
+            currentServer.banner_url = data.secure_url;
+            updateServerSettingsPreview(currentServer);
+          }
+        } else {
+          alert('Upload failed.');
+        }
+      } catch (err) {
+        alert('Upload error: ' + err.message);
+      } finally {
+        serverBannerLoading.style.display = 'none';
+        if (serverBannerCropper) { serverBannerCropper.destroy(); serverBannerCropper = null; }
+      }
+    }, 'image/jpeg', 0.95);
+  };
+} 
