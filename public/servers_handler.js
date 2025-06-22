@@ -267,283 +267,9 @@ async function openServerChannel(serverId, channelId) {
 }
 
 // --- Server Creation/Join ---
-let serverAvatarCropper = null;
-let serverAvatarBlob = null;
-
 function openCreateServerModal() {
   const overlay = document.getElementById('create-server-modal-overlay');
   const modal = document.getElementById('create-server-modal');
-  const customizeStep = document.getElementById('server-create-customize');
-  const successStep = document.getElementById('server-create-success');
-  if (!overlay || !modal || !customizeStep || !successStep) return;
-  overlay.style.display = 'flex';
-  setTimeout(() => overlay.classList.add('active'), 10);
-  // Show customize step, hide success
-  customizeStep.style.display = '';
-  successStep.style.display = 'none';
-  // Animate modal and inner elements
-  modal.classList.remove('fade-in-up');
-  void modal.offsetWidth;
-  modal.classList.add('fade-in-up');
-  const staggerEls = customizeStep.querySelectorAll('.modal-title, .modal-desc, .server-avatar-upload-container, form, .server-create-guidelines');
-  staggerEls.forEach((el, i) => {
-    el.classList.remove('fade-in-up');
-    void el.offsetWidth;
-    el.classList.add('fade-in-up');
-    el.style.animationDelay = (0.08 * i) + 's';
-  });
-  // Reset form
-  document.getElementById('server-name').value = '';
-  document.getElementById('server-create-btn').disabled = true;
-  // Reset avatar preview
-  const avatarPreview = document.getElementById('server-avatar-preview');
-  avatarPreview.src = '';
-  avatarPreview.style.display = 'none';
-  serverAvatarBlob = null;
-  // Focus name input
-  setTimeout(() => {
-    const nameInput = document.getElementById('server-name');
-    if (nameInput) nameInput.focus();
-  }, 200);
-}
-
-function closeCreateServerModal() {
-  const overlay = document.getElementById('create-server-modal-overlay');
-  if (!overlay) return;
-  overlay.classList.remove('active');
-  setTimeout(() => { overlay.style.display = 'none'; }, 350);
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  // Modal close logic
-  const overlay = document.getElementById('create-server-modal-overlay');
-  const closeBtn = document.getElementById('close-create-server-modal');
-  if (closeBtn) closeBtn.onclick = closeCreateServerModal;
-  if (overlay) overlay.onclick = (e) => {
-    if (e.target === overlay) closeCreateServerModal();
-  };
-  // Avatar upload logic
-  const avatarUpload = document.getElementById('server-avatar-upload');
-  const avatarInput = document.getElementById('server-avatar-input');
-  const avatarPreview = document.getElementById('server-avatar-preview');
-  if (avatarUpload && avatarInput) {
-    avatarUpload.onclick = () => {
-      avatarInput.value = '';
-      avatarInput.click();
-    };
-    avatarInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function (ev) {
-        // Show Cropper.js modal for cropping
-        showServerAvatarCropper(ev.target.result);
-      };
-      reader.readAsDataURL(file);
-    };
-  }
-  // Enable/disable Create button based on name
-  const nameInput = document.getElementById('server-name');
-  const createBtn = document.getElementById('server-create-btn');
-  if (nameInput && createBtn) {
-    nameInput.addEventListener('input', () => {
-      createBtn.disabled = nameInput.value.trim().length === 0;
-    });
-  }
-  // Form submit logic
-  const form = document.getElementById('create-server-form');
-  if (form) {
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const user = JSON.parse(localStorage.getItem('spice_user'));
-      const name = document.getElementById('server-name').value.trim();
-      if (!user || !user.user_id || !name) return;
-      let icon_url = null;
-      if (serverAvatarBlob) {
-        // Upload avatar to Cloudinary
-        icon_url = await uploadServerAvatarToCloudinary(serverAvatarBlob);
-      }
-      // Create server in Supabase
-      const { data: server, error } = await supabaseClient.from('servers').insert([
-        { name, icon_url: icon_url || null, owner_id: user.user_id }
-      ]).select().single();
-      if (error || !server) return;
-      // Add owner as member
-      await supabaseClient.from('server_members').insert([
-        { server_id: server.id, user_id: user.user_id, role: 'owner' }
-      ]);
-      // Create default channels
-      await supabaseClient.from('channels').insert([
-        { server_id: server.id, name: 'general', type: 'text' },
-        { server_id: server.id, name: 'General', type: 'voice' }
-      ]);
-      // Show success step
-      showServerCreateSuccess(server, icon_url);
-      await renderServersList();
-      currentServer = server;
-      await renderChannelsList(server.id);
-      // Optionally auto-select the new server and its general text channel
-    };
-  }
-  // Back button
-  const backBtn = document.getElementById('server-create-back');
-  if (backBtn) backBtn.onclick = closeCreateServerModal;
-  // Go to Server button
-  const gotoBtn = document.getElementById('server-success-goto');
-  if (gotoBtn) gotoBtn.onclick = () => {
-    closeCreateServerModal();
-    // Optionally scroll to/select the new server in the sidebar
-  };
-});
-
-// --- Avatar Cropper Modal Logic ---
-function showServerAvatarCropper(imgSrc) {
-  // Reuse or create a modal for cropping (simple inline for now)
-  let cropModal = document.getElementById('server-avatar-crop-modal');
-  if (!cropModal) {
-    cropModal = document.createElement('div');
-    cropModal.id = 'server-avatar-crop-modal';
-    cropModal.className = 'avatar-crop-modal';
-    cropModal.innerHTML = `
-      <div class="avatar-crop-modal-content">
-        <div id="server-avatar-crop-area"></div>
-        <div class="avatar-crop-actions">
-          <button id="server-avatar-crop-confirm" class="profile-btn">Crop & Upload</button>
-          <button id="server-avatar-crop-cancel" class="profile-btn secondary">Cancel</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(cropModal);
-  }
-  cropModal.style.display = 'flex';
-  setTimeout(() => cropModal.classList.add('active'), 10);
-  // Insert image and initialize Cropper.js
-  const cropArea = document.getElementById('server-avatar-crop-area');
-  cropArea.innerHTML = `<img id="server-avatar-crop-img" src="${imgSrc}" style="max-width:100%;max-height:100%;display:block;" />`;
-  setTimeout(() => {
-    const img = document.getElementById('server-avatar-crop-img');
-    if (serverAvatarCropper) serverAvatarCropper.destroy();
-    serverAvatarCropper = new window.Cropper(img, {
-      aspectRatio: 1,
-      viewMode: 1,
-      background: false,
-      dragMode: 'move',
-      guides: false,
-      autoCropArea: 1,
-      movable: true,
-      zoomable: true,
-      rotatable: false,
-      scalable: false,
-      cropBoxResizable: true,
-      minCropBoxWidth: 100,
-      minCropBoxHeight: 100,
-    });
-  }, 100);
-  // Confirm/cancel handlers
-  document.getElementById('server-avatar-crop-confirm').onclick = () => {
-    if (!serverAvatarCropper) return;
-    serverAvatarCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob((blob) => {
-      serverAvatarBlob = blob;
-      // Show preview in modal
-      const preview = document.getElementById('server-avatar-preview');
-      preview.src = URL.createObjectURL(blob);
-      preview.style.display = 'block';
-      cropModal.classList.remove('active');
-      setTimeout(() => { cropModal.style.display = 'none'; }, 350);
-      serverAvatarCropper.destroy();
-      serverAvatarCropper = null;
-    }, 'image/png');
-  };
-  document.getElementById('server-avatar-crop-cancel').onclick = () => {
-    cropModal.classList.remove('active');
-    setTimeout(() => { cropModal.style.display = 'none'; }, 350);
-    if (serverAvatarCropper) { serverAvatarCropper.destroy(); serverAvatarCropper = null; }
-  };
-}
-
-// --- Cloudinary Upload Helper ---
-async function uploadServerAvatarToCloudinary(blob) {
-  const formData = new FormData();
-  formData.append('file', blob);
-  formData.append('upload_preset', 'spice_uploads'); // Change to your preset
-  const res = await fetch('https://api.cloudinary.com/v1_1/spicecdn/image/upload', {
-    method: 'POST',
-    body: formData
-  });
-  const data = await res.json();
-  return data.secure_url;
-}
-
-// --- Success Step Logic ---
-function showServerCreateSuccess(server, icon_url) {
-  const customizeStep = document.getElementById('server-create-customize');
-  const successStep = document.getElementById('server-create-success');
-  if (!customizeStep || !successStep) return;
-  customizeStep.style.display = 'none';
-  successStep.style.display = '';
-  // Set avatar and name
-  const avatar = document.getElementById('server-success-avatar');
-  const name = document.getElementById('server-success-name');
-  if (avatar) avatar.src = icon_url || '';
-  if (name) name.textContent = server.name;
-  // Animate confetti
-  animateServerCreateConfetti();
-  // Animate success icon
-  const icon = document.querySelector('.server-create-success-icon');
-  if (icon) {
-    icon.classList.remove('popIn');
-    void icon.offsetWidth;
-    icon.classList.add('popIn');
-  }
-}
-
-// --- Confetti Animation ---
-function animateServerCreateConfetti() {
-  const confettiDiv = document.getElementById('confetti-animation');
-  if (!confettiDiv) return;
-  confettiDiv.innerHTML = '';
-  // Simple confetti burst (CSS/JS, not a library)
-  for (let i = 0; i < 24; i++) {
-    const conf = document.createElement('div');
-    conf.className = 'confetti-piece';
-    conf.style.left = (Math.random() * 100) + '%';
-    conf.style.background = `hsl(${Math.random()*360},90%,60%)`;
-    conf.style.animationDelay = (Math.random() * 0.5) + 's';
-    confettiDiv.appendChild(conf);
-  }
-  // Add CSS for confetti if not present
-  if (!document.getElementById('confetti-style')) {
-    const style = document.createElement('style');
-    style.id = 'confetti-style';
-    style.innerHTML = `
-      .confetti-piece {
-        position: absolute;
-        top: 0;
-        width: 10px;
-        height: 18px;
-        border-radius: 3px;
-        opacity: 0.85;
-        animation: confetti-fall 1.2s cubic-bezier(.4,2,.6,1) forwards;
-      }
-      @keyframes confetti-fall {
-        0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-        80% { opacity: 1; }
-        100% { transform: translateY(120px) rotate(360deg) scale(0.7); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-}
-
-// --- Server Creation/Join ---
-function openJoinServerModal() {
-  // TODO: Show modal for joining a server by invite code
-}
-
-// --- Create Channel Modal Logic ---
-function openCreateChannelModal() {
-  const overlay = document.getElementById('create-channel-modal-overlay');
-  const modal = document.getElementById('create-channel-modal');
   if (!overlay || !modal) return;
   overlay.style.display = 'flex';
   setTimeout(() => overlay.classList.add('active'), 10);
@@ -553,115 +279,46 @@ function openCreateChannelModal() {
     content.classList.remove('fade-in-up');
     void content.offsetWidth;
     content.classList.add('fade-in-up');
-    const fields = content.querySelectorAll('label, input, button, .channel-type-section, .channel-name-input-group, .private-channel-section, .modal-actions');
+    const fields = content.querySelectorAll('label, input, button');
     fields.forEach((el, i) => {
       el.classList.remove('fade-in-up');
       void el.offsetWidth;
       el.classList.add('fade-in-up');
-      el.style.animationDelay = (0.07 * i) + 's';
+      el.style.animationDelay = (0.08 * i) + 's';
     });
   }
-  const nameInput = document.getElementById('new-channel-name');
+  const nameInput = document.getElementById('server-name');
   if (nameInput) nameInput.focus();
 }
 
-function closeCreateChannelModal() {
-  const overlay = document.getElementById('create-channel-modal-overlay');
+function closeCreateServerModal() {
+  const overlay = document.getElementById('create-server-modal-overlay');
   if (!overlay) return;
   overlay.classList.remove('active');
   setTimeout(() => { overlay.style.display = 'none'; }, 350);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  // ... existing code ...
-  // Create Channel modal open/close
-  const createChannelBtn = document.getElementById('create-channel-btn');
-  if (createChannelBtn) createChannelBtn.onclick = openCreateChannelModal;
-  const closeCreateChannelBtn = document.getElementById('close-create-channel-modal');
-  if (closeCreateChannelBtn) closeCreateChannelBtn.onclick = closeCreateChannelModal;
-  const cancelCreateChannelBtn = document.getElementById('cancel-create-channel');
-  if (cancelCreateChannelBtn) cancelCreateChannelBtn.onclick = closeCreateChannelModal;
-  const createChannelOverlay = document.getElementById('create-channel-modal-overlay');
-  if (createChannelOverlay) createChannelOverlay.onclick = (e) => {
-    if (e.target === createChannelOverlay) closeCreateChannelModal();
-  };
-  // Channel type selector logic
-  const typeText = document.getElementById('channel-type-text');
-  const typeVoice = document.getElementById('channel-type-voice');
-  if (typeText && typeVoice) {
-    typeText.onclick = () => {
-      typeText.classList.add('selected');
-      typeVoice.classList.remove('selected');
-      typeText.querySelector('input').checked = true;
-      typeVoice.querySelector('input').checked = false;
-      document.getElementById('channel-name-prefix').textContent = '#';
-    };
-    typeVoice.onclick = () => {
-      typeVoice.classList.add('selected');
-      typeText.classList.remove('selected');
-      typeVoice.querySelector('input').checked = true;
-      typeText.querySelector('input').checked = false;
-      document.getElementById('channel-name-prefix').textContent = '';
-    };
-  }
-  // Create channel form submit
-  const createChannelForm = document.getElementById('create-channel-form');
-  if (createChannelForm) {
-    createChannelForm.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!currentServer || !currentServer.id) return;
-      const name = document.getElementById('new-channel-name').value.trim();
-      const type = typeText && typeText.querySelector('input').checked ? 'text' : 'voice';
-      if (!name) return;
-      // Create channel in Supabase
-      const { data: channel, error } = await supabaseClient.from('channels').insert([
-        { server_id: currentServer.id, name, type }
-      ]).select().single();
-      if (error || !channel) return;
-      closeCreateChannelModal();
-      await renderChannelsList(currentServer.id);
-      // Optionally auto-select the new channel
-      currentChannel = channel;
-      await openServerChannel(currentServer.id, channel.id);
-    };
-  }
-  // ... existing code ...
-});
-
-// --- Real-time Updates ---
-// TODO: Setup Socket.IO or Supabase Realtime for server/channel events
-
-// --- Server Icon & Banner Upload/Crop Logic ---
-let serverIconCropper = null;
-let serverBannerCropper = null;
-
-const serverIconInput = document.getElementById('server-icon-upload-input');
+// --- Create Server Modal Avatar Upload & Celebration Logic ---
+let createServerAvatarCropper = null;
+const createServerAvatarInput = document.getElementById('create-server-avatar-input');
+const createServerAvatarPreview = document.getElementById('create-server-avatar-preview');
+const createServerAvatarUploadBtn = document.getElementById('create-server-avatar-upload-btn');
+const createServerAvatarUrlInput = document.getElementById('create-server-avatar-url');
 const serverIconCropModal = document.getElementById('server-icon-crop-modal');
 const serverIconCropArea = document.getElementById('server-icon-crop-area');
 const serverIconCropConfirm = document.getElementById('server-icon-crop-confirm');
 const serverIconCropCancel = document.getElementById('server-icon-crop-cancel');
 const serverIconLoading = document.getElementById('server-icon-upload-loading');
 
-const serverBannerInput = document.getElementById('server-banner-upload-input');
-const serverBannerCropModal = document.getElementById('server-banner-crop-modal');
-const serverBannerCropArea = document.getElementById('server-banner-crop-area');
-const serverBannerCropConfirm = document.getElementById('server-banner-crop-confirm');
-const serverBannerCropCancel = document.getElementById('server-banner-crop-cancel');
-const serverBannerLoading = document.getElementById('server-banner-upload-loading');
-
-// Open file input when Change Server Icon is clicked
-const changeIconBtn = document.getElementById('server-settings-change-icon');
-if (changeIconBtn) {
-  changeIconBtn.onclick = (e) => {
+if (createServerAvatarUploadBtn && createServerAvatarInput) {
+  createServerAvatarUploadBtn.onclick = (e) => {
     e.preventDefault();
-    serverIconInput.value = '';
-    serverIconInput.click();
+    createServerAvatarInput.value = '';
+    createServerAvatarInput.click();
   };
 }
-
-// Show crop modal and initialize Cropper.js for server icon
-if (serverIconInput) {
-  serverIconInput.addEventListener('change', (e) => {
+if (createServerAvatarInput) {
+  createServerAvatarInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -670,8 +327,8 @@ if (serverIconInput) {
       serverIconCropModal.style.display = 'flex';
       setTimeout(() => {
         const img = document.getElementById('server-icon-crop-img');
-        if (serverIconCropper) serverIconCropper.destroy();
-        serverIconCropper = new window.Cropper(img, {
+        if (createServerAvatarCropper) createServerAvatarCropper.destroy();
+        createServerAvatarCropper = new window.Cropper(img, {
           aspectRatio: 1,
           viewMode: 1,
           background: false,
@@ -691,22 +348,18 @@ if (serverIconInput) {
     reader.readAsDataURL(file);
   });
 }
-
-// Cancel crop for server icon
 if (serverIconCropCancel) {
   serverIconCropCancel.onclick = () => {
     serverIconCropModal.style.display = 'none';
-    if (serverIconCropper) { serverIconCropper.destroy(); serverIconCropper = null; }
+    if (createServerAvatarCropper) { createServerAvatarCropper.destroy(); createServerAvatarCropper = null; }
   };
 }
-
-// Confirm crop and upload to Cloudinary for server icon
 if (serverIconCropConfirm) {
   serverIconCropConfirm.onclick = async () => {
-    if (!serverIconCropper || !currentServer) return;
+    if (!createServerAvatarCropper) return;
     serverIconCropModal.style.display = 'none';
     serverIconLoading.style.display = 'flex';
-    serverIconCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
+    createServerAvatarCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
       try {
         const formData = new FormData();
         formData.append('file', blob);
@@ -717,14 +370,8 @@ if (serverIconCropConfirm) {
         });
         const data = await res.json();
         if (data.secure_url) {
-          // Update icon in UI
-          document.getElementById('server-settings-icon-preview').src = data.secure_url;
-          document.getElementById('server-settings-icon-preview').style.display = 'block';
-          document.getElementById('server-settings-icon-preview-card').src = data.secure_url;
-          // Save to Supabase
-          await supabaseClient.from('servers').update({ icon_url: data.secure_url }).eq('id', currentServer.id);
-          currentServer.icon_url = data.secure_url;
-          renderServersList();
+          createServerAvatarPreview.src = data.secure_url;
+          createServerAvatarUrlInput.value = data.secure_url;
         } else {
           alert('Upload failed.');
         }
@@ -732,351 +379,81 @@ if (serverIconCropConfirm) {
         alert('Upload error: ' + err.message);
       } finally {
         serverIconLoading.style.display = 'none';
-        if (serverIconCropper) { serverIconCropper.destroy(); serverIconCropper = null; }
+        if (createServerAvatarCropper) { createServerAvatarCropper.destroy(); createServerAvatarCropper = null; }
       }
     }, 'image/jpeg', 0.95);
   };
 }
 
-// Open file input when clicking on banner color or add a "Change Banner" button if needed
-const bannerColorsDiv = document.getElementById('server-settings-banner-colors');
-if (bannerColorsDiv) {
-  bannerColorsDiv.querySelectorAll('.profile-btn').forEach(btn => {
-    btn.onclick = async (e) => {
-      e.preventDefault();
-      // Set selected color
-      bannerColorsDiv.querySelectorAll('.profile-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      const color = btn.style.backgroundColor || btn.style.background;
-      document.getElementById('server-settings-banner-preview').style.background = color;
-      // Save to Supabase
-      if (currentServer) {
-        await supabaseClient.from('servers').update({ banner_url: null, banner_color: color }).eq('id', currentServer.id);
-        currentServer.banner_url = null;
-        currentServer.banner_color = color;
-        renderServersList();
-      }
-    };
-  });
-}
-
-// Banner image upload/crop logic
-// (Optional: Add a "Change Banner" button for image upload, or allow clicking the preview to upload)
-const serverBannerPreview = document.getElementById('server-settings-banner-preview');
-if (serverBannerPreview) {
-  serverBannerPreview.onclick = (e) => {
-    e.preventDefault();
-    serverBannerInput.value = '';
-    serverBannerInput.click();
+// --- Create Server Modal Success Celebration ---
+function showCreateServerSuccess(serverName) {
+  const modalContent = document.getElementById('create-server-modal-content');
+  const successDiv = document.getElementById('create-server-success');
+  if (!modalContent || !successDiv) return;
+  // Hide form
+  const form = document.getElementById('create-server-form');
+  if (form) form.style.display = 'none';
+  // Show celebration
+  successDiv.innerHTML = `
+    <div class="celebration-animation" style="margin-bottom:1.5rem;">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="40" cy="40" r="38" stroke="#43b581" stroke-width="4" fill="#23272a" />
+        <path d="M25 42L36 53L56 33" stroke="#43b581" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h3 class="modal-title" style="color:#43b581;">Server Created!</h3>
+    <div style="font-size:1.15rem;margin:0.7rem 0 1.2rem 0;color:var(--white);">Your server <b>${serverName}</b> is ready to go.</div>
+    <button id="create-server-success-close" class="profile-btn" style="margin-top:0.7rem;">Let's Go!</button>
+    <div class="confetti" id="create-server-confetti"></div>
+  `;
+  successDiv.style.display = 'flex';
+  // Animate confetti
+  launchConfetti('create-server-confetti');
+  // Close on button click
+  const closeBtn = document.getElementById('create-server-success-close');
+  if (closeBtn) closeBtn.onclick = () => {
+    closeCreateServerModal();
+    setTimeout(() => {
+      // Reset modal for next open
+      if (form) form.style.display = '';
+      successDiv.style.display = 'none';
+      successDiv.innerHTML = '';
+    }, 400);
   };
 }
-
-if (serverBannerInput) {
-  serverBannerInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function (ev) {
-      serverBannerCropArea.innerHTML = `<img id="server-banner-crop-img" src="${ev.target.result}" style="max-width:100%;max-height:100%;display:block;" />`;
-      serverBannerCropModal.style.display = 'flex';
-      setTimeout(() => {
-        const img = document.getElementById('server-banner-crop-img');
-        if (serverBannerCropper) serverBannerCropper.destroy();
-        serverBannerCropper = new window.Cropper(img, {
-          aspectRatio: 4,
-          viewMode: 1,
-          background: false,
-          dragMode: 'move',
-          guides: false,
-          autoCropArea: 1,
-          movable: true,
-          zoomable: true,
-          rotatable: false,
-          scalable: false,
-          cropBoxResizable: true,
-          minCropBoxWidth: 200,
-          minCropBoxHeight: 50,
-        });
-      }, 100);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-if (serverBannerCropCancel) {
-  serverBannerCropCancel.onclick = () => {
-    serverBannerCropModal.style.display = 'none';
-    if (serverBannerCropper) { serverBannerCropper.destroy(); serverBannerCropper = null; }
-  };
-}
-
-if (serverBannerCropConfirm) {
-  serverBannerCropConfirm.onclick = async () => {
-    if (!serverBannerCropper || !currentServer) return;
-    serverBannerCropModal.style.display = 'none';
-    serverBannerLoading.style.display = 'flex';
-    serverBannerCropper.getCroppedCanvas({ width: 1200, height: 300 }).toBlob(async (blob) => {
-      try {
-        const formData = new FormData();
-        formData.append('file', blob);
-        formData.append('upload_preset', 'user_media');
-        const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        if (data.secure_url) {
-          // Update banner in UI
-          document.getElementById('server-settings-banner-preview').style.background = '';
-          document.getElementById('server-settings-banner-preview').style.backgroundImage = `url('${data.secure_url}')`;
-          document.getElementById('server-settings-banner-preview').style.backgroundSize = 'cover';
-          document.getElementById('server-settings-banner-preview').style.backgroundPosition = 'center';
-          // Save to Supabase
-          await supabaseClient.from('servers').update({ banner_url: data.secure_url, banner_color: null }).eq('id', currentServer.id);
-          currentServer.banner_url = data.secure_url;
-          currentServer.banner_color = null;
-          renderServersList();
-        } else {
-          alert('Upload failed.');
-        }
-      } catch (err) {
-        alert('Upload error: ' + err.message);
-      } finally {
-        serverBannerLoading.style.display = 'none';
-        if (serverBannerCropper) { serverBannerCropper.destroy(); serverBannerCropper = null; }
-      }
-    }, 'image/jpeg', 0.95);
-  };
-}
-
-// --- Server Name Edit Logic ---
-function setupServerNameEdit() {
-  const nameText = document.getElementById('server-settings-name-text');
-  const editBtn = document.getElementById('server-settings-edit-name-btn');
-  const nameInput = document.getElementById('server-settings-name-input');
-  const saveBtn = document.getElementById('server-settings-save-name-btn');
-  const cancelBtn = document.getElementById('server-settings-cancel-name-btn');
-  if (!nameText || !editBtn || !nameInput || !saveBtn || !cancelBtn) return;
-
-  // Show current name
-  function showName() {
-    nameText.textContent = currentServer ? currentServer.name : '';
-    nameText.style.display = '';
-    editBtn.style.display = '';
-    nameInput.style.display = 'none';
-    saveBtn.style.display = 'none';
-    cancelBtn.style.display = 'none';
-  }
-
-  // Show input for editing
-  function showInput() {
-    nameInput.value = currentServer ? currentServer.name : '';
-    nameText.style.display = 'none';
-    editBtn.style.display = 'none';
-    nameInput.style.display = '';
-    saveBtn.style.display = '';
-    cancelBtn.style.display = '';
-    nameInput.focus();
-  }
-
-  editBtn.onclick = showInput;
-  cancelBtn.onclick = showName;
-  nameInput.onkeydown = (e) => { if (e.key === 'Escape') showName(); };
-  saveBtn.onclick = async () => {
-    const newName = nameInput.value.trim();
-    if (!newName || !currentServer) return;
-    if (newName === currentServer.name) { showName(); return; }
-    saveBtn.disabled = true;
-    await supabaseClient.from('servers').update({ name: newName }).eq('id', currentServer.id);
-    currentServer.name = newName;
-    showName();
-    // Update preview card
-    const preview = document.getElementById('server-settings-name-preview');
-    if (preview) preview.textContent = newName;
-    renderServersList();
-    saveBtn.disabled = false;
-  };
-
-  // On modal open, always show name
-  showName();
-}
-
-function setupServerIdCopy() {
-  const idSpan = document.getElementById('server-settings-id-preview');
-  const copyBtn = document.getElementById('server-settings-copy-id-btn');
-  const feedback = document.getElementById('server-settings-copy-id-feedback');
-  if (!idSpan || !copyBtn || !feedback) return;
-  idSpan.textContent = currentServer ? currentServer.id : '';
-  copyBtn.onclick = () => {
-    if (!currentServer) return;
-    navigator.clipboard.writeText(currentServer.id);
-    feedback.style.display = 'inline-block';
-    setTimeout(() => { feedback.style.display = 'none'; }, 1200);
-  };
-}
-
-// Call setupServerNameEdit when opening the server settings modal
-const serverSettingsModal = document.getElementById('server-settings-modal-overlay');
-if (serverSettingsModal) {
-  serverSettingsModal.addEventListener('transitionend', (e) => {
-    if (serverSettingsModal.classList.contains('active')) {
-      setupServerNameEdit();
-      setupServerIdCopy();
-    }
-  });
-}
-
-// --- Export nothing (vanilla JS, not a module) ---
-// All functions are global for now 
-
-async function fetchServerInvites() {
-  if (!currentServer) return;
-  const { data: invites, error } = await supabaseClient
-    .from('server_invites')
-    .select('id, user_id, status')
-    .eq('server_id', currentServer.id)
-    .eq('status', 'pending');
-  const list = document.getElementById('server-invites-list');
-  if (!list) return;
-  list.innerHTML = '';
-  if (error) {
-    list.innerHTML = '<div class="friend-request-item">Error loading invites</div>';
-    return;
-  }
-  if (!invites.length) {
-    list.innerHTML = '<div class="friend-request-item">No pending join requests</div>';
-    return;
-  }
-  for (const invite of invites) {
-    const info = await getUserInfo(invite.user_id);
-    list.innerHTML += `
-      <div class="friend-request-item">
-        <img class="friend-request-avatar" src="${info.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
-        <span class="friend-request-username">${info.username}</span>
-        <button class="friend-request-accept" data-id="${invite.id}" data-user="${invite.user_id}">Accept</button>
-        <button class="friend-request-reject" data-id="${invite.id}">Reject</button>
-      </div>
-    `;
-  }
-  // Accept/Reject handlers
-  document.querySelectorAll('.friend-request-accept').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-id');
-      const userId = btn.getAttribute('data-user');
-      // Add to server_members
-      await supabaseClient.from('server_members').insert([
-        { server_id: currentServer.id, user_id: userId, role: 'member' }
-      ]);
-      // Mark invite as accepted
-      await supabaseClient.from('server_invites').update({ status: 'accepted' }).eq('id', id);
-      fetchServerInvites();
-      renderServersList();
-    };
-  });
-  document.querySelectorAll('.friend-request-reject').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-id');
-      await supabaseClient.from('server_invites').update({ status: 'rejected' }).eq('id', id);
-      fetchServerInvites();
-    };
-  });
-}
-
-// Show Invites section when nav-link is clicked
-const invitesNavBtn = document.querySelector('.nav-link[data-section="invites"]');
-if (invitesNavBtn) {
-  invitesNavBtn.addEventListener('click', () => {
-    document.querySelectorAll('.profile-modal-content > .modal-stagger').forEach(sec => sec.style.display = 'none');
-    const invitesSection = document.getElementById('server-settings-section-invites');
-    if (invitesSection) {
-      invitesSection.style.display = '';
-      fetchServerInvites();
-    }
-  });
-}
-
-let serverInvitesRealtimeSub = null;
-
-function setupServerInvitesRealtime() {
-  if (serverInvitesRealtimeSub) return;
-  if (!currentServer) return;
-  serverInvitesRealtimeSub = supabaseClient.channel('server-invites-rt')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'server_invites',
-      filter: `server_id=eq.${currentServer.id}`
-    }, payload => {
-      const invitesSection = document.getElementById('server-settings-section-invites');
-      if (invitesSection && invitesSection.style.display !== 'none') {
-        fetchServerInvites();
-      }
-    })
-    .subscribe();
-}
-
-function cleanupServerInvitesRealtime() {
-  if (serverInvitesRealtimeSub) {
-    supabaseClient.removeChannel(serverInvitesRealtimeSub);
-    serverInvitesRealtimeSub = null;
+// Simple confetti animation (CSS/JS, can be improved)
+function launchConfetti(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 0; i < 24; i++) {
+    const conf = document.createElement('div');
+    conf.className = 'confetti-piece';
+    conf.style.left = Math.random() * 90 + '%';
+    conf.style.background = `hsl(${Math.random()*360},90%,60%)`;
+    conf.style.animationDelay = (Math.random()*0.7)+'s';
+    container.appendChild(conf);
   }
 }
-
-// Setup/cleanup subscription on modal open/close
-if (serverSettingsModal) {
-  serverSettingsModal.addEventListener('transitionend', (e) => {
-    if (serverSettingsModal.classList.contains('active')) {
-      setupServerInvitesRealtime();
-    } else {
-      cleanupServerInvitesRealtime();
-    }
-  });
+// Confetti CSS
+const confettiStyle = document.createElement('style');
+confettiStyle.innerHTML = `
+.confetti { position: absolute; left:0; right:0; top:0; bottom:0; pointer-events:none; z-index:2; }
+.confetti-piece {
+  position: absolute;
+  width: 12px;
+  height: 18px;
+  border-radius: 3px;
+  opacity: 0.85;
+  animation: confetti-fall 1.2s cubic-bezier(.4,2,.6,1) forwards;
 }
-
-// Show Members section when nav-link is clicked
-const membersNavBtn = document.querySelector('.nav-link[data-section="members"]');
-if (membersNavBtn) {
-  membersNavBtn.addEventListener('click', () => {
-    document.querySelectorAll('.profile-modal-content > .modal-stagger').forEach(sec => sec.style.display = 'none');
-    const membersSection = document.getElementById('server-settings-section-members');
-    if (membersSection) {
-      membersSection.style.display = '';
-      fetchServerMembers();
-      setupServerMembersRealtimeForServer();
-    }
-  });
+@keyframes confetti-fall {
+  0% { transform: translateY(-40px) rotate(0deg) scale(1.1); opacity:1; }
+  80% { opacity:1; }
+  100% { transform: translateY(120px) rotate(360deg) scale(0.7); opacity:0; }
 }
-
-// Fetch and render server members
-async function fetchServerMembers() {
-  if (!currentServer) return;
-  const { data: members, error } = await supabaseClient
-    .from('server_members')
-    .select('user_id, role, users:users(user_id, username, avatar_url)')
-    .eq('server_id', currentServer.id);
-  const list = document.getElementById('server-members-list');
-  if (!list) return;
-  list.innerHTML = '';
-  if (error) {
-    list.innerHTML = '<div class="friend-request-item">Error loading members</div>';
-    return;
-  }
-  if (!members.length) {
-    list.innerHTML = '<div class="friend-request-item">No members found</div>';
-    return;
-  }
-  for (const member of members) {
-    const user = member.users || {};
-    const isOwner = member.role === 'owner';
-    list.innerHTML += `
-      <div class="friend-request-item" style="display:flex;align-items:center;gap:1.1rem;">
-        <img class="friend-request-avatar" src="${user.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-        <span class="friend-request-username" style="font-size:1.13rem;font-weight:700;">${user.username || member.user_id}</span>
-        ${isOwner ? '<span class="owner-gold-tag" style="background:linear-gradient(90deg,#FFD700,#E6C200,#BFA14A);color:#fff;font-weight:800;padding:0.18em 0.8em;border-radius:0.7em;font-size:0.98em;margin-left:0.7em;letter-spacing:0.5px;box-shadow:0 2px 8px 0 rgba(255,215,0,0.13);">OWNER</span>' : ''}
-      </div>
-    `;
-  }
-}
+`;
+document.head.appendChild(confettiStyle);
 
 // --- Server Settings Modal Section Switch Logic ---
 window.addEventListener('DOMContentLoaded', () => {
@@ -1210,4 +587,42 @@ function cleanupServerMembersRealtimeForServer() {
 
 window.addEventListener('DOMContentLoaded', () => {
   setupServerMembersRealtime();
+  const form = document.getElementById('create-server-form');
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const user = JSON.parse(localStorage.getItem('spice_user'));
+      const name = document.getElementById('server-name').value.trim();
+      const icon_url = document.getElementById('create-server-avatar-url').value.trim() || 'assets/server-default.png';
+      if (!user || !user.user_id || !name) return;
+      // Create server
+      const { data: server, error } = await supabaseClient.from('servers').insert([
+        { name, icon_url: icon_url || null, owner_id: user.user_id }
+      ]).select().single();
+      if (error || !server) return;
+      // Add owner as member
+      await supabaseClient.from('server_members').insert([
+        { server_id: server.id, user_id: user.user_id, role: 'owner' }
+      ]);
+      // Create default channels
+      const { data: textChannel } = await supabaseClient.from('channels').insert([
+        { server_id: server.id, name: 'general', type: 'text' }
+      ]).select().single();
+      const { data: voiceChannel } = await supabaseClient.from('channels').insert([
+        { server_id: server.id, name: 'General', type: 'voice' }
+      ]).select().single();
+      await renderServersList();
+      // Auto-select the new server and its general text channel
+      currentServer = server;
+      if (textChannel) {
+        currentChannel = textChannel;
+        await renderChannelsList(server.id);
+        await openServerChannel(server.id, textChannel.id);
+      } else {
+        await renderChannelsList(server.id);
+      }
+      // Show celebration
+      showCreateServerSuccess(name);
+    };
+  }
 }); 
