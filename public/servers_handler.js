@@ -930,4 +930,112 @@ if (bannerColorsRow) {
       btn.classList.add('selected');
     };
   });
+}
+
+// --- Fetch and Render Server Members (for server settings modal) ---
+async function fetchServerMembers() {
+  if (!currentServer) return;
+  const membersSection = document.getElementById('server-settings-section-members');
+  if (!membersSection) return;
+  membersSection.innerHTML = '<div>Loading...</div>';
+  const { data: members, error } = await supabaseClient
+    .from('server_members')
+    .select('user_id, role, users!inner(username, avatar_url)')
+    .eq('server_id', currentServer.id);
+  if (error || !members) {
+    membersSection.innerHTML = '<div>Error loading members.</div>';
+    return;
+  }
+  membersSection.innerHTML = '';
+  members.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'server-member-row';
+    div.innerHTML = `
+      <img src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:0.7em;">
+      <span>${m.users.username || m.user_id}</span>
+      <span style="margin-left:auto;font-size:0.98em;color:var(--gray);">${m.role}</span>
+    `;
+    membersSection.appendChild(div);
+  });
+}
+
+// --- Server Settings Modal: Change Server Icon ---
+const serverSettingsChangeIconBtn = document.getElementById('server-settings-change-icon');
+const serverSettingsIconInput = document.getElementById('server-settings-icon');
+const serverSettingsIconPreview = document.getElementById('server-settings-icon-preview');
+if (serverSettingsChangeIconBtn && serverSettingsIconInput) {
+  serverSettingsChangeIconBtn.onclick = () => {
+    serverSettingsIconInput.value = '';
+    serverSettingsIconInput.click();
+  };
+  serverSettingsIconInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentServer) return;
+    // Show loading spinner (optional)
+    serverSettingsChangeIconBtn.disabled = true;
+    serverSettingsChangeIconBtn.textContent = 'Uploading...';
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'user_media');
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        await supabaseClient.from('servers').update({ icon_url: data.secure_url }).eq('id', currentServer.id);
+        currentServer.icon_url = data.secure_url;
+        updateServerSettingsPreview(currentServer);
+        serverSettingsIconPreview.src = data.secure_url;
+        serverSettingsIconPreview.style.display = '';
+      } else {
+        alert('Upload failed.');
+      }
+    } catch (err) {
+      alert('Upload error.');
+    } finally {
+      serverSettingsChangeIconBtn.disabled = false;
+      serverSettingsChangeIconBtn.textContent = 'Change Server Icon';
+    }
+  };
+}
+
+// --- Server Settings Modal: Edit Server Name ---
+const serverSettingsEditNameBtn = document.getElementById('server-settings-edit-name-btn');
+const serverSettingsNameText = document.getElementById('server-settings-name-text');
+const serverSettingsNameInput = document.getElementById('server-settings-name-input');
+const serverSettingsSaveNameBtn = document.getElementById('server-settings-save-name-btn');
+const serverSettingsCancelNameBtn = document.getElementById('server-settings-cancel-name-btn');
+if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInput && serverSettingsSaveNameBtn && serverSettingsCancelNameBtn) {
+  serverSettingsEditNameBtn.onclick = () => {
+    serverSettingsNameInput.value = serverSettingsNameText.textContent;
+    serverSettingsNameText.style.display = 'none';
+    serverSettingsEditNameBtn.style.display = 'none';
+    serverSettingsNameInput.style.display = '';
+    serverSettingsSaveNameBtn.style.display = '';
+    serverSettingsCancelNameBtn.style.display = '';
+    serverSettingsNameInput.focus();
+  };
+  serverSettingsCancelNameBtn.onclick = () => {
+    serverSettingsNameInput.style.display = 'none';
+    serverSettingsSaveNameBtn.style.display = 'none';
+    serverSettingsCancelNameBtn.style.display = 'none';
+    serverSettingsNameText.style.display = '';
+    serverSettingsEditNameBtn.style.display = '';
+  };
+  serverSettingsSaveNameBtn.onclick = async () => {
+    const newName = serverSettingsNameInput.value.trim();
+    if (!newName || !currentServer) return;
+    await supabaseClient.from('servers').update({ name: newName }).eq('id', currentServer.id);
+    currentServer.name = newName;
+    updateServerSettingsPreview(currentServer);
+    serverSettingsNameText.textContent = newName;
+    serverSettingsNameInput.style.display = 'none';
+    serverSettingsSaveNameBtn.style.display = 'none';
+    serverSettingsCancelNameBtn.style.display = 'none';
+    serverSettingsNameText.style.display = '';
+    serverSettingsEditNameBtn.style.display = '';
+  };
 } 
