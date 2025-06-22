@@ -267,28 +267,44 @@ async function openServerChannel(serverId, channelId) {
 }
 
 // --- Server Creation/Join ---
+let serverAvatarCropper = null;
+let serverAvatarBlob = null;
+
 function openCreateServerModal() {
   const overlay = document.getElementById('create-server-modal-overlay');
   const modal = document.getElementById('create-server-modal');
-  if (!overlay || !modal) return;
+  const customizeStep = document.getElementById('server-create-customize');
+  const successStep = document.getElementById('server-create-success');
+  if (!overlay || !modal || !customizeStep || !successStep) return;
   overlay.style.display = 'flex';
   setTimeout(() => overlay.classList.add('active'), 10);
-  // Animate modal elements
-  const content = modal.querySelector('.modal-content');
-  if (content) {
-    content.classList.remove('fade-in-up');
-    void content.offsetWidth;
-    content.classList.add('fade-in-up');
-    const fields = content.querySelectorAll('label, input, button');
-    fields.forEach((el, i) => {
-      el.classList.remove('fade-in-up');
-      void el.offsetWidth;
-      el.classList.add('fade-in-up');
-      el.style.animationDelay = (0.08 * i) + 's';
-    });
-  }
-  const nameInput = document.getElementById('server-name');
-  if (nameInput) nameInput.focus();
+  // Show customize step, hide success
+  customizeStep.style.display = '';
+  successStep.style.display = 'none';
+  // Animate modal and inner elements
+  modal.classList.remove('fade-in-up');
+  void modal.offsetWidth;
+  modal.classList.add('fade-in-up');
+  const staggerEls = customizeStep.querySelectorAll('.modal-title, .modal-desc, .server-avatar-upload-container, form, .server-create-guidelines');
+  staggerEls.forEach((el, i) => {
+    el.classList.remove('fade-in-up');
+    void el.offsetWidth;
+    el.classList.add('fade-in-up');
+    el.style.animationDelay = (0.08 * i) + 's';
+  });
+  // Reset form
+  document.getElementById('server-name').value = '';
+  document.getElementById('server-create-btn').disabled = true;
+  // Reset avatar preview
+  const avatarPreview = document.getElementById('server-avatar-preview');
+  avatarPreview.src = '';
+  avatarPreview.style.display = 'none';
+  serverAvatarBlob = null;
+  // Focus name input
+  setTimeout(() => {
+    const nameInput = document.getElementById('server-name');
+    if (nameInput) nameInput.focus();
+  }, 200);
 }
 
 function closeCreateServerModal() {
@@ -298,23 +314,56 @@ function closeCreateServerModal() {
   setTimeout(() => { overlay.style.display = 'none'; }, 350);
 }
 
-// Modal close handlers
 window.addEventListener('DOMContentLoaded', () => {
+  // Modal close logic
   const overlay = document.getElementById('create-server-modal-overlay');
   const closeBtn = document.getElementById('close-create-server-modal');
   if (closeBtn) closeBtn.onclick = closeCreateServerModal;
   if (overlay) overlay.onclick = (e) => {
     if (e.target === overlay) closeCreateServerModal();
   };
+  // Avatar upload logic
+  const avatarUpload = document.getElementById('server-avatar-upload');
+  const avatarInput = document.getElementById('server-avatar-input');
+  const avatarPreview = document.getElementById('server-avatar-preview');
+  if (avatarUpload && avatarInput) {
+    avatarUpload.onclick = () => {
+      avatarInput.value = '';
+      avatarInput.click();
+    };
+    avatarInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        // Show Cropper.js modal for cropping
+        showServerAvatarCropper(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+  // Enable/disable Create button based on name
+  const nameInput = document.getElementById('server-name');
+  const createBtn = document.getElementById('server-create-btn');
+  if (nameInput && createBtn) {
+    nameInput.addEventListener('input', () => {
+      createBtn.disabled = nameInput.value.trim().length === 0;
+    });
+  }
+  // Form submit logic
   const form = document.getElementById('create-server-form');
   if (form) {
     form.onsubmit = async (e) => {
       e.preventDefault();
       const user = JSON.parse(localStorage.getItem('spice_user'));
       const name = document.getElementById('server-name').value.trim();
-      const icon_url = document.getElementById('server-icon-url').value.trim();
       if (!user || !user.user_id || !name) return;
-      // Create server
+      let icon_url = null;
+      if (serverAvatarBlob) {
+        // Upload avatar to Cloudinary
+        icon_url = await uploadServerAvatarToCloudinary(serverAvatarBlob);
+      }
+      // Create server in Supabase
       const { data: server, error } = await supabaseClient.from('servers').insert([
         { name, icon_url: icon_url || null, owner_id: user.user_id }
       ]).select().single();
@@ -324,36 +373,169 @@ window.addEventListener('DOMContentLoaded', () => {
         { server_id: server.id, user_id: user.user_id, role: 'owner' }
       ]);
       // Create default channels
-      const { data: textChannel } = await supabaseClient.from('channels').insert([
-        { server_id: server.id, name: 'general', type: 'text' }
-      ]).select().single();
-      const { data: voiceChannel } = await supabaseClient.from('channels').insert([
+      await supabaseClient.from('channels').insert([
+        { server_id: server.id, name: 'general', type: 'text' },
         { server_id: server.id, name: 'General', type: 'voice' }
-      ]).select().single();
-      closeCreateServerModal();
+      ]);
+      // Show success step
+      showServerCreateSuccess(server, icon_url);
       await renderServersList();
-      // Auto-select the new server and its general text channel
       currentServer = server;
-      if (textChannel) {
-        currentChannel = textChannel;
-        await renderChannelsList(server.id);
-        await openServerChannel(server.id, textChannel.id);
-      } else {
-        await renderChannelsList(server.id);
-      }
+      await renderChannelsList(server.id);
+      // Optionally auto-select the new server and its general text channel
     };
   }
-  // Add close logic for server settings modal
-  const closeServerSettingsBtn = document.getElementById('close-server-settings-modal');
-  const serverSettingsModal = document.getElementById('server-settings-modal-overlay');
-  if (closeServerSettingsBtn && serverSettingsModal) {
-    closeServerSettingsBtn.onclick = () => {
-      serverSettingsModal.classList.remove('active');
-      setTimeout(() => { serverSettingsModal.style.display = 'none'; }, 400);
-    };
-  }
+  // Back button
+  const backBtn = document.getElementById('server-create-back');
+  if (backBtn) backBtn.onclick = closeCreateServerModal;
+  // Go to Server button
+  const gotoBtn = document.getElementById('server-success-goto');
+  if (gotoBtn) gotoBtn.onclick = () => {
+    closeCreateServerModal();
+    // Optionally scroll to/select the new server in the sidebar
+  };
 });
 
+// --- Avatar Cropper Modal Logic ---
+function showServerAvatarCropper(imgSrc) {
+  // Reuse or create a modal for cropping (simple inline for now)
+  let cropModal = document.getElementById('server-avatar-crop-modal');
+  if (!cropModal) {
+    cropModal = document.createElement('div');
+    cropModal.id = 'server-avatar-crop-modal';
+    cropModal.className = 'avatar-crop-modal';
+    cropModal.innerHTML = `
+      <div class="avatar-crop-modal-content">
+        <div id="server-avatar-crop-area"></div>
+        <div class="avatar-crop-actions">
+          <button id="server-avatar-crop-confirm" class="profile-btn">Crop & Upload</button>
+          <button id="server-avatar-crop-cancel" class="profile-btn secondary">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(cropModal);
+  }
+  cropModal.style.display = 'flex';
+  setTimeout(() => cropModal.classList.add('active'), 10);
+  // Insert image and initialize Cropper.js
+  const cropArea = document.getElementById('server-avatar-crop-area');
+  cropArea.innerHTML = `<img id="server-avatar-crop-img" src="${imgSrc}" style="max-width:100%;max-height:100%;display:block;" />`;
+  setTimeout(() => {
+    const img = document.getElementById('server-avatar-crop-img');
+    if (serverAvatarCropper) serverAvatarCropper.destroy();
+    serverAvatarCropper = new window.Cropper(img, {
+      aspectRatio: 1,
+      viewMode: 1,
+      background: false,
+      dragMode: 'move',
+      guides: false,
+      autoCropArea: 1,
+      movable: true,
+      zoomable: true,
+      rotatable: false,
+      scalable: false,
+      cropBoxResizable: true,
+      minCropBoxWidth: 100,
+      minCropBoxHeight: 100,
+    });
+  }, 100);
+  // Confirm/cancel handlers
+  document.getElementById('server-avatar-crop-confirm').onclick = () => {
+    if (!serverAvatarCropper) return;
+    serverAvatarCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob((blob) => {
+      serverAvatarBlob = blob;
+      // Show preview in modal
+      const preview = document.getElementById('server-avatar-preview');
+      preview.src = URL.createObjectURL(blob);
+      preview.style.display = 'block';
+      cropModal.classList.remove('active');
+      setTimeout(() => { cropModal.style.display = 'none'; }, 350);
+      serverAvatarCropper.destroy();
+      serverAvatarCropper = null;
+    }, 'image/png');
+  };
+  document.getElementById('server-avatar-crop-cancel').onclick = () => {
+    cropModal.classList.remove('active');
+    setTimeout(() => { cropModal.style.display = 'none'; }, 350);
+    if (serverAvatarCropper) { serverAvatarCropper.destroy(); serverAvatarCropper = null; }
+  };
+}
+
+// --- Cloudinary Upload Helper ---
+async function uploadServerAvatarToCloudinary(blob) {
+  const formData = new FormData();
+  formData.append('file', blob);
+  formData.append('upload_preset', 'spice_uploads'); // Change to your preset
+  const res = await fetch('https://api.cloudinary.com/v1_1/spicecdn/image/upload', {
+    method: 'POST',
+    body: formData
+  });
+  const data = await res.json();
+  return data.secure_url;
+}
+
+// --- Success Step Logic ---
+function showServerCreateSuccess(server, icon_url) {
+  const customizeStep = document.getElementById('server-create-customize');
+  const successStep = document.getElementById('server-create-success');
+  if (!customizeStep || !successStep) return;
+  customizeStep.style.display = 'none';
+  successStep.style.display = '';
+  // Set avatar and name
+  const avatar = document.getElementById('server-success-avatar');
+  const name = document.getElementById('server-success-name');
+  if (avatar) avatar.src = icon_url || '';
+  if (name) name.textContent = server.name;
+  // Animate confetti
+  animateServerCreateConfetti();
+  // Animate success icon
+  const icon = document.querySelector('.server-create-success-icon');
+  if (icon) {
+    icon.classList.remove('popIn');
+    void icon.offsetWidth;
+    icon.classList.add('popIn');
+  }
+}
+
+// --- Confetti Animation ---
+function animateServerCreateConfetti() {
+  const confettiDiv = document.getElementById('confetti-animation');
+  if (!confettiDiv) return;
+  confettiDiv.innerHTML = '';
+  // Simple confetti burst (CSS/JS, not a library)
+  for (let i = 0; i < 24; i++) {
+    const conf = document.createElement('div');
+    conf.className = 'confetti-piece';
+    conf.style.left = (Math.random() * 100) + '%';
+    conf.style.background = `hsl(${Math.random()*360},90%,60%)`;
+    conf.style.animationDelay = (Math.random() * 0.5) + 's';
+    confettiDiv.appendChild(conf);
+  }
+  // Add CSS for confetti if not present
+  if (!document.getElementById('confetti-style')) {
+    const style = document.createElement('style');
+    style.id = 'confetti-style';
+    style.innerHTML = `
+      .confetti-piece {
+        position: absolute;
+        top: 0;
+        width: 10px;
+        height: 18px;
+        border-radius: 3px;
+        opacity: 0.85;
+        animation: confetti-fall 1.2s cubic-bezier(.4,2,.6,1) forwards;
+      }
+      @keyframes confetti-fall {
+        0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateY(120px) rotate(360deg) scale(0.7); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+// --- Server Creation/Join ---
 function openJoinServerModal() {
   // TODO: Show modal for joining a server by invite code
 }

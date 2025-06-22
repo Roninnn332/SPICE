@@ -3030,4 +3030,220 @@ input:checked + .slider:before {
 
 /* ... existing code ... */
 
+/* --- New Server Creation Modal Styles --- */
+#server-create-customize {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  animation: fadeInUpModal 0.55s cubic-bezier(.4,2,.6,1) both;
+}
+#server-create-customize .modal-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 0.2rem;
+  text-align: center;
+}
+#server-create-customize .modal-desc {
+  color: var(--gray);
+  font-size: 1.08rem;
+  text-align: center;
+  margin-bottom: 0.7rem;
+}
+.server-avatar-upload-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+.server-avatar-upload {
+  width: 96px;
+  height: 96px;
+  border: 2.5px dashed var(--primary-blue);
+  border-radius: 50%;
+  background: var(--off-black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: border 0.18s, box-shadow 0.18s;
+  overflow: hidden;
+}
+.server-avatar-upload:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.server-avatar-upload-plus {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--primary-blue);
+  color: var(--white);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  z-index: 2;
+}
+.server-avatar-upload-icon {
+  font-size: 2.1rem;
+  color: var(--gray);
+  margin-bottom: 0.2rem;
+  z-index: 1;
+}
+.server-avatar-upload-text {
+  font-size: 1.01rem;
+  color: var(--gray);
+  font-weight: 700;
+  z-index: 1;
+}
+.server-avatar-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  background: var(--off-black);
+  border: 2.5px solid var(--primary-blue);
+  display: block;
+}
+.server-name-label {
+  font-size: 1.02rem;
+  color: var(--gray);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  align-self: flex-start;
+}
+#server-name {
+  padding: 0.7em 1em;
+  border-radius: 0.8em;
+  border: 2px solid var(--primary-blue);
+  background: var(--pure-black);
+  color: var(--white);
+  font-size: 1.05rem;
+  outline: none;
+  transition: border 0.18s;
+  width: 100%;
+  margin-bottom: 0.7rem;
+}
+#server-name:focus {
+  border-color: var(--accent);
+}
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 0.7rem;
+}
+.modal-back-btn {
+  background: none;
+  color: var(--gray);
+  font-size: 1.05rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.7em 1.2em;
+  border-radius: 0.8em;
+  transition: color 0.18s, background 0.18s;
+}
+.modal-back-btn:hover {
+  color: var(--accent);
+  background: var(--primary-blue-dark);
+}
+.modal-create-btn {
+  background: var(--primary-blue);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.08rem;
+  padding: 0.7em 1.7em;
+  border: none;
+  border-radius: 1em;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+}
+.modal-create-btn:disabled {
+  background: var(--gray);
+  color: var(--off-black);
+  cursor: not-allowed;
+}
+.modal-create-btn:hover:not(:disabled), .modal-create-btn:focus:not(:disabled) {
+  background: var(--accent);
+  color: var(--pure-black);
+  transform: scale(1.04);
+}
+.server-create-guidelines {
+  color: var(--gray);
+  font-size: 0.98rem;
+  margin-top: 0.7rem;
+  text-align: center;
+}
+/* Success Celebration Step */
+.server-create-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  min-height: 340px;
+  animation: fadeInUpModal 0.55s cubic-bezier(.4,2,.6,1) both;
+}
+.server-create-celebration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+.server-create-success-icon {
+  font-size: 3.5rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  animation: popIn 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+@keyframes popIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  70% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.server-create-success-avatar-name {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  margin-top: 0.5rem;
+}
+.server-create-success-avatar-name img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--primary-blue);
+}
+.server-create-success-avatar-name span {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.confetti-animation {
+  width: 100%;
+  height: 60px;
+  pointer-events: none;
+  position: relative;
+  margin-bottom: 0.7rem;
+}
+/* Hide old modal styles if needed */
+#create-server-modal .modal-content, #create-server-form, #create-server-form label, #create-server-form input[type="text"], #create-server-form input[type="url"], #create-server-form button[type="submit"] {
+  display: none !important;
+}
+
  
