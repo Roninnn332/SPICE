@@ -35,6 +35,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (serversSidebar) {
     renderServersList();
   }
+
+  // Server icon crop modal elements
+  window.serverIconCropConfirm = document.getElementById('server-icon-crop-confirm');
+  window.serverIconCropModal = document.getElementById('server-icon-crop-modal');
+  window.serverIconCropArea = document.getElementById('server-icon-crop-area');
+  window.serverIconCropCancel = document.getElementById('server-icon-crop-cancel');
+  window.serverIconLoading = document.getElementById('server-icon-upload-loading');
+
+  // Wire up close button for create server modal
+  const closeCreateServerModalBtn = document.getElementById('close-create-server-modal');
+  if (closeCreateServerModalBtn) {
+    closeCreateServerModalBtn.onclick = closeCreateServerModal;
+  }
+
+  // If you have other modal event listeners, wire them here as well
 });
 
 // --- Server List UI ---
