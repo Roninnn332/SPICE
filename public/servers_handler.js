@@ -325,6 +325,9 @@ const createServerAvatarPreviewDiv = document.getElementById('create-server-avat
 const createServerAvatarInput = document.getElementById('create-server-avatar-input');
 const createServerAvatarUrlInput = document.getElementById('create-server-avatar-url');
 const serverNameInput = document.getElementById('server-name');
+const createServerForm = document.getElementById('create-server-form');
+const createServerSubmitBtn = createServerForm ? createServerForm.querySelector('button[type="submit"]') : null;
+let isServerAvatarUploading = false;
 
 function updateCreateServerAvatarPreview() {
   const url = createServerAvatarUrlInput.value;
@@ -369,6 +372,12 @@ if (createServerAvatarInput) {
       createServerAvatarPreviewDiv.innerHTML = `<span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>`;
     };
     reader.readAsDataURL(file);
+    // Disable submit and show spinner
+    isServerAvatarUploading = true;
+    if (createServerSubmitBtn) {
+      createServerSubmitBtn.disabled = true;
+      createServerSubmitBtn.textContent = 'Uploading Avatar...';
+    }
     // Upload to Cloudinary
     const formData = new FormData();
     formData.append('file', file);
@@ -389,6 +398,13 @@ if (createServerAvatarInput) {
       .catch(() => {
         alert('Avatar upload error.');
         createServerAvatarUrlInput.value = '';
+      })
+      .finally(() => {
+        isServerAvatarUploading = false;
+        if (createServerSubmitBtn) {
+          createServerSubmitBtn.disabled = false;
+          createServerSubmitBtn.textContent = 'Create Server';
+        }
       });
   });
 }
@@ -669,6 +685,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('create-server-form');
   if (form) {
     form.onsubmit = async (e) => {
+      if (isServerAvatarUploading) {
+        e.preventDefault();
+        alert('Please wait for the avatar upload to finish.');
+        return;
+      }
       e.preventDefault();
       const user = JSON.parse(localStorage.getItem('spice_user'));
       const name = document.getElementById('server-name').value.trim();
