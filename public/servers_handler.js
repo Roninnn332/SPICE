@@ -271,13 +271,20 @@ async function openServerChannel(serverId, channelId) {
               avatar_url: user.avatar_url
             }
           });
+          // Optimistically render own avatar tile immediately for instant feedback
+          renderVoiceTiles([
+            {
+              userId: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          ], chat);
           // Most Important: Listen for voice_state from server right after joining
           window.channelSocket.off('voice_state');
           window.channelSocket.on('voice_state', (users) => {
             renderVoiceTiles(users, chat);
           });
         }
-        // Do NOT render user tiles manually here. Wait for server's voice_state.
         // Show controls
         if (footer) {
           footer.innerHTML = `
