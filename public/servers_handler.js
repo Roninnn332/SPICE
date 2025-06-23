@@ -223,9 +223,32 @@ async function openServerChannel(serverId, channelId) {
   const channel = channelsList.find(c => c.id === channelId);
   // Render channel name in header
   const header = serverChatSection.querySelector('.chat-header');
-  if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  // Fetch messages for the channel
+  if (header) header.textContent = channel ? (channel.type === 'voice' ? `🔊 ${channel.name}` : `# ${channel.name}`) : '# Channel';
+  // Fetch main chat area
   const chat = serverChatSection.querySelector('.chat-messages');
+  const footer = serverChatSection.querySelector('.chat-input-area');
+  if (channel && channel.type === 'voice') {
+    // Render custom voice channel UI
+    if (chat) {
+      chat.innerHTML = `
+        <div class="voice-channel-ui voice-gradient-bg fade-in-up">
+          <div class="voice-channel-content">
+            <div class="voice-channel-icon"><i class='fa-solid fa-volume-high'></i></div>
+            <div class="voice-channel-title">${channel.name}</div>
+            <button class="voice-join-btn btn btn-primary">Join Voice</button>
+          </div>
+        </div>
+      `;
+      // Animate in
+      setTimeout(() => {
+        const ui = chat.querySelector('.voice-channel-ui');
+        if (ui) ui.classList.add('active');
+      }, 10);
+    }
+    if (footer) footer.innerHTML = '';
+    // TODO: Add join logic later
+    return;
+  }
   if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
   const { data: messages, error } = await supabaseClient
     .from('channel_messages')
@@ -252,7 +275,6 @@ async function openServerChannel(serverId, channelId) {
   // Setup Socket.IO for real-time
   setupChannelSocketIO(serverId, channelId, user);
   // Render message input in footer ONLY for text channels
-  const footer = serverChatSection.querySelector('.chat-input-area');
   if (footer) {
     if (channel && channel.type === 'text') {
       footer.innerHTML = `
