@@ -226,6 +226,9 @@ async function openServerChannel(serverId, channelId) {
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
+  // Always setup socket for both text and voice channels
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  setupChannelSocketIO(serverId, channelId, user);
   if (channel && channel.type === 'voice') {
     // Always listen for live updates when a voice channel is open
     if (window.channelSocket && chat) {
@@ -252,7 +255,6 @@ async function openServerChannel(serverId, channelId) {
     if (joinBtn) {
       joinBtn.onclick = function() {
         // Emit join event
-        const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
             serverId,
@@ -334,7 +336,6 @@ async function openServerChannel(serverId, channelId) {
     return;
   }
   // Render messages with premium UI
-  const user = JSON.parse(localStorage.getItem('spice_user'));
   for (const msg of messages) {
     const isMe = String(msg.user_id) === String(user.user_id);
     await appendChannelMessage({
