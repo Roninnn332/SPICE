@@ -230,6 +230,10 @@ async function openServerChannel(serverId, channelId) {
   const user = JSON.parse(localStorage.getItem('spice_user'));
   setupChannelSocketIO(serverId, channelId, user);
   if (channel && channel.type === 'voice') {
+    // Always join the voice room immediately
+    if (window.channelSocket) {
+      window.channelSocket.emit('join_voice_channel', { serverId, channelId });
+    }
     // Always listen for live updates when a voice channel is open
     if (window.channelSocket && chat) {
       window.channelSocket.off('voice_state');
@@ -254,23 +258,6 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // Emit join_voice_channel to join the correct room
-        if (window.channelSocket) {
-          window.channelSocket.emit('join_voice_channel', { serverId, channelId });
-        }
-        // Emit join event
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        if (window.channelSocket) {
-          window.channelSocket.emit('voice_join', {
-            serverId,
-            channelId,
-            user: {
-              userId: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url
-            }
-          });
-        }
         // Optimistically render own avatar tile immediately
         renderVoiceTiles([
           {
