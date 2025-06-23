@@ -254,7 +254,12 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // Emit join_voice_channel to join the correct room
+        if (window.channelSocket) {
+          window.channelSocket.emit('join_voice_channel', { serverId, channelId });
+        }
         // Emit join event
+        const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
             serverId,

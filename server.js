@@ -111,6 +111,13 @@ io.on('connection', (socket) => {
     return `voice-server-${serverId}-channel-${channelId}`;
   }
 
+  socket.on('join_voice_channel', ({ serverId, channelId }) => {
+    const room = getVoiceRoom(serverId, channelId);
+    socket.join(room);
+    socket.voiceRoom = room;
+    // No need to emit anything here; presence is handled by voice_join
+  });
+
   socket.on('voice_join', ({ serverId, channelId, user }) => {
     const room = getVoiceRoom(serverId, channelId);
     socket.join(room);
