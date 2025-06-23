@@ -257,6 +257,14 @@ async function openServerChannel(serverId, channelId) {
             }
           });
         }
+        // Optimistically render own avatar tile immediately
+        renderVoiceTiles([
+          {
+            userId: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          }
+        ], chat);
         // Show controls
         if (footer) {
           footer.innerHTML = `
@@ -386,7 +394,6 @@ function renderVoiceTiles(users, chat) {
           <div class="voice-avatar-img-wrapper">
             ${u.avatar_url ? `<img class="voice-avatar-img" src="${u.avatar_url}" alt="${u.username}">` : `<span class="voice-avatar-initial">${u.username ? u.username[0].toUpperCase() : '?'}</span>`}
           </div>
-          <div class="voice-avatar-username">${u.username}</div>
         </div>
       `).join('')}
     </div>
