@@ -227,6 +227,13 @@ async function openServerChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
+    // Always listen for live updates when a voice channel is open
+    if (window.channelSocket && chat) {
+      window.channelSocket.off('voice_state');
+      window.channelSocket.on('voice_state', (users) => {
+        renderVoiceTiles(users, chat);
+      });
+    }
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -310,13 +317,6 @@ async function openServerChannel(serverId, channelId) {
               openServerChannel(serverId, channelId);
             };
           }
-        }
-        // Listen for live updates
-        if (window.channelSocket) {
-          window.channelSocket.off('voice_state');
-          window.channelSocket.on('voice_state', (users) => {
-            renderVoiceTiles(users, chat);
-          });
         }
       };
     }
