@@ -238,6 +238,7 @@ async function openServerChannel(serverId, channelId) {
     if (window.channelSocket && chat) {
       window.channelSocket.off('voice_state');
       window.channelSocket.on('voice_state', (users) => {
+        console.log('[voice_state] received:', users);
         renderVoiceTiles(users, chat);
       });
     }
