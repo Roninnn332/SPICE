@@ -238,7 +238,6 @@ async function openServerChannel(serverId, channelId) {
     if (window.channelSocket && chat) {
       window.channelSocket.off('voice_state');
       window.channelSocket.on('voice_state', (users) => {
-        console.log('[voice_state] received:', users);
         renderVoiceTiles(users, chat);
       });
     }
@@ -259,32 +258,14 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // Emit join_voice_channel to join the correct room
-        if (window.channelSocket) {
-          window.channelSocket.emit('join_voice_channel', { serverId, channelId });
-          window.channelSocket.emit('voice_join', {
-            serverId,
-            channelId,
-            user: {
-              userId: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url
-            }
-          });
-          // Optimistically render own avatar tile immediately for instant feedback
-          renderVoiceTiles([
-            {
-              userId: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url
-            }
-          ], chat);
-          // Most Important: Listen for voice_state from server right after joining
-          window.channelSocket.off('voice_state');
-          window.channelSocket.on('voice_state', (users) => {
-            renderVoiceTiles(users, chat);
-          });
-        }
+        // Optimistically render own avatar tile immediately
+        renderVoiceTiles([
+          {
+            userId: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          }
+        ], chat);
         // Show controls
         if (footer) {
           footer.innerHTML = `
