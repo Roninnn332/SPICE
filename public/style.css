@@ -3287,4 +3287,76 @@ input:checked + .slider:before {
   display: block;
 }
 
+/* Voice Channel Welcome UI */
+.voice-channel-welcome {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.voice-channel-bg {
+  position: absolute;
+  left: 0; right: 0; bottom: 0; top: 0;
+  background: linear-gradient(to top, #2563eb 0%, rgba(37,99,235,0.12) 40%, transparent 80%);
+  z-index: 1;
+  animation: voice-lighting 3s ease-in-out infinite alternate;
+}
+@keyframes voice-lighting {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+.voice-channel-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  text-align: center;
+}
+.voice-channel-icon {
+  font-size: 2.8rem;
+  color: #b3b3b3;
+  margin-bottom: 0.5rem;
+}
+.voice-channel-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #e0e6f7;
+  margin-bottom: 0.2rem;
+  letter-spacing: 1px;
+}
+.voice-channel-title-text {
+  filter: drop-shadow(0 2px 12px #2563eb44);
+}
+.voice-channel-desc {
+  color: #b3b3b3;
+  font-size: 1.1rem;
+  margin-bottom: 1.2rem;
+}
+.voice-channel-join-btn {
+  background: #fff;
+  color: #2563eb;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  border: none;
+  border-radius: 1.2em;
+  padding: 0.7em 2.2em;
+  cursor: pointer;
+  box-shadow: 0 2px 12px 0 rgba(37,99,235,0.10);
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+}
+.voice-channel-join-btn:hover, .voice-channel-join-btn:focus {
+  background: #2563eb;
+  color: #fff;
+  transform: scale(1.04);
+}
+
  
