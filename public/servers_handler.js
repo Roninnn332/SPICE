@@ -262,9 +262,6 @@ async function openServerChannel(serverId, channelId) {
         // Emit join_voice_channel to join the correct room
         if (window.channelSocket) {
           window.channelSocket.emit('join_voice_channel', { serverId, channelId });
-        }
-        // Emit voice_join to notify server and all users
-        if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
             serverId,
             channelId,
@@ -274,8 +271,13 @@ async function openServerChannel(serverId, channelId) {
               avatar_url: user.avatar_url
             }
           });
+          // Most Important: Listen for voice_state from server right after joining
+          window.channelSocket.off('voice_state');
+          window.channelSocket.on('voice_state', (users) => {
+            renderVoiceTiles(users, chat);
+          });
         }
-        // Do NOT optimistically render own avatar; wait for voice_state
+        // Do NOT render user tiles manually here. Wait for server's voice_state.
         // Show controls
         if (footer) {
           footer.innerHTML = `
