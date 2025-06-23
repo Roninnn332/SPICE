@@ -258,14 +258,23 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // Optimistically render own avatar tile immediately
-        renderVoiceTiles([
-          {
-            userId: user.user_id,
-            username: user.username,
-            avatar_url: user.avatar_url
-          }
-        ], chat);
+        // Emit join_voice_channel to join the correct room
+        if (window.channelSocket) {
+          window.channelSocket.emit('join_voice_channel', { serverId, channelId });
+        }
+        // Emit voice_join to notify server and all users
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              userId: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+        }
+        // Do NOT optimistically render own avatar; wait for voice_state
         // Show controls
         if (footer) {
           footer.innerHTML = `
