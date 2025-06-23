@@ -240,12 +240,49 @@ async function openServerChannel(serverId, channelId) {
       </div>
     `;
     if (footer) footer.innerHTML = '';
-    // Optionally: add event listener for Join Voice button here
+    // Add event listener for Join Voice button
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // TODO: Implement join voice logic
-        alert('Join Voice clicked!');
+        // Remove welcome, show coming soon, and show controls in footer
+        if (chat) chat.innerHTML = `<div class='voice-coming-soon'>Coming soon!</div>`;
+        if (footer) {
+          footer.innerHTML = `
+            <div class="voice-controls animate-stagger">
+              <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
+              <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
+              <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
+            </div>
+          `;
+          // Mic toggle
+          const micBtn = footer.querySelector('.mic-btn');
+          let micOn = true;
+          if (micBtn) {
+            micBtn.onclick = function() {
+              micOn = !micOn;
+              micBtn.innerHTML = micOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+              micBtn.classList.toggle('off', !micOn);
+            };
+          }
+          // Deafen toggle
+          const deafenBtn = footer.querySelector('.deafen-btn');
+          let deafenOn = false;
+          if (deafenBtn) {
+            deafenBtn.onclick = function() {
+              deafenOn = !deafenOn;
+              deafenBtn.innerHTML = deafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
+              deafenBtn.classList.toggle('off', deafenOn);
+            };
+          }
+          // Leave button
+          const leaveBtn = footer.querySelector('.leave-btn');
+          if (leaveBtn) {
+            leaveBtn.onclick = function() {
+              // Restore the original voice channel welcome UI
+              openServerChannel(serverId, channelId);
+            };
+          }
+        }
       };
     }
     return;
