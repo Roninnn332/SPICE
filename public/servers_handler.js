@@ -244,8 +244,20 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // Remove welcome, show coming soon, and show controls in footer
-        if (chat) chat.innerHTML = `<div class='voice-coming-soon'>Coming soon!</div>`;
+        // Emit join event
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              userId: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+        }
+        // Show controls
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
@@ -278,10 +290,25 @@ async function openServerChannel(serverId, channelId) {
           const leaveBtn = footer.querySelector('.leave-btn');
           if (leaveBtn) {
             leaveBtn.onclick = function() {
+              // Emit leave event
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_leave', {
+                  serverId,
+                  channelId,
+                  userId: user.user_id
+                });
+              }
               // Restore the original voice channel welcome UI
               openServerChannel(serverId, channelId);
             };
           }
+        }
+        // Listen for live updates
+        if (window.channelSocket) {
+          window.channelSocket.off('voice_state');
+          window.channelSocket.on('voice_state', (users) => {
+            renderVoiceTiles(users, chat);
+          });
         }
       };
     }
@@ -343,6 +370,27 @@ async function openServerChannel(serverId, channelId) {
       footer.innerHTML = '';
     }
   }
+}
+
+// Render voice channel avatar tiles
+function renderVoiceTiles(users, chat) {
+  if (!chat) return;
+  if (!users || users.length === 0) {
+    chat.innerHTML = `<div class='voice-channel-tiles-empty'>No one is currently in voice</div>`;
+    return;
+  }
+  chat.innerHTML = `
+    <div class="voice-channel-tiles">
+      ${users.map(u => `
+        <div class="voice-avatar-tile animate-stagger">
+          <div class="voice-avatar-img-wrapper">
+            ${u.avatar_url ? `<img class="voice-avatar-img" src="${u.avatar_url}" alt="${u.username}">` : `<span class="voice-avatar-initial">${u.username ? u.username[0].toUpperCase() : '?'}</span>`}
+          </div>
+          <div class="voice-avatar-username">${u.username}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 // --- Server Creation/Join ---

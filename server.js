@@ -104,7 +104,47 @@ io.on('connection', (socket) => {
     io.to(user2).emit('delete', timestamp);
   });
 
+  // --- Voice Channel Presence ---
+  const voiceChannelUsers = {};
+
+  function getVoiceRoom(serverId, channelId) {
+    return `voice-server-${serverId}-channel-${channelId}`;
+  }
+
+  socket.on('voice_join', ({ serverId, channelId, user }) => {
+    const room = getVoiceRoom(serverId, channelId);
+    socket.join(room);
+    socket.voiceRoom = room;
+    socket.voiceUser = user;
+    if (!voiceChannelUsers[room]) voiceChannelUsers[room] = [];
+    // Prevent duplicates
+    if (!voiceChannelUsers[room].some(u => u.userId === user.userId)) {
+      voiceChannelUsers[room].push(user);
+    }
+    io.to(room).emit('voice_state', voiceChannelUsers[room]);
+  });
+
+  socket.on('voice_leave', ({ serverId, channelId, userId }) => {
+    const room = getVoiceRoom(serverId, channelId);
+    socket.leave(room);
+    if (voiceChannelUsers[room]) {
+      voiceChannelUsers[room] = voiceChannelUsers[room].filter(u => u.userId !== userId);
+      io.to(room).emit('voice_state', voiceChannelUsers[room]);
+    }
+    if (socket.voiceRoom === room) {
+      delete socket.voiceRoom;
+      delete socket.voiceUser;
+    }
+  });
+
   socket.on('disconnect', () => {
+    if (socket.voiceRoom && voiceChannelUsers[socket.voiceRoom]) {
+      const userId = socket.voiceUser && socket.voiceUser.userId;
+      if (userId) {
+        voiceChannelUsers[socket.voiceRoom] = voiceChannelUsers[socket.voiceRoom].filter(u => u.userId !== userId);
+        io.to(socket.voiceRoom).emit('voice_state', voiceChannelUsers[socket.voiceRoom]);
+      }
+    }
     console.log('User disconnected:', socket.id);
   });
 });
