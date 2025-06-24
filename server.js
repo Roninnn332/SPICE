@@ -127,6 +127,8 @@ io.on('connection', (socket) => {
     if (!voiceChannelUsers[room]) {
       voiceChannelUsers[room] = [];
     }
+    // Set socket.voiceUser for disconnect cleanup
+    socket.voiceUser = user;
     // Update presence (update if exists, else add)
     const existingIndex = voiceChannelUsers[room].findIndex(u => u.userId === user.userId);
     if (existingIndex >= 0) {
@@ -134,9 +136,7 @@ io.on('connection', (socket) => {
     } else {
       voiceChannelUsers[room].push(user);
     }
-    // Broadcast to all in room
     io.to(room).emit('voice_state', voiceChannelUsers[room]);
-    // Debug log
     console.log(`Voice state update for room ${room}:`, voiceChannelUsers[room]);
   });
 
