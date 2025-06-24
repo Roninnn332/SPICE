@@ -23,6 +23,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// --- Voice Channel Presence (GLOBAL) ---
+const voiceChannelUsers = {};
+
 // Socket.IO DM logic
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -105,8 +108,6 @@ io.on('connection', (socket) => {
   });
 
   // --- Voice Channel Presence ---
-  const voiceChannelUsers = {};
-
   function getVoiceRoom(serverId, channelId) {
     return `voice-server-${serverId}-channel-${channelId}`;
   }

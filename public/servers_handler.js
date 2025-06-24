@@ -166,10 +166,7 @@ let currentChannelRoom = null;
 function setupChannelSocketIO(serverId, channelId, user) {
   if (!window.io) return;
   if (!channelSocket) {
-    // Always use the deployed backend URL when not on localhost
-    const socketUrl = window.location.hostname === 'localhost'
-      ? 'http://localhost:3000'
-      : 'https://spice-edzx.onrender.com:10000';
+    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
     channelSocket = window.io(socketUrl);
   }
   // Leave previous room
