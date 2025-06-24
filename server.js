@@ -120,11 +120,12 @@ io.on('connection', (socket) => {
 
   socket.on('voice_join', ({ serverId, channelId, user }) => {
     const room = getVoiceRoom(serverId, channelId);
+    console.log('voice_join received:', user);
+    console.log('Joining voice room:', room);
     socket.join(room);
     socket.voiceRoom = room;
     socket.voiceUser = user;
     if (!voiceChannelUsers[room]) voiceChannelUsers[room] = [];
-    // Prevent duplicates
     if (!voiceChannelUsers[room].some(u => u.userId === user.userId)) {
       voiceChannelUsers[room].push(user);
     }

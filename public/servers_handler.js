@@ -266,6 +266,16 @@ async function openServerChannel(serverId, channelId) {
             avatar_url: user.avatar_url
           }
         ], chat);
+        // Debug log before emitting voice_join
+        console.log("Emitting voice_join with:", {
+          serverId,
+          channelId,
+          user: {
+            userId: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          }
+        });
         // Emit voice_join to notify server
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
