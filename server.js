@@ -24,7 +24,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // --- Voice Channel Presence (GLOBAL) ---
-const voiceChannelUsers = {};
+const voiceChannelUsers = {}; // Structure: { 'voice-server-X-channel-Y': [{ userId, username, avatar_url }, ...] }
 
 // Socket.IO DM logic
 io.on('connection', (socket) => {
@@ -116,10 +116,13 @@ io.on('connection', (socket) => {
     const room = getVoiceRoom(serverId, channelId);
     socket.join(room);
     socket.voiceRoom = room;
-    // Send current state to the joining user
-    if (voiceChannelUsers[room]) {
-      socket.emit('voice_state', voiceChannelUsers[room]);
+    // Always initialize the room array
+    if (!voiceChannelUsers[room]) {
+      voiceChannelUsers[room] = [];
     }
+    // Send current state to the joining user
+    socket.emit('voice_state', voiceChannelUsers[room]);
+    console.log(`Socket ${socket.id} joined voice channel room ${room}`);
   });
 
   socket.on('voice_join', ({ serverId, channelId, user }) => {
@@ -127,25 +130,37 @@ io.on('connection', (socket) => {
     if (!voiceChannelUsers[room]) {
       voiceChannelUsers[room] = [];
     }
-    // Set socket.voiceUser for disconnect cleanup
-    socket.voiceUser = user;
-    // Update presence (update if exists, else add)
-    const existingIndex = voiceChannelUsers[room].findIndex(u => u.userId === user.userId);
+    // Set socket.voiceUser for disconnect handling
+    socket.voiceUser = {
+      userId: user.userId,
+      username: user.username,
+      avatar_url: user.avatar_url
+    };
+    // Check if user already exists in the room to prevent duplicates
+    const existingIndex = voiceChannelUsers[room].findIndex(u => String(u.userId) === String(user.userId));
     if (existingIndex >= 0) {
-      voiceChannelUsers[room][existingIndex] = user;
+      // Update existing user's info
+      voiceChannelUsers[room][existingIndex] = socket.voiceUser;
     } else {
-      voiceChannelUsers[room].push(user);
+      // Add new user
+      voiceChannelUsers[room].push(socket.voiceUser);
     }
+    // Broadcast the updated state to all in the room
     io.to(room).emit('voice_state', voiceChannelUsers[room]);
-    console.log(`Voice state update for room ${room}:`, voiceChannelUsers[room]);
+    console.log(`Voice state update for room ${room} (JOIN):`, voiceChannelUsers[room]);
   });
 
   socket.on('voice_leave', ({ serverId, channelId, userId }) => {
     const room = getVoiceRoom(serverId, channelId);
-    socket.leave(room);
     if (voiceChannelUsers[room]) {
-      voiceChannelUsers[room] = voiceChannelUsers[room].filter(u => u.userId !== userId);
+      voiceChannelUsers[room] = voiceChannelUsers[room].filter(u => String(u.userId) !== String(userId));
       io.to(room).emit('voice_state', voiceChannelUsers[room]);
+      console.log(`Voice state update for room ${room} (LEAVE):`, voiceChannelUsers[room]);
+      // Clean up empty rooms
+      if (voiceChannelUsers[room].length === 0) {
+        delete voiceChannelUsers[room];
+        console.log(`Voice room ${room} is empty and cleaned up.`);
+      }
     }
     if (socket.voiceRoom === room) {
       delete socket.voiceRoom;
@@ -154,14 +169,20 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    if (socket.voiceRoom && voiceChannelUsers[socket.voiceRoom]) {
-      const userId = socket.voiceUser && socket.voiceUser.userId;
-      if (userId) {
-        voiceChannelUsers[socket.voiceRoom] = voiceChannelUsers[socket.voiceRoom].filter(u => u.userId !== userId);
-        io.to(socket.voiceRoom).emit('voice_state', voiceChannelUsers[socket.voiceRoom]);
+    console.log('User disconnected:', socket.id);
+    if (socket.voiceRoom && socket.voiceUser && socket.voiceUser.userId) {
+      const room = socket.voiceRoom;
+      const userId = socket.voiceUser.userId;
+      if (voiceChannelUsers[room]) {
+        voiceChannelUsers[room] = voiceChannelUsers[room].filter(u => String(u.userId) !== String(userId));
+        io.to(room).emit('voice_state', voiceChannelUsers[room]);
+        console.log(`Voice state update for room ${room} (DISCONNECT):`, voiceChannelUsers[room]);
+        if (voiceChannelUsers[room].length === 0) {
+          delete voiceChannelUsers[room];
+          console.log(`Voice room ${room} is empty and cleaned up on disconnect.`);
+        }
       }
     }
-    console.log('User disconnected:', socket.id);
   });
 });
 
