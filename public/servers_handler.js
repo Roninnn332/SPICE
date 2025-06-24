@@ -238,6 +238,7 @@ async function openServerChannel(serverId, channelId) {
     if (window.channelSocket && chat) {
       window.channelSocket.off('voice_state');
       window.channelSocket.on('voice_state', (users) => {
+        console.log("Received voice_state", users); // Debug log
         renderVoiceTiles(users, chat);
       });
     }
@@ -262,6 +263,7 @@ async function openServerChannel(serverId, channelId) {
         if (window.channelSocket && chat) {
           window.channelSocket.off('voice_state');
           window.channelSocket.on('voice_state', (users) => {
+            console.log("Received voice_state", users); // Debug log
             renderVoiceTiles(users, chat);
           });
         }
@@ -391,6 +393,7 @@ async function openServerChannel(serverId, channelId) {
 
 // Render voice channel avatar tiles
 function renderVoiceTiles(users, chat) {
+  console.log("Rendering voice tiles", users); // Debug log
   if (!chat) return;
   if (!users || users.length === 0) {
     chat.innerHTML = `<div class='voice-channel-tiles-empty'>No one is currently in voice</div>`;
