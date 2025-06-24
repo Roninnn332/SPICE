@@ -116,21 +116,28 @@ io.on('connection', (socket) => {
     const room = getVoiceRoom(serverId, channelId);
     socket.join(room);
     socket.voiceRoom = room;
-    // No need to emit anything here; presence is handled by voice_join
+    // Send current state to the joining user
+    if (voiceChannelUsers[room]) {
+      socket.emit('voice_state', voiceChannelUsers[room]);
+    }
   });
 
   socket.on('voice_join', ({ serverId, channelId, user }) => {
     const room = getVoiceRoom(serverId, channelId);
-    console.log('voice_join received:', user);
-    console.log('Joining voice room:', room);
-    socket.join(room);
-    socket.voiceRoom = room;
-    socket.voiceUser = user;
-    if (!voiceChannelUsers[room]) voiceChannelUsers[room] = [];
-    if (!voiceChannelUsers[room].some(u => u.userId === user.userId)) {
+    if (!voiceChannelUsers[room]) {
+      voiceChannelUsers[room] = [];
+    }
+    // Update presence (update if exists, else add)
+    const existingIndex = voiceChannelUsers[room].findIndex(u => u.userId === user.userId);
+    if (existingIndex >= 0) {
+      voiceChannelUsers[room][existingIndex] = user;
+    } else {
       voiceChannelUsers[room].push(user);
     }
+    // Broadcast to all in room
     io.to(room).emit('voice_state', voiceChannelUsers[room]);
+    // Debug log
+    console.log(`Voice state update for room ${room}:`, voiceChannelUsers[room]);
   });
 
   socket.on('voice_leave', ({ serverId, channelId, userId }) => {
