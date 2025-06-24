@@ -266,6 +266,18 @@ async function openServerChannel(serverId, channelId) {
             avatar_url: user.avatar_url
           }
         ], chat);
+        // Emit voice_join to notify server
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              userId: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+        }
         // Show controls
         if (footer) {
           footer.innerHTML = `
