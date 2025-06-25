@@ -118,12 +118,15 @@ io.on('connection', (socket) => {
     }
     voiceParticipants[roomId].add(JSON.stringify(user));
 
-    // Debug logging
-    console.log(`[voice_join] roomId: ${roomId}, user:`, user);
-    console.log(`[voice_join] participants:`, Array.from(voiceParticipants[roomId]));
+    const participants = Array.from(voiceParticipants[roomId]);
 
-    // Notify others in the room
-    io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
+    // Send full list to new user
+    socket.emit('voice_user_joined', participants);
+    // Notify others
+    socket.to(roomId).emit('voice_user_joined', participants);
+
+    console.log(`[voice_join] ${user.username} joined ${roomId}`);
+    console.log(`[voice_join] participants now:`, participants);
   });
 
   socket.on('voice_leave', () => {

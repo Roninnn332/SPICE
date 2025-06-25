@@ -306,6 +306,7 @@ async function openServerChannel(serverId, channelId) {
           });
           window.channelSocket.off('voice_user_joined');
           window.channelSocket.on('voice_user_joined', (users) => {
+            console.log('[Client] Received updated users in voice:', users);
             updateVoiceUserCards(users);
           });
         }
@@ -1160,6 +1161,7 @@ function setupVoiceChannelSocketIO(serverId, channelId, user) {
   channelSocket.emit('join_channel', { serverId, channelId });
   // Listen for new messages
   channelSocket.on('voice_user_joined', (users) => {
+    console.log('[Client] Received updated users in voice:', users);
     updateVoiceUserCards(users);
   });
 }
@@ -1254,6 +1256,7 @@ async function openVoiceChannel(serverId, channelId) {
           });
           window.channelSocket.off('voice_user_joined');
           window.channelSocket.on('voice_user_joined', (users) => {
+            console.log('[Client] Received updated users in voice:', users);
             updateVoiceUserCards(users);
           });
         }
