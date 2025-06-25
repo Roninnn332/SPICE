@@ -5,6 +5,8 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const { createClient: createRedisClient } = require('redis');
 
 const app = express();
 const server = http.createServer(app);
@@ -22,6 +24,13 @@ app.use(express.static('public'));
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+// --- Redis Adapter for Socket.IO (multi-instance support) ---
+const pubClient = createRedisClient({ url: process.env.REDIS_URL });
+const subClient = pubClient.duplicate();
+Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+  io.adapter(createAdapter(pubClient, subClient));
+});
 
 // --- Voice Channel Presence (GLOBAL) ---
 const voiceChannelUsers = {}; // Structure: { 'voice-server-X-channel-Y': [{ userId, username, avatar_url }, ...] }
