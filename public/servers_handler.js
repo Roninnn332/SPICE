@@ -265,25 +265,32 @@ async function openServerChannel(serverId, channelId) {
             serverId,
             channelId
           });
-          // 3. Then, emit voice_join with full user info
-          window.channelSocket.emit('voice_join', {
-            serverId,
-            channelId,
-            user: {
-              userId: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url
-            }
-          });
+
+          // Set up a one-time listener for the first voice_state after joining
+          const handleFirstVoiceState = (users) => {
+            // 3. Then, emit voice_join with full user info
+            window.channelSocket.emit('voice_join', {
+              serverId,
+              channelId,
+              user: {
+                userId: user.user_id,
+                username: user.username,
+                avatar_url: user.avatar_url
+              }
+            });
+            // Immediately update UI to show current user's tile
+            renderVoiceTiles([
+              {
+                userId: user.user_id,
+                username: user.username,
+                avatar_url: user.avatar_url
+              }
+            ], chat);
+            // Remove this one-time listener
+            window.channelSocket.off('voice_state', handleFirstVoiceState);
+          };
+          window.channelSocket.on('voice_state', handleFirstVoiceState);
         }
-        // Immediately update UI to show current user's tile
-        renderVoiceTiles([
-          {
-            userId: user.user_id,
-            username: user.username,
-            avatar_url: user.avatar_url
-          }
-        ], chat);
         // 4. Show controls (mic, deafen, leave)
         if (footer) {
           footer.innerHTML = `
