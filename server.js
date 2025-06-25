@@ -104,69 +104,7 @@ io.on('connection', (socket) => {
     io.to(user2).emit('delete', timestamp);
   });
 
-  // --- Voice Channel Presence ---
-  const voiceChannelUsers = new Map(); // channelKey => Set of user objects
-
-  function getVoiceRoom(serverId, channelId) {
-    return `voice-server-${serverId}-channel-${channelId}`;
-  }
-
-  socket.on('voice_join', ({ serverId, channelId, user }) => {
-    const room = getVoiceRoom(serverId, channelId);
-    socket.join(room);
-    socket.voiceRoom = room;
-    socket.voiceUser = user;
-    // Add user to the Set for this channel
-    if (!voiceChannelUsers.has(room)) voiceChannelUsers.set(room, new Set());
-    // Remove any previous user with same userId (avoid duplicates)
-    const usersSet = voiceChannelUsers.get(room);
-    for (const u of usersSet) {
-      if (u.userId === user.userId) usersSet.delete(u);
-    }
-    usersSet.add(user);
-    // Broadcast full user list to all in the room
-    const userList = Array.from(usersSet);
-    io.to(room).emit('voice_state', userList);
-  });
-
-  socket.on('voice_leave', ({ serverId, channelId, userId }) => {
-    const room = getVoiceRoom(serverId, channelId);
-    socket.leave(room);
-    if (voiceChannelUsers.has(room)) {
-      const usersSet = voiceChannelUsers.get(room);
-      for (const u of usersSet) {
-        if (u.userId === userId) usersSet.delete(u);
-      }
-      // Broadcast updated user list
-      io.to(room).emit('voice_state', Array.from(usersSet));
-    }
-    if (socket.voiceRoom === room) {
-      delete socket.voiceRoom;
-      delete socket.voiceUser;
-    }
-  });
-
-  socket.on('request_voice_state', ({ serverId, channelId }) => {
-    const room = getVoiceRoom(serverId, channelId);
-    if (voiceChannelUsers.has(room)) {
-      socket.emit('voice_state', Array.from(voiceChannelUsers.get(room)));
-    } else {
-      socket.emit('voice_state', []);
-    }
-  });
-
   socket.on('disconnect', () => {
-    // Remove user from all channels they were in
-    if (socket.voiceRoom && voiceChannelUsers.has(socket.voiceRoom)) {
-      const usersSet = voiceChannelUsers.get(socket.voiceRoom);
-      const userId = socket.voiceUser && socket.voiceUser.userId;
-      if (userId) {
-        for (const u of usersSet) {
-          if (u.userId === userId) usersSet.delete(u);
-        }
-        io.to(socket.voiceRoom).emit('voice_state', Array.from(usersSet));
-      }
-    }
     console.log('User disconnected:', socket.id);
   });
 });
