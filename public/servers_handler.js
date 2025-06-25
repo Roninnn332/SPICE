@@ -244,8 +244,7 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // Remove welcome, show coming soon, and show controls in footer
-        if (chat) chat.innerHTML = `<div class='voice-coming-soon'>Coming soon!</div>`;
+        // Remove welcome, show controls in footer
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
@@ -279,9 +278,36 @@ async function openServerChannel(serverId, channelId) {
           if (leaveBtn) {
             leaveBtn.onclick = function() {
               // Restore the original voice channel welcome UI
-              openServerChannel(serverId, channelId);
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_leave');
+                window.channelSocket.off('voice_user_joined');
+              }
+              openVoiceChannel(serverId, channelId);
             };
           }
+        }
+        // Immediately show own user card
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        updateVoiceUserCards([JSON.stringify({
+          user_id: user.user_id,
+          username: user.username,
+          avatar_url: user.avatar_url
+        })]);
+        // Emit join and listen for updates
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              user_id: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+          window.channelSocket.off('voice_user_joined');
+          window.channelSocket.on('voice_user_joined', (users) => {
+            updateVoiceUserCards(users);
+          });
         }
       };
     }
@@ -1166,8 +1192,7 @@ async function openVoiceChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // Remove welcome, show coming soon, and show controls in footer
-        if (chat) chat.innerHTML = `<div class='voice-coming-soon'>Coming soon!</div>`;
+        // Remove welcome, show controls in footer
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
@@ -1201,9 +1226,36 @@ async function openVoiceChannel(serverId, channelId) {
           if (leaveBtn) {
             leaveBtn.onclick = function() {
               // Restore the original voice channel welcome UI
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_leave');
+                window.channelSocket.off('voice_user_joined');
+              }
               openVoiceChannel(serverId, channelId);
             };
           }
+        }
+        // Immediately show own user card
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        updateVoiceUserCards([JSON.stringify({
+          user_id: user.user_id,
+          username: user.username,
+          avatar_url: user.avatar_url
+        })]);
+        // Emit join and listen for updates
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              user_id: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+          window.channelSocket.off('voice_user_joined');
+          window.channelSocket.on('voice_user_joined', (users) => {
+            updateVoiceUserCards(users);
+          });
         }
       };
     }
