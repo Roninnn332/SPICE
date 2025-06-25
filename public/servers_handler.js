@@ -289,14 +289,7 @@ async function openServerChannel(serverId, channelId) {
             }
           });
         }
-        // Optimistically render own avatar tile immediately
-        renderVoiceTiles([
-          {
-            userId: user.user_id,
-            username: user.username,
-            avatar_url: user.avatar_url
-          }
-        ], chat);
+        // Do NOT optimistically render own avatar tile here. Wait for server's voice_state event.
         // Show controls
         if (footer) {
           footer.innerHTML = `
