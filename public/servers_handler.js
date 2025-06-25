@@ -283,17 +283,15 @@ async function openServerChannel(serverId, channelId) {
               avatar_url: user.avatar_url
             }
           });
-        };
+          // Immediately request the current voice state to update UI
+          window.channelSocket.emit('request_voice_state', { serverId, channelId });
+        }
         if (window.channelSocket && chat) {
-          window.channelSocket.off('voice_state'); // Remove old listener
+          window.channelSocket.off('voice_state');
           window.channelSocket.on('voice_state', (users) => {
             renderVoiceTiles(users, chat);
           });
         }
-        
-     // ❌ DO NOT render voice tiles here.
-  // ✅ Wait for the server to send the full list using 'voice_state' event.
-
         // Show controls
         if (footer) {
           footer.innerHTML = `
