@@ -182,16 +182,7 @@ function setupChannelSocketIO(serverId, channelId, user) {
   channelSocket.emit('join_channel', { serverId, channelId });
 
   // --- Voice Channel presence updates ---
-  channelSocket.emit('voice_join', {
-    serverId,
-    channelId,
-    user: {
-      userId: user.user_id,
-      username: user.username,
-      avatar_url: user.avatar_url
-    }
-  });
-
+  // Moved initial 'voice_join' emit to openServerChannel when "Join Voice" is clicked
   channelSocket.on('voice_state', (users) => {
     const chat = document.querySelector('.chat-messages');
     renderVoiceTiles(users, chat);
@@ -246,14 +237,13 @@ async function openServerChannel(serverId, channelId) {
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
+
+  // Setup Socket.IO for real-time messages and voice state (even for text channels)
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  setupChannelSocketIO(serverId, channelId, user);
+
+
   if (channel && channel.type === 'voice') {
-    // Always listen for live updates when a voice channel is open
-    if (window.channelSocket && chat) {
-      window.channelSocket.off('voice_state');
-      window.channelSocket.on('voice_state', (users) => {
-        renderVoiceTiles(users, chat);
-      });
-    }
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -261,10 +251,11 @@ async function openServerChannel(serverId, channelId) {
         <div class="voice-channel-center">
           <div class="voice-channel-icon"><i class='fa-solid fa-volume-high'></i></div>
           <div class="voice-channel-title">${channel.name ? `<span class='voice-channel-title-text'>${channel.name}</span>` : ''}</div>
-          <div class="voice-channel-desc">No one is currently in voice</div>
+          <div class="voice-channel-desc" id="voice-channel-user-count">No one is currently in voice</div>
           <button class="voice-channel-join-btn">Join Voice</button>
         </div>
       </div>
+      <div class="voice-channel-tiles-container"></div>
     `;
     if (footer) footer.innerHTML = '';
     // Add event listener for Join Voice button
@@ -284,15 +275,10 @@ async function openServerChannel(serverId, channelId) {
             }
           });
         }
-        // Optimistically render own avatar tile immediately
-        renderVoiceTiles([
-          {
-            userId: user.user_id,
-            username: user.username,
-            avatar_url: user.avatar_url
-          }
-        ], chat);
-        // Show controls
+        // Hide welcome UI and show controls
+        const welcomeUI = chat.querySelector('.voice-channel-welcome');
+        if (welcomeUI) welcomeUI.style.display = 'none';
+
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
@@ -340,8 +326,14 @@ async function openServerChannel(serverId, channelId) {
         }
       };
     }
+    // Also, immediately request current voice state when opening a voice channel
+    if (window.channelSocket) {
+      window.channelSocket.emit('request_voice_state', { serverId, channelId });
+    }
     return;
   }
+  
+  // For text channels:
   if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
   const { data: messages, error } = await supabaseClient
     .from('channel_messages')
@@ -354,7 +346,6 @@ async function openServerChannel(serverId, channelId) {
     return;
   }
   // Render messages with premium UI
-  const user = JSON.parse(localStorage.getItem('spice_user'));
   for (const msg of messages) {
     const isMe = String(msg.user_id) === String(user.user_id);
     await appendChannelMessage({
@@ -365,8 +356,7 @@ async function openServerChannel(serverId, channelId) {
       timestamp: msg.created_at
     }, isMe ? 'me' : 'them');
   }
-  // Setup Socket.IO for real-time
-  setupChannelSocketIO(serverId, channelId, user);
+  
   // Render message input in footer ONLY for text channels
   if (footer) {
     if (channel && channel.type === 'text') {
@@ -403,22 +393,44 @@ async function openServerChannel(serverId, channelId) {
 // Render voice channel avatar tiles
 function renderVoiceTiles(users, chat) {
   if (!chat) return;
+  const voiceTilesContainer = chat.querySelector('.voice-channel-tiles-container');
+  const voiceUserCount = chat.querySelector('#voice-channel-user-count');
+
+  if (!voiceTilesContainer) {
+      console.warn("Voice tiles container not found.");
+      return;
+  }
+
   if (!users || users.length === 0) {
-    chat.innerHTML = `<div class='voice-channel-tiles-empty'>No one is currently in voice</div>`;
+    voiceTilesContainer.innerHTML = ''; // Clear tiles
+    if (voiceUserCount) voiceUserCount.textContent = 'No one is currently in voice';
+    // If the welcome UI is hidden, show it again if no one is in voice
+    const welcomeUI = chat.querySelector('.voice-channel-welcome');
+    if (welcomeUI && welcomeUI.style.display === 'none') {
+        welcomeUI.style.display = 'flex';
+    }
     return;
   }
-  chat.innerHTML = `
+
+  // Hide the welcome UI if there are users
+  const welcomeUI = chat.querySelector('.voice-channel-welcome');
+  if (welcomeUI) welcomeUI.style.display = 'none';
+
+  voiceTilesContainer.innerHTML = `
     <div class="voice-channel-tiles">
       ${users.map(u => `
         <div class="voice-avatar-tile animate-stagger">
           <div class="voice-avatar-img-wrapper">
             ${u.avatar_url ? `<img class="voice-avatar-img" src="${u.avatar_url}" alt="${u.username}">` : `<span class="voice-avatar-initial">${u.username ? u.username[0].toUpperCase() : '?'}</span>`}
           </div>
+          <div class="voice-avatar-username">${u.username}</div>
         </div>
       `).join('')}
     </div>
   `;
+  if (voiceUserCount) voiceUserCount.textContent = `${users.length} user${users.length === 1 ? '' : 's'} in voice`;
 }
+
 
 // --- Server Creation/Join ---
 function openCreateServerModal() {
@@ -443,6 +455,8 @@ function openCreateServerModal() {
   }
   const nameInput = document.getElementById('server-name');
   if (nameInput) nameInput.focus();
+  const createServerAvatarUrlInput = document.getElementById('create-server-avatar-url'); // Define here
+  const serverNameInput = document.getElementById('server-name'); // Define here
   if (createServerAvatarUrlInput) createServerAvatarUrlInput.value = '';
   if (serverNameInput) serverNameInput.value = '';
   updateCreateServerAvatarPreview();
@@ -998,6 +1012,13 @@ async function fetchServerInvites() {
   invitesList.querySelectorAll('.friend-request-accept').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.getAttribute('data-id');
+      // Add member to server_members table
+      const invite = invites.find(i => String(i.id) === String(id));
+      if (invite && currentServer) {
+        await supabaseClient.from('server_members').insert([
+          { server_id: currentServer.id, user_id: invite.user_id, role: 'member' }
+        ]);
+      }
       await supabaseClient.from('server_invites').update({ status: 'accepted' }).eq('id', id);
       fetchServerInvites();
     };
@@ -1173,4 +1194,4 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
     serverSettingsNameText.style.display = '';
     serverSettingsEditNameBtn.style.display = '';
   };
-} 
+}
