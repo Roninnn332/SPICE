@@ -120,13 +120,18 @@ io.on('connection', (socket) => {
 
     const participants = Array.from(voiceParticipants[roomId]);
 
-    // Send full list to new user
+    // Send full list to the user who just joined
     socket.emit('voice_user_joined', participants);
-    // Notify others
+    // Also notify everyone else
     socket.to(roomId).emit('voice_user_joined', participants);
 
-    console.log(`[voice_join] ${user.username} joined ${roomId}`);
-    console.log(`[voice_join] participants now:`, participants);
+    // Debug log: show usernames
+    try {
+      const names = participants.map(u => JSON.parse(u).username);
+      console.log(`[voice_join] ${user.username} joined. Participants now:`, names);
+    } catch (e) {
+      console.log(`[voice_join] ${user.username} joined. Participants now:`, participants);
+    }
   });
 
   socket.on('voice_leave', () => {
