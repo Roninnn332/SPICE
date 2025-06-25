@@ -116,15 +116,16 @@ io.on('connection', (socket) => {
     socket.join(room);
     socket.voiceRoom = room;
     socket.voiceUser = user;
+    // Add user to the Set for this channel
     if (!voiceChannelUsers.has(room)) voiceChannelUsers.set(room, new Set());
+    // Remove any previous user with same userId (avoid duplicates)
     const usersSet = voiceChannelUsers.get(room);
     for (const u of usersSet) {
       if (u.userId === user.userId) usersSet.delete(u);
     }
     usersSet.add(user);
+    // Broadcast full user list to all in the room
     const userList = Array.from(usersSet);
-    console.log(`[SERVER] ${user.username} (${user.userId}) joined voice: ${room}`);
-    console.log(`[SERVER] Current users in ${room}:`, userList.map(u => `${u.username} (${u.userId})`).join(', '));
     io.to(room).emit('voice_state', userList);
   });
 
@@ -136,10 +137,8 @@ io.on('connection', (socket) => {
       for (const u of usersSet) {
         if (u.userId === userId) usersSet.delete(u);
       }
-      const userList = Array.from(usersSet);
-      console.log(`[SERVER] User ${userId} left voice: ${room}`);
-      console.log(`[SERVER] Current users in ${room}:`, userList.map(u => `${u.username} (${u.userId})`).join(', '));
-      io.to(room).emit('voice_state', userList);
+      // Broadcast updated user list
+      io.to(room).emit('voice_state', Array.from(usersSet));
     }
     if (socket.voiceRoom === room) {
       delete socket.voiceRoom;
@@ -148,6 +147,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    // Remove user from all channels they were in
     if (socket.voiceRoom && voiceChannelUsers.has(socket.voiceRoom)) {
       const usersSet = voiceChannelUsers.get(socket.voiceRoom);
       const userId = socket.voiceUser && socket.voiceUser.userId;
@@ -155,10 +155,7 @@ io.on('connection', (socket) => {
         for (const u of usersSet) {
           if (u.userId === userId) usersSet.delete(u);
         }
-        const userList = Array.from(usersSet);
-        console.log(`[SERVER] User ${userId} disconnected from voice: ${socket.voiceRoom}`);
-        console.log(`[SERVER] Current users in ${socket.voiceRoom}:`, userList.map(u => `${u.username} (${u.userId})`).join(', '));
-        io.to(socket.voiceRoom).emit('voice_state', userList);
+        io.to(socket.voiceRoom).emit('voice_state', Array.from(usersSet));
       }
     }
     console.log('User disconnected:', socket.id);
