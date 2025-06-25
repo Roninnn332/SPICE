@@ -259,14 +259,6 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // 1. Ensure the voice_state listener is set up first
-        if (window.channelSocket && chat) {
-          window.channelSocket.off('voice_state');
-          window.channelSocket.on('voice_state', (users) => {
-            console.log("Received voice_state", users); // Debug log
-            renderVoiceTiles(users, chat);
-          });
-        }
         // 2. Join the voice channel room
         if (window.channelSocket) {
           window.channelSocket.emit('join_voice_channel', {
@@ -284,6 +276,14 @@ async function openServerChannel(serverId, channelId) {
             }
           });
         }
+        // Immediately update UI to show current user's tile
+        renderVoiceTiles([
+          {
+            userId: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          }
+        ], chat);
         // 4. Show controls (mic, deafen, leave)
         if (footer) {
           footer.innerHTML = `
