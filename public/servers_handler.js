@@ -168,6 +168,7 @@ function setupChannelSocketIO(serverId, channelId, user) {
   const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
   if (!channelSocket) {
     channelSocket = window.io(socketUrl);
+    console.log('[CLIENT] Socket.IO connecting to:', socketUrl);
   }
 
   // Leave previous room and remove listeners

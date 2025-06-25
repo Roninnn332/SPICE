@@ -163,6 +163,10 @@ io.on('connection', (socket) => {
     }
     console.log('User disconnected:', socket.id);
   });
+
+  socket.onAny((event, ...args) => {
+    console.log(`[SERVER] Received event: ${event}`, args);
+  });
 });
 
 // API endpoint to fetch message history between two users
