@@ -165,19 +165,39 @@ let currentChannelRoom = null;
 
 function setupChannelSocketIO(serverId, channelId, user) {
   if (!window.io) return;
+  const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
   if (!channelSocket) {
-    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
     channelSocket = window.io(socketUrl);
   }
-  // Leave previous room
+
+  // Leave previous room and remove listeners
   if (currentChannelRoom) {
     channelSocket.emit('leave_channel', currentChannelRoom);
     channelSocket.off('channel_message');
+    channelSocket.off('voice_state');
   }
+
   // Join new room
   currentChannelRoom = { serverId, channelId };
   channelSocket.emit('join_channel', { serverId, channelId });
-  // Listen for new messages
+
+  // --- Voice Channel presence updates ---
+  channelSocket.emit('voice_join', {
+    serverId,
+    channelId,
+    user: {
+      userId: user.user_id,
+      username: user.username,
+      avatar_url: user.avatar_url
+    }
+  });
+
+  channelSocket.on('voice_state', (users) => {
+    const chat = document.querySelector('.chat-messages');
+    renderVoiceTiles(users, chat);
+  });
+
+  // --- Channel messages ---
   channelSocket.on('channel_message', (msg) => {
     if (!msg || msg.channelId !== channelId) return;
     const isMe = String(msg.userId) === String(user.user_id);
