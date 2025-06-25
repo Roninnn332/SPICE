@@ -146,6 +146,15 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('request_voice_state', ({ serverId, channelId }) => {
+    const room = getVoiceRoom(serverId, channelId);
+    if (voiceChannelUsers.has(room)) {
+      socket.emit('voice_state', Array.from(voiceChannelUsers.get(room)));
+    } else {
+      socket.emit('voice_state', []);
+    }
+  });
+
   socket.on('disconnect', () => {
     // Remove user from all channels they were in
     if (socket.voiceRoom && voiceChannelUsers.has(socket.voiceRoom)) {
