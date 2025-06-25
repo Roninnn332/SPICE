@@ -1098,4 +1098,171 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
     serverSettingsNameText.style.display = '';
     serverSettingsEditNameBtn.style.display = '';
   };
+}
+
+function updateVoiceUserCards(users) {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat) return;
+  chat.innerHTML = '<div class="voice-user-tiles"></div>';
+  const container = chat.querySelector('.voice-user-tiles');
+  users.forEach(userJson => {
+    const user = JSON.parse(userJson);
+    const tile = document.createElement('div');
+    tile.className = 'voice-user-card';
+    tile.innerHTML = `
+      <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
+      <div class="voice-user-name">${user.username}</div>
+    `;
+    container.appendChild(tile);
+  });
+}
+
+// --- Socket.IO for Voice Channel ---
+function setupVoiceChannelSocketIO(serverId, channelId, user) {
+  if (!window.io) return;
+  if (!channelSocket) {
+    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+    channelSocket = window.io(socketUrl);
+  }
+  // Leave previous room
+  if (currentChannelRoom) {
+    channelSocket.emit('leave_channel', currentChannelRoom);
+    channelSocket.off('voice_user_joined');
+  }
+  // Join new room
+  currentChannelRoom = { serverId, channelId };
+  channelSocket.emit('join_channel', { serverId, channelId });
+  // Listen for new messages
+  channelSocket.on('voice_user_joined', (users) => {
+    updateVoiceUserCards(users);
+  });
+}
+
+// --- Voice Channel Logic ---
+async function openVoiceChannel(serverId, channelId) {
+  if (!serverId || !channelId || !serverChatSection) return;
+  // Fetch channel info
+  const channel = channelsList.find(c => c.id === channelId);
+  // Render channel name in header
+  const header = serverChatSection.querySelector('.chat-header');
+  if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
+  const chat = serverChatSection.querySelector('.chat-messages');
+  const footer = serverChatSection.querySelector('.chat-input-area');
+  if (channel && channel.type === 'voice') {
+    // Render the voice channel welcome UI
+    if (chat) chat.innerHTML = `
+      <div class="voice-channel-welcome">
+        <div class="voice-channel-bg"></div>
+        <div class="voice-channel-center">
+          <div class="voice-channel-icon"><i class='fa-solid fa-volume-high'></i></div>
+          <div class="voice-channel-title">${channel.name ? `<span class='voice-channel-title-text'>${channel.name}</span>` : ''}</div>
+          <div class="voice-channel-desc">No one is currently in voice</div>
+          <button class="voice-channel-join-btn">Join Voice</button>
+        </div>
+      </div>
+    `;
+    if (footer) footer.innerHTML = '';
+    // Add event listener for Join Voice button
+    const joinBtn = chat.querySelector('.voice-channel-join-btn');
+    if (joinBtn) {
+      joinBtn.onclick = function() {
+        // Remove welcome, show coming soon, and show controls in footer
+        if (chat) chat.innerHTML = `<div class='voice-coming-soon'>Coming soon!</div>`;
+        if (footer) {
+          footer.innerHTML = `
+            <div class="voice-controls animate-stagger">
+              <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
+              <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
+              <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
+            </div>
+          `;
+          // Mic toggle
+          const micBtn = footer.querySelector('.mic-btn');
+          let micOn = true;
+          if (micBtn) {
+            micBtn.onclick = function() {
+              micOn = !micOn;
+              micBtn.innerHTML = micOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+              micBtn.classList.toggle('off', !micOn);
+            };
+          }
+          // Deafen toggle
+          const deafenBtn = footer.querySelector('.deafen-btn');
+          let deafenOn = false;
+          if (deafenBtn) {
+            deafenBtn.onclick = function() {
+              deafenOn = !deafenOn;
+              deafenBtn.innerHTML = deafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
+              deafenBtn.classList.toggle('off', deafenOn);
+            };
+          }
+          // Leave button
+          const leaveBtn = footer.querySelector('.leave-btn');
+          if (leaveBtn) {
+            leaveBtn.onclick = function() {
+              // Restore the original voice channel welcome UI
+              openVoiceChannel(serverId, channelId);
+            };
+          }
+        }
+      };
+    }
+    return;
+  }
+  if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
+  const { data: messages, error } = await supabaseClient
+    .from('channel_messages')
+    .select('*')
+    .eq('channel_id', channelId)
+    .order('created_at', { ascending: true });
+  if (chat) chat.innerHTML = '';
+  if (error || !messages) {
+    if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
+    return;
+  }
+  // Render messages with premium UI
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  for (const msg of messages) {
+    const isMe = String(msg.user_id) === String(user.user_id);
+    await appendChannelMessage({
+      userId: msg.user_id,
+      username: msg.username,
+      avatar_url: msg.avatar_url,
+      content: msg.content,
+      timestamp: msg.created_at
+    }, isMe ? 'me' : 'them');
+  }
+  // Setup Socket.IO for real-time
+  setupVoiceChannelSocketIO(serverId, channelId, user);
+  // Render message input in footer ONLY for text channels
+  if (footer) {
+    if (channel && channel.type === 'text') {
+      footer.innerHTML = `
+        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
+          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
+          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
+        </form>
+      `;
+      const form = footer.querySelector('.server-chat-input-form');
+      const input = footer.querySelector('.server-chat-input');
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const content = input.value.trim();
+        if (!user || !user.user_id || !content) return;
+        input.value = '';
+        // Send via Socket.IO
+        channelSocket.emit('channel_message', {
+          serverId,
+          channelId,
+          userId: Number(user.user_id),
+          username: user.username,
+          avatar_url: user.avatar_url,
+          content,
+          timestamp: Date.now()
+        });
+      };
+    } else {
+      footer.innerHTML = '';
+    }
+  }
 } 

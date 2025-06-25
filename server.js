@@ -23,6 +23,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// Track voice participants in memory (optional reset on restart)
+const voiceParticipants = {}; // key = roomId, value = Set of users
+
 // Socket.IO DM logic
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -104,7 +107,38 @@ io.on('connection', (socket) => {
     io.to(user2).emit('delete', timestamp);
   });
 
+  socket.on('voice_join', ({ serverId, channelId, user }) => {
+    const roomId = `voice-${serverId}-${channelId}`;
+    socket.join(roomId);
+    socket.voiceRoomId = roomId;
+    socket.userInfo = user;
+
+    if (!voiceParticipants[roomId]) {
+      voiceParticipants[roomId] = new Set();
+    }
+    voiceParticipants[roomId].add(JSON.stringify(user));
+
+    // Notify others in the room
+    io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
+  });
+
+  socket.on('voice_leave', () => {
+    const roomId = socket.voiceRoomId;
+    const user = socket.userInfo;
+    if (roomId && user && voiceParticipants[roomId]) {
+      voiceParticipants[roomId].delete(JSON.stringify(user));
+      io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
+    }
+    socket.leave(roomId);
+    delete socket.voiceRoomId;
+  });
+
   socket.on('disconnect', () => {
+    if (socket.voiceRoomId && socket.userInfo) {
+      const roomId = socket.voiceRoomId;
+      voiceParticipants[roomId]?.delete(JSON.stringify(socket.userInfo));
+      io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
+    }
     console.log('User disconnected:', socket.id);
   });
 });
