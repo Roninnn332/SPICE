@@ -175,13 +175,16 @@ function setupChannelSocketIO(serverId, channelId, user) {
     channelSocket.emit('leave_channel', currentChannelRoom);
     channelSocket.off('channel_message');
     channelSocket.off('voice_state');
+    console.log('[CLIENT] Left previous channel room:', currentChannelRoom);
   }
 
   // Join new room
   currentChannelRoom = { serverId, channelId };
   channelSocket.emit('join_channel', { serverId, channelId });
+  console.log('[CLIENT] Joined new channel room:', { serverId, channelId });
 
   // --- Voice Channel presence updates ---
+  console.log('[CLIENT] Emitting voice_join:', { serverId, channelId, user });
   channelSocket.emit('voice_join', {
     serverId,
     channelId,
@@ -193,6 +196,7 @@ function setupChannelSocketIO(serverId, channelId, user) {
   });
 
   channelSocket.on('voice_state', (users) => {
+    console.log('[CLIENT] Received voice_state:', users.map(u => `${u.username} (${u.userId})`).join(', '));
     const chat = document.querySelector('.chat-messages');
     renderVoiceTiles(users, chat);
   });
@@ -338,6 +342,7 @@ async function openServerChannel(serverId, channelId) {
             };
           }
         }
+        console.log('[CLIENT] Join Voice button clicked:', { serverId, channelId, user });
       };
     }
     return;
