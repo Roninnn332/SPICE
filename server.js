@@ -23,11 +23,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// --- Voice Channel Presence ---
-// Key: voice room string (e.g., 'voice-server-123-channel-456')
-// Value: Set of user objects ({ userId, username, avatar_url })
-const voiceChannelUsers = new Map();
-
+// Socket.IO DM logic
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -39,13 +35,6 @@ io.on('connection', (socket) => {
   });
 
   // --- CHANNEL CHAT LOGIC ---
-  // Store voice channel users globally
-  // Key: voice room string (e.g., 'voice-server-123-channel-456')
-  // Value: Set of user objects ({ userId, username, avatar_url })
-  function getVoiceRoom(serverId, channelId) {
-    return `voice-server-${serverId}-channel-${channelId}`;
-  }
-
   // Join a channel room
   socket.on('join_channel', ({ serverId, channelId }) => {
     const room = `server-${serverId}-channel-${channelId}`;
@@ -116,67 +105,46 @@ io.on('connection', (socket) => {
   });
 
   // --- Voice Channel Presence ---
+  const voiceChannelUsers = new Map(); // channelKey => Set of user objects
+
+  function getVoiceRoom(serverId, channelId) {
+    return `voice-server-${serverId}-channel-${channelId}`;
+  }
+
   socket.on('voice_join', ({ serverId, channelId, user }) => {
     const room = getVoiceRoom(serverId, channelId);
     socket.join(room);
-    socket.voiceRoom = room; // Store the voice room this socket is in
-    socket.voiceUser = user; // Store the user object associated with this socket for voice
-
+    socket.voiceRoom = room;
+    socket.voiceUser = user;
     // Add user to the Set for this channel
-    if (!voiceChannelUsers.has(room)) {
-      voiceChannelUsers.set(room, new Set());
-    }
+    if (!voiceChannelUsers.has(room)) voiceChannelUsers.set(room, new Set());
+    // Remove any previous user with same userId (avoid duplicates)
     const usersSet = voiceChannelUsers.get(room);
-
-    // Remove any previous entry for this user to avoid duplicates if they rejoin
-    for (let existingUser of usersSet) {
-      if (existingUser.userId === user.userId) {
-        usersSet.delete(existingUser);
-        break;
-      }
+    for (const u of usersSet) {
+      if (u.userId === user.userId) usersSet.delete(u);
     }
     usersSet.add(user);
-
-    // Broadcast the updated list of users in this voice channel to everyone in that room
+    // Broadcast full user list to all in the room
     const userList = Array.from(usersSet);
     io.to(room).emit('voice_state', userList);
-    console.log(`User ${user.username} joined voice channel ${room}. Current users:`, userList.map(u => u.username));
   });
 
   socket.on('voice_leave', ({ serverId, channelId, userId }) => {
     const room = getVoiceRoom(serverId, channelId);
     socket.leave(room);
-
     if (voiceChannelUsers.has(room)) {
       const usersSet = voiceChannelUsers.get(room);
-      // Remove the specific user from the set
-      for (let existingUser of usersSet) {
-        if (existingUser.userId === userId) {
-          usersSet.delete(existingUser);
-          break;
-        }
+      for (const u of usersSet) {
+        if (u.userId === userId) usersSet.delete(u);
       }
-      // Broadcast the updated list
+      // Broadcast updated user list
       io.to(room).emit('voice_state', Array.from(usersSet));
-      console.log(`User ${userId} left voice channel ${room}. Current users:`, Array.from(usersSet).map(u => u.username));
     }
-
-    // Clean up socket's voice state
     if (socket.voiceRoom === room) {
       delete socket.voiceRoom;
       delete socket.voiceUser;
     }
   });
-
-  socket.on('request_voice_state', ({ serverId, channelId }) => {
-    const room = getVoiceRoom(serverId, channelId);
-    if (voiceChannelUsers.has(room)) {
-      io.to(socket.id).emit('voice_state', Array.from(voiceChannelUsers.get(room)));
-    } else {
-      io.to(socket.id).emit('voice_state', []);
-    }
-  });
-
 
   socket.on('disconnect', () => {
     // Remove user from all channels they were in
@@ -185,14 +153,9 @@ io.on('connection', (socket) => {
       const userId = socket.voiceUser && socket.voiceUser.userId;
       if (userId) {
         for (const u of usersSet) {
-          if (u.userId === userId) {
-            usersSet.delete(u);
-            break;
-          }
+          if (u.userId === userId) usersSet.delete(u);
         }
-        // Broadcast the updated list to the channel users if any users remain
         io.to(socket.voiceRoom).emit('voice_state', Array.from(usersSet));
-        console.log(`User ${userId} disconnected from voice channel ${socket.voiceRoom}. Current users:`, Array.from(usersSet).map(u => u.username));
       }
     }
     console.log('User disconnected:', socket.id);
@@ -215,4 +178,4 @@ app.get('/messages', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
+}); 
