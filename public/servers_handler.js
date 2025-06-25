@@ -226,19 +226,11 @@ async function openServerChannel(serverId, channelId) {
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
-  // Always setup socket for both text and voice channels
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  setupChannelSocketIO(serverId, channelId, user);
   if (channel && channel.type === 'voice') {
-    // Always join the voice room immediately
-    if (window.channelSocket) {
-      window.channelSocket.emit('join_voice_channel', { serverId, channelId });
-    }
     // Always listen for live updates when a voice channel is open
     if (window.channelSocket && chat) {
       window.channelSocket.off('voice_state');
       window.channelSocket.on('voice_state', (users) => {
-        console.log("Received voice_state", users); // Debug log
         renderVoiceTiles(users, chat);
       });
     }
@@ -259,7 +251,20 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
-        // 1. Immediately update UI to show current user's tile (instant feedback)
+        // Emit join event
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              userId: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+        }
+        // Optimistically render own avatar tile immediately
         renderVoiceTiles([
           {
             userId: user.user_id,
@@ -267,31 +272,7 @@ async function openServerChannel(serverId, channelId) {
             avatar_url: user.avatar_url
           }
         ], chat);
-        // 2. Join the voice channel room
-        if (window.channelSocket) {
-          window.channelSocket.emit('join_voice_channel', {
-            serverId,
-            channelId
-          });
-
-          // 3. Set up a one-time listener for the first voice_state after joining
-          const handleFirstVoiceState = (users) => {
-            // 4. Then, emit voice_join with full user info
-            window.channelSocket.emit('voice_join', {
-              serverId,
-              channelId,
-              user: {
-                userId: user.user_id,
-                username: user.username,
-                avatar_url: user.avatar_url
-              }
-            });
-            // 5. Remove this one-time listener (do NOT re-render UI here)
-            window.channelSocket.off('voice_state', handleFirstVoiceState);
-          };
-          window.channelSocket.on('voice_state', handleFirstVoiceState);
-        }
-        // 6. Show controls (mic, deafen, leave)
+        // Show controls
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
@@ -353,6 +334,7 @@ async function openServerChannel(serverId, channelId) {
     return;
   }
   // Render messages with premium UI
+  const user = JSON.parse(localStorage.getItem('spice_user'));
   for (const msg of messages) {
     const isMe = String(msg.user_id) === String(user.user_id);
     await appendChannelMessage({
@@ -400,7 +382,6 @@ async function openServerChannel(serverId, channelId) {
 
 // Render voice channel avatar tiles
 function renderVoiceTiles(users, chat) {
-  console.log("Rendering voice tiles", users); // Debug log
   if (!chat) return;
   if (!users || users.length === 0) {
     chat.innerHTML = `<div class='voice-channel-tiles-empty'>No one is currently in voice</div>`;

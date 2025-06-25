@@ -5,8 +5,6 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
-const { createAdapter } = require('@socket.io/redis-adapter');
-const { createClient: createRedisClient } = require('redis');
 
 const app = express();
 const server = http.createServer(app);
@@ -24,16 +22,6 @@ app.use(express.static('public'));
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-// --- Redis Adapter for Socket.IO (multi-instance support) ---
-const pubClient = createRedisClient({ url: process.env.REDIS_URL });
-const subClient = pubClient.duplicate();
-Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
-  io.adapter(createAdapter(pubClient, subClient));
-});
-
-// --- Voice Channel Presence (GLOBAL) ---
-const voiceChannelUsers = {}; // Structure: { 'voice-server-X-channel-Y': [{ userId, username, avatar_url }, ...] }
 
 // Socket.IO DM logic
 io.on('connection', (socket) => {
@@ -117,59 +105,40 @@ io.on('connection', (socket) => {
   });
 
   // --- Voice Channel Presence ---
+  const voiceChannelUsers = new Map(); // channelKey => Set of user objects
+
   function getVoiceRoom(serverId, channelId) {
     return `voice-server-${serverId}-channel-${channelId}`;
   }
 
-  socket.on('join_voice_channel', ({ serverId, channelId }) => {
+  socket.on('voice_join', ({ serverId, channelId, user }) => {
     const room = getVoiceRoom(serverId, channelId);
     socket.join(room);
     socket.voiceRoom = room;
-    // Always initialize the room array
-    if (!voiceChannelUsers[room]) {
-      voiceChannelUsers[room] = [];
+    socket.voiceUser = user;
+    // Add user to the Set for this channel
+    if (!voiceChannelUsers.has(room)) voiceChannelUsers.set(room, new Set());
+    // Remove any previous user with same userId (avoid duplicates)
+    const usersSet = voiceChannelUsers.get(room);
+    for (const u of usersSet) {
+      if (u.userId === user.userId) usersSet.delete(u);
     }
-    // Send current state to the joining user
-    socket.emit('voice_state', voiceChannelUsers[room]);
-    console.log(`Socket ${socket.id} joined voice channel room ${room}`);
-  });
-
-  socket.on('voice_join', ({ serverId, channelId, user }) => {
-    const room = getVoiceRoom(serverId, channelId);
-    if (!voiceChannelUsers[room]) {
-      voiceChannelUsers[room] = [];
-    }
-    // Set socket.voiceUser for disconnect handling
-    socket.voiceUser = {
-      userId: user.userId,
-      username: user.username,
-      avatar_url: user.avatar_url
-    };
-    // Check if user already exists in the room to prevent duplicates
-    const existingIndex = voiceChannelUsers[room].findIndex(u => String(u.userId) === String(user.userId));
-    if (existingIndex >= 0) {
-      // Update existing user's info
-      voiceChannelUsers[room][existingIndex] = socket.voiceUser;
-    } else {
-      // Add new user
-      voiceChannelUsers[room].push(socket.voiceUser);
-    }
-    // Broadcast the updated state to all in the room
-    io.to(room).emit('voice_state', voiceChannelUsers[room]);
-    console.log(`Voice state update for room ${room} (JOIN):`, voiceChannelUsers[room]);
+    usersSet.add(user);
+    // Broadcast full user list to all in the room
+    const userList = Array.from(usersSet);
+    io.to(room).emit('voice_state', userList);
   });
 
   socket.on('voice_leave', ({ serverId, channelId, userId }) => {
     const room = getVoiceRoom(serverId, channelId);
-    if (voiceChannelUsers[room]) {
-      voiceChannelUsers[room] = voiceChannelUsers[room].filter(u => String(u.userId) !== String(userId));
-      io.to(room).emit('voice_state', voiceChannelUsers[room]);
-      console.log(`Voice state update for room ${room} (LEAVE):`, voiceChannelUsers[room]);
-      // Clean up empty rooms
-      if (voiceChannelUsers[room].length === 0) {
-        delete voiceChannelUsers[room];
-        console.log(`Voice room ${room} is empty and cleaned up.`);
+    socket.leave(room);
+    if (voiceChannelUsers.has(room)) {
+      const usersSet = voiceChannelUsers.get(room);
+      for (const u of usersSet) {
+        if (u.userId === userId) usersSet.delete(u);
       }
+      // Broadcast updated user list
+      io.to(room).emit('voice_state', Array.from(usersSet));
     }
     if (socket.voiceRoom === room) {
       delete socket.voiceRoom;
@@ -178,20 +147,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    if (socket.voiceRoom && socket.voiceUser && socket.voiceUser.userId) {
-      const room = socket.voiceRoom;
-      const userId = socket.voiceUser.userId;
-      if (voiceChannelUsers[room]) {
-        voiceChannelUsers[room] = voiceChannelUsers[room].filter(u => String(u.userId) !== String(userId));
-        io.to(room).emit('voice_state', voiceChannelUsers[room]);
-        console.log(`Voice state update for room ${room} (DISCONNECT):`, voiceChannelUsers[room]);
-        if (voiceChannelUsers[room].length === 0) {
-          delete voiceChannelUsers[room];
-          console.log(`Voice room ${room} is empty and cleaned up on disconnect.`);
+    // Remove user from all channels they were in
+    if (socket.voiceRoom && voiceChannelUsers.has(socket.voiceRoom)) {
+      const usersSet = voiceChannelUsers.get(socket.voiceRoom);
+      const userId = socket.voiceUser && socket.voiceUser.userId;
+      if (userId) {
+        for (const u of usersSet) {
+          if (u.userId === userId) usersSet.delete(u);
         }
+        io.to(socket.voiceRoom).emit('voice_state', Array.from(usersSet));
       }
     }
+    console.log('User disconnected:', socket.id);
   });
 });
 
