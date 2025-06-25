@@ -118,6 +118,10 @@ io.on('connection', (socket) => {
     }
     voiceParticipants[roomId].add(JSON.stringify(user));
 
+    // Debug logging
+    console.log(`[voice_join] roomId: ${roomId}, user:`, user);
+    console.log(`[voice_join] participants:`, Array.from(voiceParticipants[roomId]));
+
     // Notify others in the room
     io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
   });
@@ -127,6 +131,9 @@ io.on('connection', (socket) => {
     const user = socket.userInfo;
     if (roomId && user && voiceParticipants[roomId]) {
       voiceParticipants[roomId].delete(JSON.stringify(user));
+      // Debug logging
+      console.log(`[voice_leave] roomId: ${roomId}, user:`, user);
+      console.log(`[voice_leave] participants:`, Array.from(voiceParticipants[roomId]));
       io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
     }
     socket.leave(roomId);
@@ -137,6 +144,9 @@ io.on('connection', (socket) => {
     if (socket.voiceRoomId && socket.userInfo) {
       const roomId = socket.voiceRoomId;
       voiceParticipants[roomId]?.delete(JSON.stringify(socket.userInfo));
+      // Debug logging
+      console.log(`[disconnect] roomId: ${roomId}, user:`, socket.userInfo);
+      console.log(`[disconnect] participants:`, Array.from(voiceParticipants[roomId]));
       io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
     }
     console.log('User disconnected:', socket.id);
