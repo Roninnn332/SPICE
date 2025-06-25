@@ -259,6 +259,14 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // 1. Immediately update UI to show current user's tile (instant feedback)
+        renderVoiceTiles([
+          {
+            userId: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          }
+        ], chat);
         // 2. Join the voice channel room
         if (window.channelSocket) {
           window.channelSocket.emit('join_voice_channel', {
@@ -266,9 +274,9 @@ async function openServerChannel(serverId, channelId) {
             channelId
           });
 
-          // Set up a one-time listener for the first voice_state after joining
+          // 3. Set up a one-time listener for the first voice_state after joining
           const handleFirstVoiceState = (users) => {
-            // 3. Then, emit voice_join with full user info
+            // 4. Then, emit voice_join with full user info
             window.channelSocket.emit('voice_join', {
               serverId,
               channelId,
@@ -278,20 +286,12 @@ async function openServerChannel(serverId, channelId) {
                 avatar_url: user.avatar_url
               }
             });
-            // Immediately update UI to show current user's tile
-            renderVoiceTiles([
-              {
-                userId: user.user_id,
-                username: user.username,
-                avatar_url: user.avatar_url
-              }
-            ], chat);
-            // Remove this one-time listener
+            // 5. Remove this one-time listener (do NOT re-render UI here)
             window.channelSocket.off('voice_state', handleFirstVoiceState);
           };
           window.channelSocket.on('voice_state', handleFirstVoiceState);
         }
-        // 4. Show controls (mic, deafen, leave)
+        // 6. Show controls (mic, deafen, leave)
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
