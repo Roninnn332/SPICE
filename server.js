@@ -23,7 +23,11 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Socket.IO DM logic
+// --- Voice Channel Presence ---
+// Key: voice room string (e.g., 'voice-server-123-channel-456')
+// Value: Set of user objects ({ userId, username, avatar_url })
+const voiceChannelUsers = new Map();
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -38,8 +42,6 @@ io.on('connection', (socket) => {
   // Store voice channel users globally
   // Key: voice room string (e.g., 'voice-server-123-channel-456')
   // Value: Set of user objects ({ userId, username, avatar_url })
-  const voiceChannelUsers = new Map(); 
-
   function getVoiceRoom(serverId, channelId) {
     return `voice-server-${serverId}-channel-${channelId}`;
   }
