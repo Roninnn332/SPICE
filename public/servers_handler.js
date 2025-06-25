@@ -443,26 +443,6 @@ function renderVoiceTiles(users, chat) {
 // ------------------------------
 
 
-// Render voice channel avatar tiles
-function renderVoiceTiles(users, chat) {
-  if (!chat) return;
-  if (!users || users.length === 0) {
-    chat.innerHTML = `<div class='voice-channel-tiles-empty'>No one is currently in voice</div>`;
-    return;
-  }
-  chat.innerHTML = `
-    <div class="voice-channel-tiles">
-      ${users.map(u => `
-        <div class="voice-avatar-tile animate-stagger">
-          <div class="voice-avatar-img-wrapper">
-            ${u.avatar_url ? `<img class="voice-avatar-img" src="${u.avatar_url}" alt="${u.username}">` : `<span class="voice-avatar-initial">${u.username ? u.username[0].toUpperCase() : '?'}</span>`}
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
 // --- Server Creation/Join ---
 function openCreateServerModal() {
   const overlay = document.getElementById('create-server-modal-overlay');
