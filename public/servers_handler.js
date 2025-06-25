@@ -166,24 +166,43 @@ let currentChannelRoom = null;
 function setupChannelSocketIO(serverId, channelId, user) {
   if (!window.io) return;
   const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
-  if (!window.channelSocket) {
-    window.channelSocket = window.io(socketUrl);
-    console.log('[CLIENT] Socket.IO connecting to:', socketUrl);
+  if (!channelSocket) {
+    channelSocket = window.io(socketUrl);
   }
+
   // Leave previous room and remove listeners
-  if (window.currentChannelRoom) {
-    window.channelSocket.emit('leave_channel', window.currentChannelRoom);
-    window.channelSocket.off('channel_message');
-    window.channelSocket.off('voice_state');
-    console.log('[CLIENT] Left previous channel room:', window.currentChannelRoom);
+  if (currentChannelRoom) {
+    channelSocket.emit('leave_channel', currentChannelRoom);
+    channelSocket.off('channel_message');
+    channelSocket.off('voice_state');
+    console.log('[CLIENT] Left previous channel room:', currentChannelRoom);
   }
-  // Join new room for text chat
-  window.currentChannelRoom = { serverId, channelId };
-  window.channelSocket.emit('join_channel', { serverId, channelId });
+
+  // Join new room
+  currentChannelRoom = { serverId, channelId };
+  channelSocket.emit('join_channel', { serverId, channelId });
   console.log('[CLIENT] Joined new channel room:', { serverId, channelId });
 
-  // Listen for text messages
-  window.channelSocket.on('channel_message', (msg) => {
+  // --- Voice Channel presence updates ---
+  console.log('[CLIENT] Emitting voice_join:', { serverId, channelId, user });
+  channelSocket.emit('voice_join', {
+    serverId,
+    channelId,
+    user: {
+      userId: user.user_id,
+      username: user.username,
+      avatar_url: user.avatar_url
+    }
+  });
+
+  channelSocket.on('voice_state', (users) => {
+    console.log('[CLIENT] Received voice_state:', users.map(u => `${u.username} (${u.userId})`).join(', '));
+    const chat = document.querySelector('.chat-messages');
+    renderVoiceTiles(users, chat);
+  });
+
+  // --- Channel messages ---
+  channelSocket.on('channel_message', (msg) => {
     if (!msg || msg.channelId !== channelId) return;
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
@@ -232,8 +251,13 @@ async function openServerChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
-    // Remove any previous voice_state listeners
-    if (window.channelSocket) window.channelSocket.off('voice_state');
+    // Always listen for live updates when a voice channel is open
+    if (window.channelSocket && chat) {
+      window.channelSocket.off('voice_state');
+      window.channelSocket.on('voice_state', (users) => {
+        renderVoiceTiles(users, chat);
+      });
+    }
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -251,10 +275,9 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // Emit join event
         const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
-          // Remove any previous listener before adding
-          window.channelSocket.off('voice_state');
           window.channelSocket.emit('voice_join', {
             serverId,
             channelId,
@@ -264,15 +287,15 @@ async function openServerChannel(serverId, channelId) {
               avatar_url: user.avatar_url
             }
           });
-          // Listen for voice_state updates
-          window.channelSocket.on('voice_state', (users) => {
-            renderVoiceTiles(users, chat);
-          });
         }
-        // Show a loading/waiting state until server responds
-        if (chat) {
-          chat.innerHTML = `<div class='voice-channel-tiles-empty'>Joining voice...</div>`;
-        }
+        // Optimistically render own avatar tile immediately
+        renderVoiceTiles([
+          {
+            userId: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          }
+        ], chat);
         // Show controls
         if (footer) {
           footer.innerHTML = `
@@ -306,14 +329,13 @@ async function openServerChannel(serverId, channelId) {
           const leaveBtn = footer.querySelector('.leave-btn');
           if (leaveBtn) {
             leaveBtn.onclick = function() {
-              const user = JSON.parse(localStorage.getItem('spice_user'));
+              // Emit leave event
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave', {
                   serverId,
                   channelId,
                   userId: user.user_id
                 });
-                window.channelSocket.off('voice_state');
               }
               // Restore the original voice channel welcome UI
               openServerChannel(serverId, channelId);
@@ -367,7 +389,7 @@ async function openServerChannel(serverId, channelId) {
         if (!user || !user.user_id || !content) return;
         input.value = '';
         // Send via Socket.IO
-        window.channelSocket.emit('channel_message', {
+        channelSocket.emit('channel_message', {
           serverId,
           channelId,
           userId: Number(user.user_id),
