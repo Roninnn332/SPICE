@@ -286,14 +286,8 @@ async function openServerChannel(serverId, channelId) {
             };
           }
         }
-        // Immediately show own user card
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        updateVoiceUserCards([JSON.stringify({
-          user_id: user.user_id,
-          username: user.username,
-          avatar_url: user.avatar_url
-        })]);
         // Emit join and listen for updates
+        const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
             serverId,
@@ -306,7 +300,7 @@ async function openServerChannel(serverId, channelId) {
           });
           window.channelSocket.off('voice_user_joined');
           window.channelSocket.on('voice_user_joined', (users) => {
-            console.log('[Client] Received updated users in voice:', users);
+            console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
             updateVoiceUserCards(users);
           });
         }
@@ -1161,7 +1155,7 @@ function setupVoiceChannelSocketIO(serverId, channelId, user) {
   channelSocket.emit('join_channel', { serverId, channelId });
   // Listen for new messages
   channelSocket.on('voice_user_joined', (users) => {
-    console.log('[Client] Received updated users in voice:', users);
+    console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
     updateVoiceUserCards(users);
   });
 }
@@ -1236,14 +1230,8 @@ async function openVoiceChannel(serverId, channelId) {
             };
           }
         }
-        // Immediately show own user card
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        updateVoiceUserCards([JSON.stringify({
-          user_id: user.user_id,
-          username: user.username,
-          avatar_url: user.avatar_url
-        })]);
         // Emit join and listen for updates
+        const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
             serverId,
@@ -1256,7 +1244,7 @@ async function openVoiceChannel(serverId, channelId) {
           });
           window.channelSocket.off('voice_user_joined');
           window.channelSocket.on('voice_user_joined', (users) => {
-            console.log('[Client] Received updated users in voice:', users);
+            console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
             updateVoiceUserCards(users);
           });
         }

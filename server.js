@@ -120,10 +120,8 @@ io.on('connection', (socket) => {
 
     const participants = Array.from(voiceParticipants[roomId]);
 
-    // Send full list to the user who just joined
-    socket.emit('voice_user_joined', participants);
-    // Also notify everyone else
-    socket.to(roomId).emit('voice_user_joined', participants);
+    // Send full list to EVERYONE in the room (including the joiner)
+    io.to(roomId).emit('voice_user_joined', participants);
 
     // Debug log: show usernames
     try {
