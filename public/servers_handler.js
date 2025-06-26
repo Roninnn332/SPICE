@@ -1113,17 +1113,44 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
 function updateVoiceUserCards(users) {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
-  chat.innerHTML = '<div class="voice-user-tiles"></div>';
-  const container = chat.querySelector('.voice-user-tiles');
+
+  // Use or create the container
+  let container = chat.querySelector('.voice-user-tiles');
+  if (!container) {
+    chat.innerHTML = '<div class="voice-user-tiles"></div>';
+    container = chat.querySelector('.voice-user-tiles');
+  }
+
+  // Build a map of current user cards
+  const currentCards = {};
+  container.querySelectorAll('.voice-user-card').forEach(card => {
+    const userId = card.getAttribute('data-user-id');
+    if (userId) currentCards[userId] = card;
+  });
+
+  // Parse new users and build a set
+  const newUserIds = new Set();
   users.forEach(userJson => {
     const user = JSON.parse(userJson);
-    const tile = document.createElement('div');
-    tile.className = 'voice-user-card';
-    tile.innerHTML = `
-      <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
-      <div class="voice-user-name">${user.username}</div>
-    `;
-    container.appendChild(tile);
+    newUserIds.add(String(user.user_id));
+    if (!currentCards[user.user_id]) {
+      // Add new card
+      const tile = document.createElement('div');
+      tile.className = 'voice-user-card';
+      tile.setAttribute('data-user-id', user.user_id);
+      tile.innerHTML = `
+        <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
+        <div class="voice-user-name">${user.username}</div>
+      `;
+      container.appendChild(tile);
+    }
+  });
+
+  // Remove cards for users who left
+  Object.keys(currentCards).forEach(userId => {
+    if (!newUserIds.has(userId)) {
+      currentCards[userId].remove();
+    }
   });
 }
 
