@@ -1110,47 +1110,56 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
   };
 }
 
-function updateVoiceUserCards(users) {
-  const chat = document.querySelector('.chat-messages');
-  if (!chat) return;
-
-  // Use or create the container
-  let container = chat.querySelector('.voice-user-tiles');
-  if (!container) {
-    chat.innerHTML = '<div class="voice-user-tiles"></div>';
-    container = chat.querySelector('.voice-user-tiles');
+// Utility to generate random hacker letters
+function generateHackerText(rows = 10, cols = 7) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let text = '';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      text += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    text += '\n';
   }
+  return text;
+}
 
-  // Build a map of current user cards
-  const currentCards = {};
-  container.querySelectorAll('.voice-user-card').forEach(card => {
-    const userId = card.getAttribute('data-user-id');
-    if (userId) currentCards[userId] = card;
-  });
+function renderVoiceUserCards(participants) {
+  const container = document.querySelector('.voice-user-tiles');
+  if (!container) return;
+  container.innerHTML = '';
+  participants.forEach(userStr => {
+    const user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr;
+    const card = document.createElement('div');
+    card.className = 'voice-user-card';
 
-  // Parse new users and build a set
-  const newUserIds = new Set();
-  users.forEach(userJson => {
-    const user = JSON.parse(userJson);
-    newUserIds.add(String(user.user_id));
-    if (!currentCards[user.user_id]) {
-      // Add new card
-      const tile = document.createElement('div');
-      tile.className = 'voice-user-card';
-      tile.setAttribute('data-user-id', user.user_id);
-      tile.innerHTML = `
-        <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
-        <div class="voice-user-name">${user.username}</div>
-      `;
-      container.appendChild(tile);
-    }
-  });
+    // Hacker background
+    const hackerBg = document.createElement('div');
+    hackerBg.className = 'voice-user-hacker-bg';
+    hackerBg.textContent = generateHackerText(10, 7);
+    card.appendChild(hackerBg);
 
-  // Remove cards for users who left
-  Object.keys(currentCards).forEach(userId => {
-    if (!newUserIds.has(userId)) {
-      currentCards[userId].remove();
-    }
+    // Avatar wrapper with neon glow
+    const avatarWrapper = document.createElement('div');
+    avatarWrapper.className = 'voice-user-avatar-wrapper';
+    const avatar = document.createElement('img');
+    avatar.className = 'voice-user-avatar';
+    avatar.src = user.avatar_url || '/default-avatar.png';
+    avatar.alt = user.username;
+    const avatarGlow = document.createElement('div');
+    avatarGlow.className = 'voice-user-avatar-glow';
+    avatarWrapper.appendChild(avatar);
+    avatarWrapper.appendChild(avatarGlow);
+    card.appendChild(avatarWrapper);
+
+    // Username
+    const name = document.createElement('div');
+    name.className = 'voice-user-name';
+    name.textContent = user.username;
+    card.appendChild(name);
+
+    // Optionally, add mic/deafen indicators here
+
+    container.appendChild(card);
   });
 }
 
