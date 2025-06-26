@@ -244,6 +244,16 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // Immediately show own user card (optimistic update)
+        if (chat) {
+          chat.innerHTML = '<div class="voice-user-tiles"></div>';
+          const user = JSON.parse(localStorage.getItem('spice_user'));
+          updateVoiceUserCards([JSON.stringify({
+            user_id: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          })]);
+        }
         // Remove welcome, show controls in footer
         if (footer) {
           footer.innerHTML = `
@@ -1188,6 +1198,16 @@ async function openVoiceChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // Immediately show own user card (optimistic update)
+        if (chat) {
+          chat.innerHTML = '<div class="voice-user-tiles"></div>';
+          const user = JSON.parse(localStorage.getItem('spice_user'));
+          updateVoiceUserCards([JSON.stringify({
+            user_id: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url
+          })]);
+        }
         // Remove welcome, show controls in footer
         if (footer) {
           footer.innerHTML = `
