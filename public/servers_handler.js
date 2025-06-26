@@ -167,7 +167,7 @@ if (!window.channelSocket) {
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
-  updateVoiceUserCards(users);
+  renderVoiceUserCards(users);
 });
 
 // --- Premium Message Rendering ---
@@ -233,7 +233,7 @@ async function openServerChannel(serverId, channelId) {
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
           const user = JSON.parse(localStorage.getItem('spice_user'));
-          updateVoiceUserCards([JSON.stringify({
+          renderVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
             avatar_url: user.avatar_url
@@ -1132,24 +1132,41 @@ function renderVoiceUserCards(participants) {
     const card = document.createElement('div');
     card.className = 'voice-user-card';
 
-    // Hacker background
-    const hackerBg = document.createElement('div');
-    hackerBg.className = 'voice-user-hacker-bg';
-    hackerBg.textContent = generateHackerText(10, 7);
-    card.appendChild(hackerBg);
+    // Holographic background
+    const holoBg = document.createElement('div');
+    holoBg.className = 'holographic-bg';
+    card.appendChild(holoBg);
+    // Glitch overlay
+    const glitchOverlay = document.createElement('div');
+    glitchOverlay.className = 'glitch-overlay';
+    card.appendChild(glitchOverlay);
 
-    // Avatar wrapper with neon glow
-    const avatarWrapper = document.createElement('div');
-    avatarWrapper.className = 'voice-user-avatar-wrapper';
+    // Floating alien glyphs
+    const glyphs = ['⏣', '⍟', '⌖', '⍜', '⎈', '⍎', '⍣', '⍷'];
+    const glyphCount = 8 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < glyphCount; i++) {
+      const glyph = document.createElement('div');
+      glyph.className = 'alien-glyphs';
+      glyph.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+      glyph.style.left = Math.random() * 90 + '%';
+      glyph.style.top = Math.random() * 90 + '%';
+      glyph.style.animationDuration = (5 + Math.random() * 7) + 's';
+      glyph.style.animationDelay = (Math.random() * 5) + 's';
+      card.appendChild(glyph);
+    }
+
+    // Avatar container with pulse ring and glitch avatar
+    const avatarContainer = document.createElement('div');
+    avatarContainer.className = 'avatar-container';
+    const pulseRing = document.createElement('div');
+    pulseRing.className = 'pulse-ring';
+    avatarContainer.appendChild(pulseRing);
     const avatar = document.createElement('img');
-    avatar.className = 'voice-user-avatar';
+    avatar.className = 'glitch-avatar';
     avatar.src = user.avatar_url || '/default-avatar.png';
     avatar.alt = user.username;
-    const avatarGlow = document.createElement('div');
-    avatarGlow.className = 'voice-user-avatar-glow';
-    avatarWrapper.appendChild(avatar);
-    avatarWrapper.appendChild(avatarGlow);
-    card.appendChild(avatarWrapper);
+    avatarContainer.appendChild(avatar);
+    card.appendChild(avatarContainer);
 
     // Username
     const name = document.createElement('div');
@@ -1157,7 +1174,60 @@ function renderVoiceUserCards(participants) {
     name.textContent = user.username;
     card.appendChild(name);
 
-    // Optionally, add mic/deafen indicators here
+    // Terminal output (typewriter effect, skip forbidden lines)
+    const terminal = document.createElement('div');
+    terminal.className = 'terminal-output';
+    card.appendChild(terminal);
+    const terminalLines = [
+      '> ACTIVATING QUANTUM ENCRYPTION...',
+      '> ACCESSING BLACKNET ARCHIVES...',
+      '> AI CORE TEMP: 42.7°C',
+      '> NEURAL UPLINK STABLE',
+      '> BYPASSING CORPORATE FIREWALL...',
+      '> DATA STREAM ENCRYPTED',
+      '> WARNING: TRACE DETECTED',
+      '> INITIATING COUNTERMEASURES',
+      '> ROUTING THROUGH PROXY NODES',
+      '> CONNECTION SECURED'
+    ];
+    // Typewriter effect
+    let currentLine = 0;
+    function typeLine() {
+      if (currentLine < terminalLines.length) {
+        const p = document.createElement('p');
+        terminal.insertBefore(p, terminal.lastElementChild);
+        let i = 0;
+        const typing = setInterval(() => {
+          p.textContent = terminalLines[currentLine].substring(0, i);
+          i++;
+          if (i > terminalLines[currentLine].length) {
+            clearInterval(typing);
+            currentLine++;
+            setTimeout(typeLine, 400 + Math.random() * 800);
+          }
+        }, 30 + Math.random() * 40);
+      } else {
+        // Add blinking cursor
+        const blink = document.createElement('p');
+        blink.className = 'blink';
+        blink.textContent = '_';
+        terminal.appendChild(blink);
+      }
+    }
+    setTimeout(typeLine, 500 + Math.random() * 500);
+
+    // Parallax/3D hover effect
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const xAxis = (rect.width / 2 - (e.clientX - rect.left)) / 18;
+      const yAxis = (rect.height / 2 - (e.clientY - rect.top)) / 18;
+      card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+      card.classList.add('parallax');
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'rotateY(0) rotateX(0)';
+      card.classList.remove('parallax');
+    });
 
     container.appendChild(card);
   });
@@ -1181,7 +1251,7 @@ function setupVoiceChannelSocketIO(serverId, channelId, user) {
   // Listen for new messages
   channelSocket.on('voice_user_joined', (users) => {
     console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
-    updateVoiceUserCards(users);
+    renderVoiceUserCards(users);
   });
 }
 
@@ -1226,7 +1296,7 @@ async function openVoiceChannel(serverId, channelId) {
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
           const user = JSON.parse(localStorage.getItem('spice_user'));
-          updateVoiceUserCards([JSON.stringify({
+          renderVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
             avatar_url: user.avatar_url
