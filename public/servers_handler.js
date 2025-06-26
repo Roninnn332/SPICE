@@ -159,31 +159,16 @@ async function renderChannelsList(serverId) {
   }
 }
 
-// --- Socket.IO for Channel Chat ---
-let channelSocket = null;
-let currentChannelRoom = null;
-
-function setupChannelSocketIO(serverId, channelId, user) {
-  if (!window.io) return;
-  if (!channelSocket) {
-    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
-    channelSocket = window.io(socketUrl);
-  }
-  // Leave previous room
-  if (currentChannelRoom) {
-    channelSocket.emit('leave_channel', currentChannelRoom);
-    channelSocket.off('channel_message');
-  }
-  // Join new room
-  currentChannelRoom = { serverId, channelId };
-  channelSocket.emit('join_channel', { serverId, channelId });
-  // Listen for new messages
-  channelSocket.on('channel_message', (msg) => {
-    if (!msg || msg.channelId !== channelId) return;
-    const isMe = String(msg.userId) === String(user.user_id);
-    appendChannelMessage(msg, isMe ? 'me' : 'them');
-  });
+// --- Socket.IO for Channel/Voice Presence ---
+if (!window.channelSocket) {
+  const socketUrl = window.location.origin;
+  window.channelSocket = window.io(socketUrl);
 }
+window.channelSocket.off('voice_user_joined');
+window.channelSocket.on('voice_user_joined', (users) => {
+  console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
+  updateVoiceUserCards(users);
+});
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
@@ -290,13 +275,12 @@ async function openServerChannel(serverId, channelId) {
               // Restore the original voice channel welcome UI
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave');
-                window.channelSocket.off('voice_user_joined');
               }
               openVoiceChannel(serverId, channelId);
             };
           }
         }
-        // Emit join and listen for updates
+        // Emit join
         const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
@@ -307,11 +291,6 @@ async function openServerChannel(serverId, channelId) {
               username: user.username,
               avatar_url: user.avatar_url
             }
-          });
-          window.channelSocket.off('voice_user_joined');
-          window.channelSocket.on('voice_user_joined', (users) => {
-            console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
-            updateVoiceUserCards(users);
           });
         }
       };
@@ -1152,7 +1131,7 @@ function updateVoiceUserCards(users) {
 function setupVoiceChannelSocketIO(serverId, channelId, user) {
   if (!window.io) return;
   if (!channelSocket) {
-    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+    const socketUrl = window.location.origin;
     channelSocket = window.io(socketUrl);
   }
   // Leave previous room
@@ -1244,13 +1223,12 @@ async function openVoiceChannel(serverId, channelId) {
               // Restore the original voice channel welcome UI
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave');
-                window.channelSocket.off('voice_user_joined');
               }
               openVoiceChannel(serverId, channelId);
             };
           }
         }
-        // Emit join and listen for updates
+        // Emit join
         const user = JSON.parse(localStorage.getItem('spice_user'));
         if (window.channelSocket) {
           window.channelSocket.emit('voice_join', {
@@ -1261,11 +1239,6 @@ async function openVoiceChannel(serverId, channelId) {
               username: user.username,
               avatar_url: user.avatar_url
             }
-          });
-          window.channelSocket.off('voice_user_joined');
-          window.channelSocket.on('voice_user_joined', (users) => {
-            console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
-            updateVoiceUserCards(users);
           });
         }
       };
