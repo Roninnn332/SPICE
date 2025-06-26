@@ -1312,4 +1312,17 @@ async function openVoiceChannel(serverId, channelId) {
     };
   }
   // ... (rest of text channel message loading logic, if any) ...
+}
+
+// --- Minimal Socket.IO setup for text channels ---
+function setupChannelSocketIO(serverId, channelId, user) {
+  if (!window.channelSocket) return;
+  // Remove previous listener for this channel
+  window.channelSocket.off('channel_message');
+  // Listen for new messages for this channel
+  window.channelSocket.on('channel_message', (msg) => {
+    if (!msg || msg.channelId !== channelId) return;
+    const isMe = String(msg.userId) === String(user.user_id);
+    appendChannelMessage(msg, isMe ? 'me' : 'them');
+  });
 } 
