@@ -167,7 +167,7 @@ if (!window.channelSocket) {
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
-  renderVoiceUserCards(users);
+  updateVoiceUserCards(users);
 });
 
 // --- Premium Message Rendering ---
@@ -233,7 +233,7 @@ async function openServerChannel(serverId, channelId) {
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
           const user = JSON.parse(localStorage.getItem('spice_user'));
-          renderVoiceUserCards([JSON.stringify({
+          updateVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
             avatar_url: user.avatar_url
@@ -1110,68 +1110,47 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
   };
 }
 
-// Utility to generate random hacker letters
-function generateHackerText(rows = 10, cols = 7) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let text = '';
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      text += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    text += '\n';
+function updateVoiceUserCards(users) {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat) return;
+
+  // Use or create the container
+  let container = chat.querySelector('.voice-user-tiles');
+  if (!container) {
+    chat.innerHTML = '<div class="voice-user-tiles"></div>';
+    container = chat.querySelector('.voice-user-tiles');
   }
-  return text;
-}
 
-function renderVoiceUserCards(participants) {
-  const container = document.querySelector('.voice-user-tiles');
-  if (!container) return;
-  container.innerHTML = '';
-  participants.forEach(userStr => {
-    const user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr;
-    const card = document.createElement('div');
-    card.className = 'voice-user-card';
+  // Build a map of current user cards
+  const currentCards = {};
+  container.querySelectorAll('.voice-user-card').forEach(card => {
+    const userId = card.getAttribute('data-user-id');
+    if (userId) currentCards[userId] = card;
+  });
 
-    // Bubbles background
-    const bubbles = document.createElement('div');
-    bubbles.className = 'voice-user-bubbles';
-    const bubbleCount = Math.floor(Math.random() * 5) + 8; // 8-12 bubbles
-    for (let i = 0; i < bubbleCount; i++) {
-      const bubble = document.createElement('div');
-      bubble.className = 'voice-user-bubble';
-      const size = Math.random() * 32 + 18; // 18-50px
-      bubble.style.width = `${size}px`;
-      bubble.style.height = `${size}px`;
-      bubble.style.left = `${Math.random() * 90}%`;
-      bubble.style.bottom = `${Math.random() * 60}%`;
-      bubble.style.animationDuration = `${1.5 + Math.random() * 1.2}s`;
-      bubble.style.animationDelay = `${Math.random() * 1.2}s`;
-      bubbles.appendChild(bubble);
+  // Parse new users and build a set
+  const newUserIds = new Set();
+  users.forEach(userJson => {
+    const user = JSON.parse(userJson);
+    newUserIds.add(String(user.user_id));
+    if (!currentCards[user.user_id]) {
+      // Add new card
+      const tile = document.createElement('div');
+      tile.className = 'voice-user-card';
+      tile.setAttribute('data-user-id', user.user_id);
+      tile.innerHTML = `
+        <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
+        <div class="voice-user-name">${user.username}</div>
+      `;
+      container.appendChild(tile);
     }
-    card.appendChild(bubbles);
+  });
 
-    // Avatar wrapper with neon glow
-    const avatarWrapper = document.createElement('div');
-    avatarWrapper.className = 'voice-user-avatar-wrapper';
-    const avatar = document.createElement('img');
-    avatar.className = 'voice-user-avatar';
-    avatar.src = user.avatar_url || '/default-avatar.png';
-    avatar.alt = user.username;
-    const avatarGlow = document.createElement('div');
-    avatarGlow.className = 'voice-user-avatar-glow';
-    avatarWrapper.appendChild(avatar);
-    avatarWrapper.appendChild(avatarGlow);
-    card.appendChild(avatarWrapper);
-
-    // Username
-    const name = document.createElement('div');
-    name.className = 'voice-user-name';
-    name.textContent = user.username;
-    card.appendChild(name);
-
-    // Optionally, add mic/deafen indicators here
-
-    container.appendChild(card);
+  // Remove cards for users who left
+  Object.keys(currentCards).forEach(userId => {
+    if (!newUserIds.has(userId)) {
+      currentCards[userId].remove();
+    }
   });
 }
 
@@ -1193,7 +1172,7 @@ function setupVoiceChannelSocketIO(serverId, channelId, user) {
   // Listen for new messages
   channelSocket.on('voice_user_joined', (users) => {
     console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
-    renderVoiceUserCards(users);
+    updateVoiceUserCards(users);
   });
 }
 
@@ -1238,7 +1217,7 @@ async function openVoiceChannel(serverId, channelId) {
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
           const user = JSON.parse(localStorage.getItem('spice_user'));
-          renderVoiceUserCards([JSON.stringify({
+          updateVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
             avatar_url: user.avatar_url
