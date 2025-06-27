@@ -1152,8 +1152,14 @@ function updateVoiceUserCards(users) {
       tile.className = 'voice-user-card';
       tile.setAttribute('data-user-id', user.user_id);
       tile.innerHTML = `
-        <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
-        <div class="voice-user-name">${user.username}</div>
+        <div class="voice-user-avatar-wrapper">
+          <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
+          <span class="voice-user-status-dot"></span>
+        </div>
+        <div class="voice-user-name-row">
+          <span class="voice-user-name">${user.username}</span>
+          <span class="voice-user-mic"><i class="fa-solid fa-microphone"></i></span>
+        </div>
       `;
       container.appendChild(tile);
     }
