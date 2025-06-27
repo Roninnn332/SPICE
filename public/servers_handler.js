@@ -163,12 +163,12 @@ async function renderChannelsList(serverId) {
 if (!window.channelSocket) {
   const socketUrl = window.location.origin;
   window.channelSocket = window.io(socketUrl);
-}
+  }
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
   updateVoiceUserCards(users);
-});
+  });
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
@@ -272,10 +272,12 @@ async function openServerChannel(serverId, channelId) {
           const leaveBtn = footer.querySelector('.leave-btn');
           if (leaveBtn) {
             leaveBtn.onclick = function() {
-              // Only leave voice when user clicks leave
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave');
               }
+              isInVoiceChannel = false;
+              currentVoiceServerId = null;
+              currentVoiceChannelId = null;
               openVoiceChannel(serverId, channelId);
             };
           }
@@ -1255,7 +1257,6 @@ async function openVoiceChannel(serverId, channelId) {
           const leaveBtn = footer.querySelector('.leave-btn');
           if (leaveBtn) {
             leaveBtn.onclick = function() {
-              // Only leave voice when user clicks leave
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave');
               }
