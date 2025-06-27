@@ -221,6 +221,8 @@ async function openServerChannel(serverId, channelId) {
     isInVoiceChannel = false;
     currentVoiceServerId = null;
     currentVoiceChannelId = null;
+    let myMicOn = true;
+    let myDeafenOn = false;
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -247,7 +249,9 @@ async function openServerChannel(serverId, channelId) {
             user: {
               user_id: user.user_id,
               username: user.username,
-              avatar_url: user.avatar_url
+              avatar_url: user.avatar_url,
+              micOn: myMicOn,
+              deafenOn: myDeafenOn
             }
           });
         }
@@ -260,7 +264,9 @@ async function openServerChannel(serverId, channelId) {
           updateVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
-            avatar_url: user.avatar_url
+            avatar_url: user.avatar_url,
+            micOn: myMicOn,
+            deafenOn: myDeafenOn
           })]);
         }
         if (footer) {
@@ -273,22 +279,28 @@ async function openServerChannel(serverId, channelId) {
           `;
           // Mic toggle
           const micBtn = footer.querySelector('.mic-btn');
-          let micOn = true;
           if (micBtn) {
             micBtn.onclick = function() {
-              micOn = !micOn;
-              micBtn.innerHTML = micOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
-              micBtn.classList.toggle('off', !micOn);
+              myMicOn = !myMicOn;
+              micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+              micBtn.classList.toggle('off', !myMicOn);
+              // Emit state update
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+              }
             };
           }
           // Deafen toggle
           const deafenBtn = footer.querySelector('.deafen-btn');
-          let deafenOn = false;
           if (deafenBtn) {
             deafenBtn.onclick = function() {
-              deafenOn = !deafenOn;
-              deafenBtn.innerHTML = deafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
-              deafenBtn.classList.toggle('off', deafenOn);
+              myDeafenOn = !myDeafenOn;
+              deafenBtn.innerHTML = myDeafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
+              deafenBtn.classList.toggle('off', myDeafenOn);
+              // Emit state update
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+              }
             };
           }
           // Leave button
@@ -301,6 +313,8 @@ async function openServerChannel(serverId, channelId) {
               isInVoiceChannel = false;
               currentVoiceServerId = null;
               currentVoiceChannelId = null;
+              myMicOn = true;
+              myDeafenOn = false;
               openVoiceChannel(serverId, channelId);
             };
           }
@@ -1143,8 +1157,9 @@ function updateVoiceUserCards(users) {
 
   // Parse new users and build a set
   const newUserIds = new Set();
-  users.forEach(userJson => {
-    const user = JSON.parse(userJson);
+  users.forEach(userObj => {
+    // Accept both stringified and object user (for backward compat)
+    const user = typeof userObj === 'string' ? JSON.parse(userObj) : userObj;
     newUserIds.add(String(user.user_id));
     if (!currentCards[user.user_id]) {
       // Add new card
@@ -1154,14 +1169,31 @@ function updateVoiceUserCards(users) {
       tile.innerHTML = `
         <div class="voice-user-avatar-wrapper">
           <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
-          <span class="voice-user-status-dot"></span>
         </div>
         <div class="voice-user-name-row">
           <span class="voice-user-name">${user.username}</span>
-          <span class="voice-user-mic"><i class="fa-solid fa-microphone"></i></span>
+          <span class="voice-user-mic" title="${user.micOn === false ? 'Muted' : 'Unmuted'}">
+            <i class="fa-solid ${user.micOn === false ? 'fa-microphone-slash mic-muted' : 'fa-microphone'}"></i>
+          </span>
+          <span class="voice-user-deafen" title="${user.deafenOn ? 'Deafened' : 'Not Deafened'}">
+            <i class="fa-solid ${user.deafenOn ? 'fa-headphones-slash deafen-on' : 'fa-headphones'}"></i>
+          </span>
         </div>
       `;
       container.appendChild(tile);
+    } else {
+      // Update icons if user already exists
+      const card = currentCards[user.user_id];
+      const micIcon = card.querySelector('.voice-user-mic i');
+      if (micIcon) {
+        micIcon.className = `fa-solid ${user.micOn === false ? 'fa-microphone-slash mic-muted' : 'fa-microphone'}`;
+        micIcon.parentElement.title = user.micOn === false ? 'Muted' : 'Unmuted';
+      }
+      const deafenIcon = card.querySelector('.voice-user-deafen i');
+      if (deafenIcon) {
+        deafenIcon.className = `fa-solid ${user.deafenOn ? 'fa-headphones-slash deafen-on' : 'fa-headphones'}`;
+        deafenIcon.parentElement.title = user.deafenOn ? 'Deafened' : 'Not Deafened';
+      }
     }
   });
 
@@ -1199,6 +1231,8 @@ function setupVoiceChannelSocketIO(serverId, channelId, user) {
 let isInVoiceChannel = false;
 let currentVoiceServerId = null;
 let currentVoiceChannelId = null;
+let myMicOn = true;
+let myDeafenOn = false;
 
 // --- openVoiceChannel ---
 async function openVoiceChannel(serverId, channelId) {
@@ -1216,6 +1250,8 @@ async function openVoiceChannel(serverId, channelId) {
     isInVoiceChannel = false;
     currentVoiceServerId = null;
     currentVoiceChannelId = null;
+    myMicOn = true;
+    myDeafenOn = false;
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -1242,7 +1278,9 @@ async function openVoiceChannel(serverId, channelId) {
             user: {
               user_id: user.user_id,
               username: user.username,
-              avatar_url: user.avatar_url
+              avatar_url: user.avatar_url,
+              micOn: myMicOn,
+              deafenOn: myDeafenOn
             }
           });
         }
@@ -1255,7 +1293,9 @@ async function openVoiceChannel(serverId, channelId) {
           updateVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
-            avatar_url: user.avatar_url
+            avatar_url: user.avatar_url,
+            micOn: myMicOn,
+            deafenOn: myDeafenOn
           })]);
         }
         if (footer) {
@@ -1268,22 +1308,28 @@ async function openVoiceChannel(serverId, channelId) {
           `;
           // Mic toggle
           const micBtn = footer.querySelector('.mic-btn');
-          let micOn = true;
           if (micBtn) {
             micBtn.onclick = function() {
-              micOn = !micOn;
-              micBtn.innerHTML = micOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
-              micBtn.classList.toggle('off', !micOn);
+              myMicOn = !myMicOn;
+              micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+              micBtn.classList.toggle('off', !myMicOn);
+              // Emit state update
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+              }
             };
           }
           // Deafen toggle
           const deafenBtn = footer.querySelector('.deafen-btn');
-          let deafenOn = false;
           if (deafenBtn) {
             deafenBtn.onclick = function() {
-              deafenOn = !deafenOn;
-              deafenBtn.innerHTML = deafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
-              deafenBtn.classList.toggle('off', deafenOn);
+              myDeafenOn = !myDeafenOn;
+              deafenBtn.innerHTML = myDeafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
+              deafenBtn.classList.toggle('off', myDeafenOn);
+              // Emit state update
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+              }
             };
           }
           // Leave button
@@ -1296,6 +1342,8 @@ async function openVoiceChannel(serverId, channelId) {
               isInVoiceChannel = false;
               currentVoiceServerId = null;
               currentVoiceChannelId = null;
+              myMicOn = true;
+              myDeafenOn = false;
               openVoiceChannel(serverId, channelId);
             };
           }

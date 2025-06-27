@@ -3520,7 +3520,22 @@ input:checked + .slider:before {
   opacity: 0.85;
   transition: color 0.18s;
 }
-.voice-user-card:hover .voice-user-mic {
+.voice-user-mic.mic-muted, .voice-user-mic .mic-muted {
+  color: #ed4245 !important;
+  opacity: 1;
+}
+.voice-user-deafen {
+  color: #b3b3b3;
+  font-size: 1.08em;
+  margin-left: 0.35em;
+  opacity: 0.85;
+  transition: color 0.18s;
+}
+.voice-user-deafen.deafen-on, .voice-user-deafen .deafen-on {
+  color: #fbbf24 !important;
+  opacity: 1;
+}
+.voice-user-card:hover .voice-user-mic, .voice-user-card:hover .voice-user-deafen {
   color: var(--primary-blue);
   opacity: 1;
 }

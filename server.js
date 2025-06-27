@@ -24,7 +24,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Track voice participants in memory (optional reset on restart)
-const voiceParticipants = {}; // key = roomId, value = Set of users
+const voiceParticipants = {}; // key = roomId, value = Map of user_id -> user object
 
 // Socket.IO DM logic
 io.on('connection', (socket) => {
@@ -111,24 +111,43 @@ io.on('connection', (socket) => {
     const roomId = `voice-${serverId}-${channelId}`;
     socket.join(roomId);
     socket.voiceRoomId = roomId;
-    socket.userInfo = user;
-
+    // Add micOn and deafenOn state
+    const userWithState = {
+      ...user,
+      micOn: true,
+      deafenOn: false
+    };
+    socket.userInfo = userWithState;
     if (!voiceParticipants[roomId]) {
-      voiceParticipants[roomId] = new Set();
+      voiceParticipants[roomId] = new Map();
     }
-    voiceParticipants[roomId].add(JSON.stringify(user));
-
-    const participants = Array.from(voiceParticipants[roomId]);
-
-    // Send full list to EVERYONE in the room (including the joiner)
+    voiceParticipants[roomId].set(String(user.user_id), userWithState);
+    const participants = Array.from(voiceParticipants[roomId].values());
     io.to(roomId).emit('voice_user_joined', participants);
 
     // Debug log: show usernames
     try {
-      const names = participants.map(u => JSON.parse(u).username);
+      const names = participants.map(u => u.username);
       console.log(`[voice_join] ${user.username} joined. Participants now:`, names);
     } catch (e) {
       console.log(`[voice_join] ${user.username} joined. Participants now:`, participants);
+    }
+  });
+
+  // Handle mic/deafen state update
+  socket.on('voice_state_update', ({ micOn, deafenOn }) => {
+    const roomId = socket.voiceRoomId;
+    if (!roomId || !socket.userInfo) return;
+    const userId = String(socket.userInfo.user_id);
+    if (voiceParticipants[roomId] && voiceParticipants[roomId].has(userId)) {
+      const user = voiceParticipants[roomId].get(userId);
+      user.micOn = micOn;
+      user.deafenOn = deafenOn;
+      socket.userInfo.micOn = micOn;
+      socket.userInfo.deafenOn = deafenOn;
+      // Broadcast updated list
+      const participants = Array.from(voiceParticipants[roomId].values());
+      io.to(roomId).emit('voice_user_joined', participants);
     }
   });
 
@@ -136,11 +155,11 @@ io.on('connection', (socket) => {
     const roomId = socket.voiceRoomId;
     const user = socket.userInfo;
     if (roomId && user && voiceParticipants[roomId]) {
-      voiceParticipants[roomId].delete(JSON.stringify(user));
+      voiceParticipants[roomId].delete(String(user.user_id));
       // Debug logging
       console.log(`[voice_leave] roomId: ${roomId}, user:`, user);
-      console.log(`[voice_leave] participants:`, Array.from(voiceParticipants[roomId]));
-      io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
+      console.log(`[voice_leave] participants:`, Array.from(voiceParticipants[roomId].values()));
+      io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId].values()));
     }
     socket.leave(roomId);
     delete socket.voiceRoomId;
@@ -149,11 +168,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (socket.voiceRoomId && socket.userInfo) {
       const roomId = socket.voiceRoomId;
-      voiceParticipants[roomId]?.delete(JSON.stringify(socket.userInfo));
+      voiceParticipants[roomId]?.delete(String(socket.userInfo.user_id));
       // Debug logging
       console.log(`[disconnect] roomId: ${roomId}, user:`, socket.userInfo);
-      console.log(`[disconnect] participants:`, Array.from(voiceParticipants[roomId]));
-      io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]));
+      console.log(`[disconnect] participants:`, Array.from(voiceParticipants[roomId]?.values() || []));
+      io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId]?.values() || []));
     }
     console.log('User disconnected:', socket.id);
   });
