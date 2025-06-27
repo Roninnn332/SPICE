@@ -216,23 +216,11 @@ async function openServerChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
-    // Emit join FIRST, before UI or listeners
-    const user = JSON.parse(localStorage.getItem('spice_user'));
-    if (window.channelSocket) {
-      window.channelSocket.emit('voice_join', {
-        serverId,
-        channelId,
-        user: {
-          user_id: user.user_id,
-          username: user.username,
-          avatar_url: user.avatar_url
-        }
-      });
-    }
-    // Mark as in voice
-    isInVoiceChannel = true;
-    currentVoiceServerId = serverId;
-    currentVoiceChannelId = channelId;
+    // Do NOT join voice yet! Only show the welcome UI and set up the Join Voice button.
+    // Remove any previous voice state
+    isInVoiceChannel = false;
+    currentVoiceServerId = null;
+    currentVoiceChannelId = null;
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -250,10 +238,25 @@ async function openServerChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // Actually join voice now
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              user_id: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+        }
+        isInVoiceChannel = true;
+        currentVoiceServerId = serverId;
+        currentVoiceChannelId = channelId;
         // Immediately show own user card (optimistic update)
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
-          const user = JSON.parse(localStorage.getItem('spice_user'));
           updateVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
@@ -302,7 +305,6 @@ async function openServerChannel(serverId, channelId) {
             };
           }
         }
-        // Emit join (already done above, so skip here)
       };
     }
     return;
@@ -1203,10 +1205,11 @@ async function openVoiceChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
-    // Mark as in voice
-    isInVoiceChannel = true;
-    currentVoiceServerId = serverId;
-    currentVoiceChannelId = channelId;
+    // Do NOT join voice yet! Only show the welcome UI and set up the Join Voice button.
+    // Remove any previous voice state
+    isInVoiceChannel = false;
+    currentVoiceServerId = null;
+    currentVoiceChannelId = null;
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -1224,10 +1227,25 @@ async function openVoiceChannel(serverId, channelId) {
     const joinBtn = chat.querySelector('.voice-channel-join-btn');
     if (joinBtn) {
       joinBtn.onclick = function() {
+        // Actually join voice now
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              user_id: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url
+            }
+          });
+        }
+        isInVoiceChannel = true;
+        currentVoiceServerId = serverId;
+        currentVoiceChannelId = channelId;
         // Immediately show own user card (optimistic update)
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
-          const user = JSON.parse(localStorage.getItem('spice_user'));
           updateVoiceUserCards([JSON.stringify({
             user_id: user.user_id,
             username: user.username,
@@ -1275,19 +1293,6 @@ async function openVoiceChannel(serverId, channelId) {
               openVoiceChannel(serverId, channelId);
             };
           }
-        }
-        // Emit join
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        if (window.channelSocket) {
-          window.channelSocket.emit('voice_join', {
-            serverId,
-            channelId,
-            user: {
-              user_id: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url
-            }
-          });
         }
       };
     }
