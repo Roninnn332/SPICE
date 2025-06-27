@@ -3540,4 +3540,49 @@ input:checked + .slider:before {
   background: linear-gradient(120deg, rgba(96,165,250,0.22) 0%, rgba(37,99,235,0.13) 100%);
 }
 
+.voice-user-card {
+  width: 230px;
+  min-height: 300px;
+  padding: 2.2rem 1.7rem 1.7rem 1.7rem;
+  /* ... existing code ... */
+}
+.voice-user-card .voice-user-bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.voice-user-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+  opacity: 0.18;
+  animation: bubbleMove 2.2s linear infinite;
+  filter: blur(1.5px);
+}
+@keyframes bubbleMove {
+  0% { transform: translateY(100%) scale(0.7); opacity: 0.18; }
+  80% { opacity: 0.22; }
+  100% { transform: translateY(-120%) scale(1.1); opacity: 0.01; }
+}
+.voice-user-card:hover, .voice-user-card:focus {
+  /* ... existing code ... */
+  box-shadow: 0 16px 64px 0 #60a5fa66, 0 4px 32px 0 #ed424544;
+  border: 3.5px solid #60a5fa;
+  background: linear-gradient(120deg, rgba(96,165,250,0.28) 0%, rgba(37,99,235,0.17) 100%);
+}
+.voice-user-avatar {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1.5rem;
+  border-width: 7px;
+  /* ... existing code ... */
+}
+.voice-user-name {
+  font-size: 1.35rem;
+  margin-top: 0.5rem;
+  /* ... existing code ... */
+}
+
  

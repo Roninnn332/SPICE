@@ -1132,6 +1132,24 @@ function renderVoiceUserCards(participants) {
     const card = document.createElement('div');
     card.className = 'voice-user-card';
 
+    // Bubbles background
+    const bubbles = document.createElement('div');
+    bubbles.className = 'voice-user-bubbles';
+    const bubbleCount = Math.floor(Math.random() * 5) + 8; // 8-12 bubbles
+    for (let i = 0; i < bubbleCount; i++) {
+      const bubble = document.createElement('div');
+      bubble.className = 'voice-user-bubble';
+      const size = Math.random() * 32 + 18; // 18-50px
+      bubble.style.width = `${size}px`;
+      bubble.style.height = `${size}px`;
+      bubble.style.left = `${Math.random() * 90}%`;
+      bubble.style.bottom = `${Math.random() * 60}%`;
+      bubble.style.animationDuration = `${1.5 + Math.random() * 1.2}s`;
+      bubble.style.animationDelay = `${Math.random() * 1.2}s`;
+      bubbles.appendChild(bubble);
+    }
+    card.appendChild(bubbles);
+
     // Hacker background
     const hackerBg = document.createElement('div');
     hackerBg.className = 'voice-user-hacker-bg';
