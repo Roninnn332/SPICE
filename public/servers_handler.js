@@ -293,9 +293,12 @@ async function openServerChannel(serverId, channelId) {
           // Deafen toggle
           const deafenBtn = footer.querySelector('.deafen-btn');
           if (deafenBtn) {
+            const icon = deafenBtn.querySelector('i');
             deafenBtn.onclick = function() {
               myDeafenOn = !myDeafenOn;
-              deafenBtn.innerHTML = myDeafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
+              if (icon) {
+                icon.className = myDeafenOn ? 'fa-solid fa-headphones-slash' : 'fa-solid fa-headphones';
+              }
               deafenBtn.classList.toggle('off', myDeafenOn);
               // Emit state update
               if (window.channelSocket) {
@@ -1176,7 +1179,8 @@ function updateVoiceUserCards(users) {
             <i class="fa-solid ${user.micOn === false ? 'fa-microphone-slash mic-muted' : 'fa-microphone'}"></i>
           </span>
           <span class="voice-user-deafen" title="${user.deafenOn ? 'Deafened' : 'Not Deafened'}">
-            <i class="fa-solid ${user.deafenOn ? 'fa-headphones-slash deafen-on' : 'fa-headphones'}"></i>
+            <i class="fa-solid ${user.deafenOn ? 'fa-headphones-slash deafen-on' : 'fa-headphones'} fa-fallback"></i>
+            ${user.deafenOn ? '<span class="deafen-slash-fallback"></span>' : ''}
           </span>
         </div>
       `;
@@ -1191,8 +1195,19 @@ function updateVoiceUserCards(users) {
       }
       const deafenIcon = card.querySelector('.voice-user-deafen i');
       if (deafenIcon) {
-        deafenIcon.className = `fa-solid ${user.deafenOn ? 'fa-headphones-slash deafen-on' : 'fa-headphones'}`;
+        deafenIcon.className = `fa-solid ${user.deafenOn ? 'fa-headphones-slash deafen-on' : 'fa-headphones'} fa-fallback`;
         deafenIcon.parentElement.title = user.deafenOn ? 'Deafened' : 'Not Deafened';
+        // Add/remove fallback slash overlay
+        let slash = card.querySelector('.voice-user-deafen .deafen-slash-fallback');
+        if (user.deafenOn) {
+          if (!slash) {
+            slash = document.createElement('span');
+            slash.className = 'deafen-slash-fallback';
+            deafenIcon.parentElement.appendChild(slash);
+          }
+        } else {
+          if (slash) slash.remove();
+        }
       }
     }
   });
@@ -1322,9 +1337,12 @@ async function openVoiceChannel(serverId, channelId) {
           // Deafen toggle
           const deafenBtn = footer.querySelector('.deafen-btn');
           if (deafenBtn) {
+            const icon = deafenBtn.querySelector('i');
             deafenBtn.onclick = function() {
               myDeafenOn = !myDeafenOn;
-              deafenBtn.innerHTML = myDeafenOn ? '<i class="fa-solid fa-headphones-slash"></i>' : '<i class="fa-solid fa-headphones"></i>';
+              if (icon) {
+                icon.className = myDeafenOn ? 'fa-solid fa-headphones-slash' : 'fa-solid fa-headphones';
+              }
               deafenBtn.classList.toggle('off', myDeafenOn);
               // Emit state update
               if (window.channelSocket) {
