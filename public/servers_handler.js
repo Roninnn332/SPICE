@@ -322,6 +322,10 @@ async function openServerChannel(serverId, channelId) {
       timestamp: msg.created_at
     }, isMe ? 'me' : 'them');
   }
+  // Ensure we join the correct Socket.IO room for this channel (for real-time updates)
+  if (window.channelSocket) {
+    window.channelSocket.emit('join_channel', { serverId, channelId });
+  }
   // Setup Socket.IO for real-time
   setupChannelSocketIO(serverId, channelId, user);
   // Render message input in footer ONLY for text channels
@@ -1113,6 +1117,7 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
 }
 
 function updateVoiceUserCards(users) {
+  if (!isInVoiceChannel) return; // Only update if user is in voice
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
 
