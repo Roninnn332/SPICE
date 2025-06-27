@@ -166,7 +166,7 @@ if (!window.channelSocket) {
   }
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
-  console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
+  console.log('[Client] Received users:', users.map(u => u.username));
   updateVoiceUserCards(users);
   });
 
@@ -1222,7 +1222,7 @@ function setupVoiceChannelSocketIO(serverId, channelId, user) {
   channelSocket.emit('join_channel', { serverId, channelId });
   // Listen for new messages
   channelSocket.on('voice_user_joined', (users) => {
-    console.log('[Client] Received users:', users.map(u => JSON.parse(u).username));
+    console.log('[Client] Received users:', users.map(u => u.username));
     updateVoiceUserCards(users);
   });
 }
