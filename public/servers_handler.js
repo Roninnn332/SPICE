@@ -204,6 +204,10 @@ async function appendChannelMessage(msg, who) {
 // --- Refactor openServerChannel for Real-time & Premium UI ---
 async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
+  // Always join the Socket.IO room for this channel FIRST
+  if (window.channelSocket) {
+    window.channelSocket.emit('join_channel', { serverId, channelId });
+  }
   // Fetch channel info
   const channel = channelsList.find(c => c.id === channelId);
   // Render channel name in header
@@ -212,6 +216,23 @@ async function openServerChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
+    // Emit join FIRST, before UI or listeners
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    if (window.channelSocket) {
+      window.channelSocket.emit('voice_join', {
+        serverId,
+        channelId,
+        user: {
+          user_id: user.user_id,
+          username: user.username,
+          avatar_url: user.avatar_url
+        }
+      });
+    }
+    // Mark as in voice
+    isInVoiceChannel = true;
+    currentVoiceServerId = serverId;
+    currentVoiceChannelId = channelId;
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -239,7 +260,6 @@ async function openServerChannel(serverId, channelId) {
             avatar_url: user.avatar_url
           })]);
         }
-        // Remove welcome, show controls in footer
         if (footer) {
           footer.innerHTML = `
             <div class="voice-controls animate-stagger">
@@ -282,19 +302,7 @@ async function openServerChannel(serverId, channelId) {
             };
           }
         }
-        // Emit join
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        if (window.channelSocket) {
-          window.channelSocket.emit('voice_join', {
-            serverId,
-            channelId,
-            user: {
-              user_id: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url
-            }
-          });
-        }
+        // Emit join (already done above, so skip here)
       };
     }
     return;
@@ -321,10 +329,6 @@ async function openServerChannel(serverId, channelId) {
       content: msg.content,
       timestamp: msg.created_at
     }, isMe ? 'me' : 'them');
-  }
-  // Ensure we join the correct Socket.IO room for this channel (for real-time updates)
-  if (window.channelSocket) {
-    window.channelSocket.emit('join_channel', { serverId, channelId });
   }
   // Setup Socket.IO for real-time
   setupChannelSocketIO(serverId, channelId, user);
