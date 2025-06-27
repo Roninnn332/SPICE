@@ -1150,12 +1150,6 @@ function renderVoiceUserCards(participants) {
     }
     card.appendChild(bubbles);
 
-    // Hacker background
-    const hackerBg = document.createElement('div');
-    hackerBg.className = 'voice-user-hacker-bg';
-    hackerBg.textContent = generateHackerText(10, 7);
-    card.appendChild(hackerBg);
-
     // Avatar wrapper with neon glow
     const avatarWrapper = document.createElement('div');
     avatarWrapper.className = 'voice-user-avatar-wrapper';
