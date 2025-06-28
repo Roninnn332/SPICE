@@ -725,6 +725,9 @@ body {
 .channel-category:hover .add-channel {
   opacity: 1;
 }
+.channel-btn, .channel-btn span {
+  color: var(--text-primary) !important;
+}
 .channel-btn {
   display: flex;
   align-items: center;
@@ -735,7 +738,6 @@ body {
   border: none;
   border-radius: var(--border-radius-sm);
   background: transparent;
-  color: var(--text-primary);
   font-size: 1.05rem;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;

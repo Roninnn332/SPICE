@@ -141,6 +141,7 @@ async function renderChannelsList(serverId) {
   // Render
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
+  const isFirstRender = !channelsListDiv.dataset.animated;
   channelsListDiv.innerHTML = '';
   // Split channels by type
   const textChannels = channels.filter(c => c.type === 'text');
@@ -149,6 +150,7 @@ async function renderChannelsList(serverId) {
   if (textChannels.length) {
     const textCategory = document.createElement('div');
     textCategory.className = 'channel-category';
+    if (!isFirstRender) textCategory.style.animation = 'none';
     textCategory.innerHTML = `<span>Text Channels</span><button class='add-channel' title='Add Text Channel'><i class='fa-solid fa-plus'></i></button>`;
     textCategory.querySelector('.add-channel').onclick = () => {
       openCreateChannelModal('text');
@@ -159,6 +161,7 @@ async function renderChannelsList(serverId) {
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
       btn.innerHTML = `<span class='channel-icon'>#</span> <span>${channel.name}</span>`;
       btn.style.setProperty('--channel-index', idx + 1);
+      if (!isFirstRender) btn.style.animation = 'none';
       btn.onclick = () => {
         currentChannel = channel;
         renderChannelsList(serverId); // re-render to update active
@@ -174,6 +177,7 @@ async function renderChannelsList(serverId) {
   if (voiceChannels.length) {
     const voiceCategory = document.createElement('div');
     voiceCategory.className = 'channel-category';
+    if (!isFirstRender) voiceCategory.style.animation = 'none';
     voiceCategory.innerHTML = `<span>Voice Channels</span><button class='add-channel' title='Add Voice Channel'><i class='fa-solid fa-plus'></i></button>`;
     voiceCategory.querySelector('.add-channel').onclick = () => {
       openCreateChannelModal('voice');
@@ -184,6 +188,7 @@ async function renderChannelsList(serverId) {
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
       btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> <span>${channel.name}</span>`;
       btn.style.setProperty('--channel-index', idx + 1);
+      if (!isFirstRender) btn.style.animation = 'none';
       btn.onclick = () => {
         currentChannel = channel;
         renderChannelsList(serverId); // re-render to update active
@@ -192,6 +197,8 @@ async function renderChannelsList(serverId) {
       channelsListDiv.appendChild(btn);
     });
   }
+  // Mark as animated after first render
+  channelsListDiv.dataset.animated = 'true';
 }
 
 // --- Socket.IO for Channel/Voice Presence ---
