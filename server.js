@@ -39,10 +39,13 @@ io.on('connection', (socket) => {
 
   // --- CHANNEL CHAT LOGIC ---
   // Join a channel room
-  socket.on('join_channel', ({ serverId, channelId }) => {
+  socket.on('join_channel', ({ serverId, channelId, userId }) => {
     const room = `server-${serverId}-channel-${channelId}`;
     socket.join(room);
     socket.currentChannelRoom = room;
+    // Set these for WebRTC relay
+    socket.voiceWebRTCRoomId = `voice-${serverId}-${channelId}`;
+    if (userId) socket.voiceWebRTCUserId = userId;
     console.log(`Socket ${socket.id} joined channel room ${room}`);
   });
 

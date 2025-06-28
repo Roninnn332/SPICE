@@ -225,7 +225,8 @@ async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
   // Always join the Socket.IO room for this channel FIRST
   if (window.channelSocket) {
-    window.channelSocket.emit('join_channel', { serverId, channelId });
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    window.channelSocket.emit('join_channel', { serverId, channelId, userId: user && user.user_id });
   }
   // Fetch channel info
   const channel = channelsList.find(c => c.id === channelId);
