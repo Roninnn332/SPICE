@@ -1221,11 +1221,38 @@ function updateVoiceUserCards(users) {
           const avatar = tile.querySelector('.avatar');
           if (main) main.style.opacity = '0';
           if (avatar) avatar.style.opacity = '0.5';
+          // Replace 3-dots with X icon
+          menuBtn.innerHTML = '<i class="fas fa-times"></i>';
+          menuBtn.classList.add('menu-close-btn');
+          // Handler to close menu
+          const closeMenuHandler = (ev) => {
+            ev.stopPropagation();
+            tile.classList.remove('user-card-menu-open');
+            tile.style.minHeight = '';
+            tile.style.width = '';
+            main.style.opacity = '1';
+            avatar.style.opacity = '1';
+            menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>';
+            menuBtn.classList.remove('menu-close-btn');
+            document.removeEventListener('mousedown', outsideMenuHandler);
+            menuBtn.onclick = originalMenuHandler;
+            updateVoiceUserCards(users);
+          };
+          // Save original handler for restore
+          const originalMenuHandler = menuBtn.onclick;
+          // Click X to close
+          menuBtn.onclick = closeMenuHandler;
+          // Click outside to close
+          function outsideMenuHandler(ev) {
+            if (!tile.contains(ev.target)) {
+              closeMenuHandler(ev);
+            }
+          }
+          document.addEventListener('mousedown', outsideMenuHandler);
           setTimeout(async () => {
             const userId = tile.getAttribute('data-user-id');
             const friend = await isFriend(userId);
             let menuHtml = '<div class="user-card-menu animate-menu-in">';
-            menuHtml += '<button class="user-card-menu-btn back-btn"><i class="fas fa-arrow-left"></i> Back</button>';
             if (friend) {
               menuHtml += '<button class="user-card-menu-btn" disabled><i class="fas fa-user-friends"></i> Friends</button>';
             } else {
@@ -1238,32 +1265,6 @@ function updateVoiceUserCards(users) {
             menuHtml += '</div>';
             main.innerHTML = menuHtml;
             main.style.opacity = '1';
-            function closeMenu(ev) {
-              if (!tile.contains(ev.target)) {
-                tile.classList.remove('user-card-menu-open');
-                tile.style.minHeight = '';
-                tile.style.width = '';
-                main.style.opacity = '1';
-                avatar.style.opacity = '1';
-                document.removeEventListener('mousedown', closeMenu);
-                updateVoiceUserCards(users);
-              }
-            }
-            document.addEventListener('mousedown', closeMenu);
-            // Back button
-            const backBtn = main.querySelector('.back-btn');
-            if (backBtn) {
-              backBtn.onclick = (ev) => {
-                ev.stopPropagation();
-                tile.classList.remove('user-card-menu-open');
-                tile.style.minHeight = '';
-                tile.style.width = '';
-                main.style.opacity = '1';
-                avatar.style.opacity = '1';
-                document.removeEventListener('mousedown', closeMenu);
-                updateVoiceUserCards(users);
-              };
-            }
             // Add action handlers
             const addBtn = main.querySelector('.add-friend');
             if (addBtn) {
@@ -1282,7 +1283,6 @@ function updateVoiceUserCards(users) {
             if (kickBtn) {
               kickBtn.onclick = (ev) => {
                 ev.stopPropagation();
-                // Emit kick event to server
                 if (window.channelSocket && currentVoiceServerId && currentVoiceChannelId) {
                   window.channelSocket.emit('voice_kick', {
                     serverId: currentVoiceServerId,
