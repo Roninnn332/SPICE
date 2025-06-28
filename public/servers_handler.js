@@ -1219,6 +1219,15 @@ function updateVoiceUserCards(users) {
         } else {
           if (slash) slash.remove();
         }
+        // Add/remove deafen-on class for color
+        const deafenSpan = card.querySelector('.voice-user-deafen');
+        if (deafenSpan) {
+          if (user.deafenOn) {
+            deafenSpan.classList.add('deafen-on');
+          } else {
+            deafenSpan.classList.remove('deafen-on');
+          }
+        }
       }
     }
   });
