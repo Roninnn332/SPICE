@@ -648,13 +648,15 @@ body {
 }
 .servers-sidebar {
   width: 56px;
-  border-right: 2.5px solid var(--primary-blue);
+  border-right: 2.5px solid var(--accent);
+  box-shadow: 0 0 12px 2px var(--accent), 0 2px 16px 0 rgba(96,165,250,0.18);
   align-items: center;
   padding: 0.5rem 0 0.5rem 0;
 }
 .channels-sidebar {
   width: 180px;
-  border-right: 2.5px solid var(--primary-blue);
+  border-right: 2.5px solid var(--accent);
+  box-shadow: 0 0 12px 2px var(--accent), 0 2px 16px 0 rgba(96,165,250,0.18);
   padding: 0.5rem 0.5rem;
   display: flex;
   flex-direction: column;
@@ -662,7 +664,8 @@ body {
 }
 .users-sidebar {
   width: 180px;
-  border-left: 2.5px solid var(--primary-blue);
+  border-left: 2.5px solid var(--accent);
+  box-shadow: 0 0 12px 2px var(--accent), 0 2px 16px 0 rgba(96,165,250,0.18);
   padding: 0.5rem 0.5rem;
 }
 .chat-section {
@@ -678,7 +681,8 @@ body {
   min-height: 44px;
   display: flex;
   align-items: center;
-  border-bottom: 2px solid var(--primary-blue);
+  border-bottom: 2px solid var(--accent);
+  box-shadow: 0 0 8px 1.5px var(--accent);
   padding: 0 1rem;
   font-size: 1.05rem;
   font-family: 'Montserrat', sans-serif;
@@ -696,7 +700,8 @@ body {
 }
 .chat-input-area {
   min-height: 44px;
-  border-top: 2px solid var(--primary-blue);
+  border-top: 2px solid var(--accent);
+  box-shadow: 0 0 8px 1.5px var(--accent);
   display: flex;
   align-items: center;
   padding: 0.4rem 1rem;
@@ -1932,7 +1937,8 @@ body {
   align-items: center;
   padding: 0.7rem 1.2rem;
   background: #181c25;
-  border-top: 2px solid var(--primary-blue);
+  border-top: 2px solid var(--accent);
+  box-shadow: 0 0 8px 1.5px var(--accent);
   min-height: 64px;
   gap: 0.7rem;
 }
