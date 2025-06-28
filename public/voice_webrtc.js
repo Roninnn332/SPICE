@@ -44,10 +44,11 @@ async function joinVoiceChannel(serverId, channelId, userId, socket) {
   currentServerId = serverId;
   myUserId = userId;
   const stream = await getLocalStream();
-  // Tell server we want to connect to all peers in this channel
   socket.emit('voice-webrtc-join', { serverId, channelId, userId });
   isMuted = false;
   isDeafened = false;
+  // Wait 500ms to ensure server mapping is ready
+  await new Promise(res => setTimeout(res, 500));
 }
 
 // --- Handle signaling from server ---
