@@ -182,12 +182,12 @@ async function renderChannelsList(serverId) {
 if (!window.channelSocket) {
   const socketUrl = window.location.origin;
   window.channelSocket = window.io(socketUrl);
-}
+  }
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => u.username));
   updateVoiceUserCards(users);
-});
+  });
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
