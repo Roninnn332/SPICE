@@ -51,6 +51,11 @@ async function joinVoiceChannel(serverId, channelId, userId, socket) {
 function handleVoiceSignal(socket) {
   socket.on('voice-webrtc-signal', async ({ from, type, data }) => {
     if (from === myUserId) return;
+    if (type === 'join') {
+      // New peer joined, create a connection to them
+      await createPeerConnection(from, socket);
+      return;
+    }
     if (!peers[from]) {
       await createPeerConnection(from, socket);
     }

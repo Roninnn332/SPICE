@@ -1215,7 +1215,7 @@ function updateVoiceUserCards(users) {
       const cardColor = pickColor(user.user_id);
       // Add new card with entrance animation and compact design (no 'info' div)
       const tile = document.createElement('div');
-      tile.className = 'user-card fade-in-up';
+      tile.className = 'user-card fade-in-up fade-slide';
       tile.setAttribute('data-user-id', user.user_id);
       tile.style.background = cardColor;
       tile.innerHTML = `
