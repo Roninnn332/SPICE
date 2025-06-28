@@ -1176,23 +1176,23 @@ function updateVoiceUserCards(users) {
     const user = typeof userObj === 'string' ? JSON.parse(userObj) : userObj;
     newUserIds.add(String(user.user_id));
     if (!currentCards[user.user_id]) {
-      // Add new card with entrance animation and new design
+      // Add new card with entrance animation and compact design (no 'info' div)
       const tile = document.createElement('div');
       tile.className = 'user-card fade-in-up';
       tile.setAttribute('data-user-id', user.user_id);
       tile.innerHTML = `
-        <div class="avatar">
-          <img src="${user.avatar_url}" alt="${user.username}">
+        <div class="avatar" style="width:44px;height:44px;min-width:44px;">
+          <img src="${user.avatar_url}" alt="${user.username}" style="width:44px;height:44px;">
         </div>
-        <div class="info">
-          <h3>${user.username}</h3>
-          <p>${user.status || ''}</p>
-          <div class="status-icons">
-            <i class="fas fa-microphone${user.micOn === false ? '' : ' active'}" title="${user.micOn === false ? 'Mic Off' : 'Mic On'}"></i>
-            <i class="fas fa-volume-up${user.deafenOn ? '' : ' active'}" title="${user.deafenOn ? 'Deafened' : 'Speaker On'}"></i>
-          </div>
+        <div class="user-main" style="display:flex;flex-direction:column;justify-content:center;flex:1;min-width:0;">
+          <span class="user-name" style="color:#fff;font-size:15px;font-weight:600;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.username}</span>
+          <span class="user-status" style="color:#aaa;font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.status || ''}</span>
         </div>
-        <div class="menu-button" title="Options">
+        <div class="status-icons" style="display:flex;flex-direction:column;gap:6px;margin-left:10px;">
+          <i class="fas fa-microphone${user.micOn === false ? '' : ' active'}" title="${user.micOn === false ? 'Mic Off' : 'Mic On'}" style="font-size:15px;"></i>
+          <i class="fas fa-volume-up${user.deafenOn ? '' : ' active'}" title="${user.deafenOn ? 'Deafened' : 'Speaker On'}" style="font-size:15px;"></i>
+        </div>
+        <div class="menu-button" title="Options" style="font-size:15px;margin-left:8px;align-self:center;">
           <i class="fas fa-ellipsis-v"></i>
         </div>
       `;
@@ -1203,9 +1203,9 @@ function updateVoiceUserCards(users) {
       // Avatar and username
       const avatarImg = card.querySelector('.avatar img');
       if (avatarImg) avatarImg.src = user.avatar_url;
-      const name = card.querySelector('.info h3');
+      const name = card.querySelector('.user-name');
       if (name) name.textContent = user.username;
-      const status = card.querySelector('.info p');
+      const status = card.querySelector('.user-status');
       if (status) status.textContent = user.status || '';
       // Mic icon
       const micIcon = card.querySelector('.status-icons .fa-microphone');
