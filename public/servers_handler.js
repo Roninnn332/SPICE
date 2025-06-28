@@ -50,6 +50,17 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // If you have other modal event listeners, wire them here as well
+
+  // WebRTC signaling setup
+  if (window.voiceWebRTC && window.channelSocket) {
+    window.voiceWebRTC.handleVoiceSignal(window.channelSocket);
+  } else {
+    window.addEventListener('load', () => {
+      if (window.voiceWebRTC && window.channelSocket) {
+        window.voiceWebRTC.handleVoiceSignal(window.channelSocket);
+      }
+    });
+  }
 });
 
 // --- Server List UI ---
@@ -163,12 +174,12 @@ async function renderChannelsList(serverId) {
 if (!window.channelSocket) {
   const socketUrl = window.location.origin;
   window.channelSocket = window.io(socketUrl);
-  }
+}
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => u.username));
   updateVoiceUserCards(users);
-  });
+});
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
@@ -258,6 +269,10 @@ async function openServerChannel(serverId, channelId) {
         isInVoiceChannel = true;
         currentVoiceServerId = serverId;
         currentVoiceChannelId = channelId;
+        // Start WebRTC voice streaming
+        if (window.voiceWebRTC) {
+          window.voiceWebRTC.joinVoiceChannel(serverId, channelId, user.user_id, window.channelSocket);
+        }
         // Immediately show own user card (optimistic update)
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
@@ -288,6 +303,10 @@ async function openServerChannel(serverId, channelId) {
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
               }
+              // Mute/unmute actual audio stream
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.setMute(!myMicOn);
+              }
             };
           }
           // Deafen toggle
@@ -315,6 +334,10 @@ async function openServerChannel(serverId, channelId) {
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
               }
+              // Mute/unmute all remote audio
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.setDeafen(myDeafenOn);
+              }
             };
           }
           // Leave button
@@ -323,6 +346,10 @@ async function openServerChannel(serverId, channelId) {
             leaveBtn.onclick = function() {
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave');
+              }
+              // Stop WebRTC voice streaming
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.leaveVoiceChannel(window.channelSocket);
               }
               isInVoiceChannel = false;
               currentVoiceServerId = null;
@@ -1208,13 +1235,6 @@ function updateVoiceUserCards(users) {
         </div>
       `;
       container.appendChild(tile);
-      // Add menu button handler
-      const menuBtn = tile.querySelector('.menu-button');
-      if (menuBtn) {
-        menuBtn.onclick = null;
-        menuBtn.style.cursor = 'not-allowed';
-        menuBtn.title = 'Menu coming soon';
-      }
     } else {
       // Update icons if user already exists
       const card = currentCards[user.user_id];
@@ -1344,6 +1364,10 @@ async function openVoiceChannel(serverId, channelId) {
         isInVoiceChannel = true;
         currentVoiceServerId = serverId;
         currentVoiceChannelId = channelId;
+        // Start WebRTC voice streaming
+        if (window.voiceWebRTC) {
+          window.voiceWebRTC.joinVoiceChannel(serverId, channelId, user.user_id, window.channelSocket);
+        }
         // Immediately show own user card (optimistic update)
         if (chat) {
           chat.innerHTML = '<div class="voice-user-tiles"></div>';
@@ -1374,6 +1398,10 @@ async function openVoiceChannel(serverId, channelId) {
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
               }
+              // Mute/unmute actual audio stream
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.setMute(!myMicOn);
+              }
             };
           }
           // Deafen toggle
@@ -1401,6 +1429,10 @@ async function openVoiceChannel(serverId, channelId) {
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
               }
+              // Mute/unmute all remote audio
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.setDeafen(myDeafenOn);
+              }
             };
           }
           // Leave button
@@ -1409,6 +1441,10 @@ async function openVoiceChannel(serverId, channelId) {
             leaveBtn.onclick = function() {
               if (window.channelSocket) {
                 window.channelSocket.emit('voice_leave');
+              }
+              // Stop WebRTC voice streaming
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.leaveVoiceChannel(window.channelSocket);
               }
               isInVoiceChannel = false;
               currentVoiceServerId = null;
@@ -1464,145 +1500,5 @@ function setupChannelSocketIO(serverId, channelId, user) {
     if (!msg || msg.channelId !== channelId) return;
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
-  });
-}
-
-// Helper: Check if user is a friend
-async function isFriend(userId) {
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  if (!user || !user.user_id) return false;
-  const { data, error } = await supabaseClient
-    .from('friends')
-    .select('*')
-    .or(`requester_id.eq.${user.user_id},receiver_id.eq.${user.user_id}`)
-    .eq('status', 'accepted');
-  if (error || !data) return false;
-  return data.some(f => f.requester_id === userId || f.receiver_id === userId);
-}
-
-// Helper: Check if current user is server owner
-function isServerOwner() {
-  const user = JSON.parse(localStorage.getItem('spice_user'));
-  return currentServer && user && String(currentServer.owner_id) === String(user.user_id);
-}
-
-// --- Attach Socket.IO event listeners globally, only once ---
-if (window.channelSocket && !window.channelSocket._voiceKickedHandlerAttached) {
-  window.channelSocket._voiceKickedHandlerAttached = true;
-  window.channelSocket.off('voice_kicked');
-  window.channelSocket.on('voice_kicked', ({ serverId, channelId }) => {
-    isInVoiceChannel = false;
-    currentVoiceServerId = null;
-    currentVoiceChannelId = null;
-    myMicOn = true;
-    myDeafenOn = false;
-    // Show join voice UI with special message and clear user cards/controls
-    const chat = document.querySelector('.chat-messages');
-    const footer = document.querySelector('.chat-input-area');
-    if (chat) chat.innerHTML = `
-      <div class="voice-channel-welcome">
-        <div class="voice-channel-bg"></div>
-        <div class="voice-channel-center">
-          <div class="voice-channel-icon"><i class='fa-solid fa-volume-high'></i></div>
-          <div class="voice-channel-title"><span class='voice-channel-title-text'>You got kicked by owner</span></div>
-          <div class="voice-channel-desc">You have been removed from the voice channel.</div>
-          <button class="voice-channel-join-btn">Join Voice</button>
-        </div>
-      </div>
-    `;
-    if (footer) footer.innerHTML = '';
-    const joinBtn = chat.querySelector('.voice-channel-join-btn');
-    if (joinBtn) {
-      joinBtn.onclick = function() {
-        const user = JSON.parse(localStorage.getItem('spice_user'));
-        if (window.channelSocket) {
-          window.channelSocket.emit('voice_join', {
-            serverId,
-            channelId,
-            user: {
-              user_id: user.user_id,
-              username: user.username,
-              avatar_url: user.avatar_url,
-              micOn: myMicOn,
-              deafenOn: myDeafenOn
-            }
-          });
-        }
-        isInVoiceChannel = true;
-        currentVoiceServerId = serverId;
-        currentVoiceChannelId = channelId;
-        if (chat) {
-          chat.innerHTML = '<div class="voice-user-tiles"></div>';
-          updateVoiceUserCards([JSON.stringify({
-            user_id: user.user_id,
-            username: user.username,
-            avatar_url: user.avatar_url,
-            micOn: myMicOn,
-            deafenOn: myDeafenOn
-          })]);
-        }
-        if (footer) {
-          footer.innerHTML = `
-            <div class="voice-controls animate-stagger">
-              <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
-              <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
-              <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
-            </div>
-          `;
-          // Mic toggle
-          const micBtn = footer.querySelector('.mic-btn');
-          if (micBtn) {
-            micBtn.onclick = function() {
-              myMicOn = !myMicOn;
-              micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
-              micBtn.classList.toggle('off', !myMicOn);
-              if (window.channelSocket) {
-                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
-              }
-            };
-          }
-          // Deafen toggle
-          const deafenBtn = footer.querySelector('.deafen-btn');
-          if (deafenBtn) {
-            const icon = deafenBtn.querySelector('i');
-            deafenBtn.onclick = function() {
-              myDeafenOn = !myDeafenOn;
-              if (icon) {
-                icon.className = 'fa-solid fa-headphones';
-              }
-              let slash = deafenBtn.querySelector('.deafen-slash-fallback');
-              if (myDeafenOn) {
-                if (!slash) {
-                  slash = document.createElement('span');
-                  slash.className = 'deafen-slash-fallback';
-                  deafenBtn.appendChild(slash);
-                }
-              } else {
-                if (slash) slash.remove();
-              }
-              deafenBtn.classList.toggle('off', myDeafenOn);
-              if (window.channelSocket) {
-                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
-              }
-            };
-          }
-          // Leave button
-          const leaveBtn = footer.querySelector('.leave-btn');
-          if (leaveBtn) {
-            leaveBtn.onclick = function() {
-              if (window.channelSocket) {
-                window.channelSocket.emit('voice_leave');
-              }
-              isInVoiceChannel = false;
-              currentVoiceServerId = null;
-              currentVoiceChannelId = null;
-              myMicOn = true;
-              myDeafenOn = false;
-              openVoiceChannel(serverId, channelId);
-            };
-          }
-        }
-      };
-    }
   });
 } 

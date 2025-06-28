@@ -26,9 +26,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 // Track voice participants in memory (optional reset on restart)
 const voiceParticipants = {}; // key = roomId, value = Map of user_id -> user object
 
-// Track server owners for kick logic
-const currentServerOwners = {};
-
 // Socket.IO DM logic
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -47,13 +44,6 @@ io.on('connection', (socket) => {
     socket.join(room);
     socket.currentChannelRoom = room;
     console.log(`Socket ${socket.id} joined channel room ${room}`);
-
-    // Track owner for this server
-    if (!currentServerOwners[serverId]) {
-      supabase.from('servers').select('owner_id').eq('id', serverId).single().then(({ data }) => {
-        if (data && data.owner_id) currentServerOwners[serverId] = String(data.owner_id);
-      });
-    }
   });
 
   // Leave a channel room
@@ -187,22 +177,33 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 
-  // Handle kick from voice channel
-  socket.on('voice_kick', ({ serverId, channelId, userId }) => {
+  // --- WebRTC Voice Signaling ---
+  socket.on('voice-webrtc-join', ({ serverId, channelId, userId }) => {
     const roomId = `voice-${serverId}-${channelId}`;
-    if (!voiceParticipants[roomId]) return;
-    // Only allow owner to kick
-    const ownerId = currentServerOwners[serverId] || null;
-    if (!ownerId || String(socket.userId) !== String(ownerId)) return;
-    // Remove the user
-    const kickedSocket = Array.from(io.sockets.sockets.values()).find(s => s.userInfo && String(s.userInfo.user_id) === String(userId) && s.voiceRoomId === roomId);
-    if (kickedSocket) {
-      voiceParticipants[roomId].delete(String(userId));
-      kickedSocket.leave(roomId);
-      kickedSocket.emit('voice_kicked', { serverId, channelId });
+    socket.join(roomId);
+    socket.voiceWebRTCRoomId = roomId;
+    socket.voiceWebRTCUserId = userId;
+    // Notify others in the room to connect
+    socket.to(roomId).emit('voice-webrtc-signal', { from: userId, type: 'join' });
+  });
+
+  socket.on('voice-webrtc-signal', ({ to, from, type, data }) => {
+    // Relay signaling messages to the intended peer in the same room
+    for (const [id, s] of Object.entries(io.sockets.sockets)) {
+      if (s.voiceWebRTCRoomId === socket.voiceWebRTCRoomId && s.voiceWebRTCUserId === to) {
+        s.emit('voice-webrtc-signal', { from, type, data });
+        break;
+      }
     }
-    // Notify all
-    io.to(roomId).emit('voice_user_joined', Array.from(voiceParticipants[roomId].values()));
+  });
+
+  socket.on('voice-webrtc-leave', ({ serverId, channelId, userId }) => {
+    const roomId = `voice-${serverId}-${channelId}`;
+    socket.leave(roomId);
+    // Notify others in the room that this user left
+    socket.to(roomId).emit('voice-webrtc-signal', { from: userId, type: 'leave' });
+    delete socket.voiceWebRTCRoomId;
+    delete socket.voiceWebRTCUserId;
   });
 });
 
