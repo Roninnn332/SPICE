@@ -76,7 +76,6 @@ async function renderServersList() {
   if (!supabaseClient || !serversSidebar) return;
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (!user || !user.user_id || !serversSidebar) return;
-  // Fetch servers from Supabase
   const { data: memberships, error: memErr } = await supabaseClient
     .from('server_members')
     .select('server_id, role, servers!inner(id, name, icon_url, owner_id, banner_url, banner_color)')
@@ -87,22 +86,16 @@ async function renderServersList() {
   const serversListDiv = serversSidebar.querySelector('.servers-list');
   if (!serversListDiv) return;
   serversListDiv.innerHTML = '';
-
   // Add "+" button
   const addBtn = document.createElement('button');
   addBtn.className = 'server-btn add-server-btn';
   addBtn.title = 'Add Server';
   addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
   addBtn.onclick = () => {
+    // Show modal for create/join
     openCreateServerModal();
   };
   serversListDiv.appendChild(addBtn);
-
-  // Divider
-  const divider = document.createElement('div');
-  divider.className = 'servers-divider';
-  serversListDiv.appendChild(divider);
-
   // Render each server
   serversList.forEach(server => {
     const btn = document.createElement('button');
@@ -114,12 +107,11 @@ async function renderServersList() {
       btn.innerHTML = `<span class="user-avatar-initial">${server.name[0] ? server.name[0].toUpperCase() : '?'}</span>`;
     }
     btn.onclick = () => {
-      if (!currentServer || currentServer.id !== server.id) {
-        currentServer = server;
-        renderServersList(); // re-render to update active
-        renderChannelsList(server.id);
-      }
+      currentServer = server;
+      renderServersList(); // re-render to update active
+      renderChannelsList(server.id);
     };
+    // Add double-click event for owner to open server settings modal
     btn.ondblclick = () => {
       openServerSettingsModal();
     };
@@ -141,27 +133,20 @@ async function renderChannelsList(serverId) {
   // Render
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
-  const isFirstRender = !channelsListDiv.dataset.animated;
   channelsListDiv.innerHTML = '';
   // Split channels by type
   const textChannels = channels.filter(c => c.type === 'text');
   const voiceChannels = channels.filter(c => c.type === 'voice');
   // Text Channels Section
   if (textChannels.length) {
-    const textCategory = document.createElement('div');
-    textCategory.className = 'channel-category';
-    if (!isFirstRender) textCategory.style.animation = 'none';
-    textCategory.innerHTML = `<span>Text Channels</span><button class='add-channel' title='Add Text Channel'><i class='fa-solid fa-plus'></i></button>`;
-    textCategory.querySelector('.add-channel').onclick = () => {
-      openCreateChannelModal('text');
-    };
-    channelsListDiv.appendChild(textCategory);
-    textChannels.forEach((channel, idx) => {
+    const textHeader = document.createElement('div');
+    textHeader.className = 'channel-section-header';
+    textHeader.textContent = 'Text Channels';
+    channelsListDiv.appendChild(textHeader);
+    textChannels.forEach(channel => {
       const btn = document.createElement('button');
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-      btn.innerHTML = `<span class='channel-icon'>#</span> <span>${channel.name}</span>`;
-      btn.style.setProperty('--channel-index', idx + 1);
-      if (!isFirstRender) btn.style.animation = 'none';
+      btn.innerHTML = `<span class='channel-icon'>#</span> ${channel.name}`;
       btn.onclick = () => {
         currentChannel = channel;
         renderChannelsList(serverId); // re-render to update active
@@ -175,20 +160,14 @@ async function renderChannelsList(serverId) {
   }
   // Voice Channels Section
   if (voiceChannels.length) {
-    const voiceCategory = document.createElement('div');
-    voiceCategory.className = 'channel-category';
-    if (!isFirstRender) voiceCategory.style.animation = 'none';
-    voiceCategory.innerHTML = `<span>Voice Channels</span><button class='add-channel' title='Add Voice Channel'><i class='fa-solid fa-plus'></i></button>`;
-    voiceCategory.querySelector('.add-channel').onclick = () => {
-      openCreateChannelModal('voice');
-    };
-    channelsListDiv.appendChild(voiceCategory);
-    voiceChannels.forEach((channel, idx) => {
+    const voiceHeader = document.createElement('div');
+    voiceHeader.className = 'channel-section-header';
+    voiceHeader.textContent = 'Voice Channels';
+    channelsListDiv.appendChild(voiceHeader);
+    voiceChannels.forEach(channel => {
       const btn = document.createElement('button');
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-      btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> <span>${channel.name}</span>`;
-      btn.style.setProperty('--channel-index', idx + 1);
-      if (!isFirstRender) btn.style.animation = 'none';
+      btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> ${channel.name}`;
       btn.onclick = () => {
         currentChannel = channel;
         renderChannelsList(serverId); // re-render to update active
@@ -197,8 +176,6 @@ async function renderChannelsList(serverId) {
       channelsListDiv.appendChild(btn);
     });
   }
-  // Mark as animated after first render
-  channelsListDiv.dataset.animated = 'true';
 }
 
 // --- Socket.IO for Channel/Voice Presence ---
@@ -214,7 +191,7 @@ window.channelSocket.on('voice_user_joined', (users) => {
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
-  const chat = document.querySelector('.messages-container');
+  const chat = document.querySelector('.chat-messages');
   if (!chat) return;
   // Get user info for avatar/username
   let username = msg.username || msg.userId || '';
@@ -225,22 +202,25 @@ async function appendChannelMessage(msg, who) {
     avatar_url = info.avatar_url;
   }
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'message';
+  msgDiv.className = 'dm-message ' + who;
+  msgDiv.dataset.timestamp = msg.timestamp;
   msgDiv.innerHTML = `
-    <img class="message-avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
-    <div class="message-content">
-      <div style="display:flex;align-items:center;gap:0.7em;">
-        <span class="message-username">${username}</span>
-        <span class="message-timestamp">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+    <div class="dm-message-bubble">
+      <div style="display:flex;align-items:center;gap:0.7em;margin-bottom:0.2em;">
+        <img class="dm-chat-avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">
+        <span class="dm-chat-username" style="font-size:1.01em;">${username}</span>
+        <span class="dm-message-time" style="font-size:0.93em;color:var(--gray);margin-left:0.7em;">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
-      <span class="message-text">${msg.content || ''}</span>
+      <span class="dm-message-text">${msg.content || ''}</span>
     </div>
   `;
   chat.appendChild(msgDiv);
+  void msgDiv.offsetWidth;
+  msgDiv.classList.add('dm-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
-// --- Refactor openServerChannel for Minimal UI ---
+// --- Refactor openServerChannel for Real-time & Premium UI ---
 async function openServerChannel(serverId, channelId) {
   if (!serverId || !channelId || !serverChatSection) return;
   // Always join the Socket.IO room for this channel FIRST
@@ -253,8 +233,146 @@ async function openServerChannel(serverId, channelId) {
   // Render channel name in header
   const header = serverChatSection.querySelector('.chat-header');
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
-  const chat = serverChatSection.querySelector('.messages-container');
+  const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
+  if (channel && channel.type === 'voice') {
+    // Do NOT join voice yet! Only show the welcome UI and set up the Join Voice button.
+    // Remove any previous voice state
+    isInVoiceChannel = false;
+    currentVoiceServerId = null;
+    currentVoiceChannelId = null;
+    let myMicOn = true;
+    let myDeafenOn = false;
+    // Render the voice channel welcome UI
+    if (chat) chat.innerHTML = `
+      <div class="voice-channel-welcome">
+        <div class="voice-channel-bg"></div>
+        <div class="voice-channel-center">
+          <div class="voice-channel-icon"><i class='fa-solid fa-volume-high'></i></div>
+          <div class="voice-channel-title">${channel.name ? `<span class='voice-channel-title-text'>${channel.name}</span>` : ''}</div>
+          <div class="voice-channel-desc">No one is currently in voice</div>
+          <button class="voice-channel-join-btn">Join Voice</button>
+        </div>
+      </div>
+    `;
+    if (footer) footer.innerHTML = '';
+    // Add event listener for Join Voice button
+    const joinBtn = chat.querySelector('.voice-channel-join-btn');
+    if (joinBtn) {
+      joinBtn.onclick = function() {
+        // Actually join voice now
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        if (window.channelSocket) {
+          window.channelSocket.emit('voice_join', {
+            serverId,
+            channelId,
+            user: {
+              user_id: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url,
+              micOn: myMicOn,
+              deafenOn: myDeafenOn
+            }
+          });
+        }
+        isInVoiceChannel = true;
+        currentVoiceServerId = serverId;
+        currentVoiceChannelId = channelId;
+        // Start WebRTC voice streaming
+        if (window.voiceWebRTC) {
+          window.voiceWebRTC.joinVoiceChannel(serverId, channelId, user.user_id, window.channelSocket);
+        }
+        // Immediately show own user card (optimistic update)
+        if (chat) {
+          chat.innerHTML = '<div class="voice-user-tiles"></div>';
+          updateVoiceUserCards([JSON.stringify({
+            user_id: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            micOn: myMicOn,
+            deafenOn: myDeafenOn
+          })]);
+        }
+        if (footer) {
+          footer.innerHTML = `
+            <div class="voice-controls animate-stagger">
+              <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
+              <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
+              <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
+            </div>
+          `;
+          // Mic toggle
+          const micBtn = footer.querySelector('.mic-btn');
+          if (micBtn) {
+            micBtn.onclick = function() {
+              myMicOn = !myMicOn;
+              micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+              micBtn.classList.toggle('off', !myMicOn);
+              // Emit state update
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+              }
+              // Mute/unmute actual audio stream
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.setMute(!myMicOn);
+              }
+            };
+          }
+          // Deafen toggle
+          const deafenBtn = footer.querySelector('.deafen-btn');
+          if (deafenBtn) {
+            const icon = deafenBtn.querySelector('i');
+            deafenBtn.onclick = function() {
+              myDeafenOn = !myDeafenOn;
+              if (icon) {
+                icon.className = 'fa-solid fa-headphones';
+              }
+              // Add/remove slash overlay
+              let slash = deafenBtn.querySelector('.deafen-slash-fallback');
+              if (myDeafenOn) {
+                if (!slash) {
+                  slash = document.createElement('span');
+                  slash.className = 'deafen-slash-fallback';
+                  deafenBtn.appendChild(slash);
+                }
+              } else {
+                if (slash) slash.remove();
+              }
+              deafenBtn.classList.toggle('off', myDeafenOn);
+              // Emit state update
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+              }
+              // Mute/unmute all remote audio
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.setDeafen(myDeafenOn);
+              }
+            };
+          }
+          // Leave button
+          const leaveBtn = footer.querySelector('.leave-btn');
+          if (leaveBtn) {
+            leaveBtn.onclick = function() {
+              if (window.channelSocket) {
+                window.channelSocket.emit('voice_leave');
+              }
+              // Stop WebRTC voice streaming
+              if (window.voiceWebRTC) {
+                window.voiceWebRTC.leaveVoiceChannel(window.channelSocket);
+              }
+              isInVoiceChannel = false;
+              currentVoiceServerId = null;
+              currentVoiceChannelId = null;
+              myMicOn = true;
+              myDeafenOn = false;
+              openVoiceChannel(serverId, channelId);
+            };
+          }
+        }
+      };
+    }
+    return;
+  }
   if (chat) chat.innerHTML = '<div class="server-loading">Loading messages...</div>';
   const { data: messages, error } = await supabaseClient
     .from('channel_messages')
@@ -266,7 +384,7 @@ async function openServerChannel(serverId, channelId) {
     if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
     return;
   }
-  // Render messages with minimal UI
+  // Render messages with premium UI
   const user = JSON.parse(localStorage.getItem('spice_user'));
   for (const msg of messages) {
     const isMe = String(msg.user_id) === String(user.user_id);
@@ -284,23 +402,18 @@ async function openServerChannel(serverId, channelId) {
   if (footer) {
     if (channel && channel.type === 'text') {
       footer.innerHTML = `
-        <form class="server-chat-input-form" style="display:flex;width:100%;gap:0.5rem;">
-          <textarea class="message-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" rows="1" style="flex:1;resize:none;"></textarea>
+        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
+          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
+          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
         </form>
       `;
       const form = footer.querySelector('.server-chat-input-form');
-      const textarea = footer.querySelector('.message-input');
-      textarea.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          form.requestSubmit();
-        }
-      });
+      const input = footer.querySelector('.server-chat-input');
       form.onsubmit = async (e) => {
         e.preventDefault();
-        const content = textarea.value.trim();
+        const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
-        textarea.value = '';
+        input.value = '';
         // Send via Socket.IO
         channelSocket.emit('channel_message', {
           serverId,
