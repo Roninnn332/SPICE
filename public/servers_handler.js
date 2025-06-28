@@ -1164,7 +1164,7 @@ function updateVoiceUserCards(users) {
 
   // Build a map of current user cards
   const currentCards = {};
-  container.querySelectorAll('.voice-user-card').forEach(card => {
+  container.querySelectorAll('.user-card').forEach(card => {
     const userId = card.getAttribute('data-user-id');
     if (userId) currentCards[userId] = card;
   });
@@ -1176,58 +1176,48 @@ function updateVoiceUserCards(users) {
     const user = typeof userObj === 'string' ? JSON.parse(userObj) : userObj;
     newUserIds.add(String(user.user_id));
     if (!currentCards[user.user_id]) {
-      // Add new card with entrance animation
+      // Add new card with entrance animation and new design
       const tile = document.createElement('div');
-      tile.className = 'voice-user-card fade-in-up';
+      tile.className = 'user-card fade-in-up';
       tile.setAttribute('data-user-id', user.user_id);
       tile.innerHTML = `
-        <div class="voice-user-avatar-wrapper">
-          <img src="${user.avatar_url}" alt="${user.username}" class="voice-user-avatar" />
+        <div class="avatar">
+          <img src="${user.avatar_url}" alt="${user.username}">
         </div>
-        <div class="voice-user-name-row">
-          <span class="voice-user-name">${user.username}</span>
-          <span class="voice-user-mic" title="${user.micOn === false ? 'Muted' : 'Unmuted'}">
-            <i class="fa-solid ${user.micOn === false ? 'fa-microphone-slash mic-muted' : 'fa-microphone'}"></i>
-          </span>
-          <span class="voice-user-deafen" title="${user.deafenOn ? 'Deafened' : 'Not Deafened'}">
-            <i class="fa-solid fa-headphones"></i>
-            ${user.deafenOn ? '<span class="deafen-slash-fallback"></span>' : ''}
-          </span>
+        <div class="info">
+          <h3>${user.username}</h3>
+          <p>${user.status || ''}</p>
+          <div class="status-icons">
+            <i class="fas fa-microphone${user.micOn === false ? '' : ' active'}" title="${user.micOn === false ? 'Mic Off' : 'Mic On'}"></i>
+            <i class="fas fa-volume-up${user.deafenOn ? '' : ' active'}" title="${user.deafenOn ? 'Deafened' : 'Speaker On'}"></i>
+          </div>
+        </div>
+        <div class="menu-button" title="Options">
+          <i class="fas fa-ellipsis-v"></i>
         </div>
       `;
       container.appendChild(tile);
     } else {
       // Update icons if user already exists
       const card = currentCards[user.user_id];
-      const micIcon = card.querySelector('.voice-user-mic i');
+      // Avatar and username
+      const avatarImg = card.querySelector('.avatar img');
+      if (avatarImg) avatarImg.src = user.avatar_url;
+      const name = card.querySelector('.info h3');
+      if (name) name.textContent = user.username;
+      const status = card.querySelector('.info p');
+      if (status) status.textContent = user.status || '';
+      // Mic icon
+      const micIcon = card.querySelector('.status-icons .fa-microphone');
       if (micIcon) {
-        micIcon.className = `fa-solid ${user.micOn === false ? 'fa-microphone-slash mic-muted' : 'fa-microphone'}`;
-        micIcon.parentElement.title = user.micOn === false ? 'Muted' : 'Unmuted';
+        micIcon.className = `fas fa-microphone${user.micOn === false ? '' : ' active'}`;
+        micIcon.title = user.micOn === false ? 'Mic Off' : 'Mic On';
       }
-      const deafenIcon = card.querySelector('.voice-user-deafen i');
-      if (deafenIcon) {
-        deafenIcon.className = 'fa-solid fa-headphones';
-        deafenIcon.parentElement.title = user.deafenOn ? 'Deafened' : 'Not Deafened';
-        // Add/remove fallback slash overlay
-        let slash = card.querySelector('.voice-user-deafen .deafen-slash-fallback');
-        if (user.deafenOn) {
-          if (!slash) {
-            slash = document.createElement('span');
-            slash.className = 'deafen-slash-fallback';
-            deafenIcon.parentElement.appendChild(slash);
-          }
-        } else {
-          if (slash) slash.remove();
-        }
-        // Add/remove deafen-on class for color
-        const deafenSpan = card.querySelector('.voice-user-deafen');
-        if (deafenSpan) {
-          if (user.deafenOn) {
-            deafenSpan.classList.add('deafen-on');
-          } else {
-            deafenSpan.classList.remove('deafen-on');
-          }
-        }
+      // Speaker/Deafen icon
+      const volIcon = card.querySelector('.status-icons .fa-volume-up');
+      if (volIcon) {
+        volIcon.className = `fas fa-volume-up${user.deafenOn ? '' : ' active'}`;
+        volIcon.title = user.deafenOn ? 'Deafened' : 'Speaker On';
       }
     }
   });

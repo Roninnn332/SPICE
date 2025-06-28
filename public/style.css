@@ -3443,121 +3443,96 @@ input:checked + .slider:before {
   opacity: 1;
   border: 1.5px solid #fbbf24;
 }
-
+/* --- Custom User Card Design for Voice Channel (Overrides) --- */
 .voice-user-tiles {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  padding: 1rem;
-  justify-content: start;
+  gap: 1.2rem;
+  padding: 1.2rem;
+  justify-content: flex-start;
 }
-.voice-user-card {
-  background: linear-gradient(135deg, #23272f 70%, #2563eb22 100%);
-  border: 2.5px solid var(--primary-blue);
-  border-radius: 1.2rem;
-  padding: 0.8rem 1.1rem 0.7rem 1.1rem;
+.user-card {
+  display: flex;
+  align-items: center;
+  background: #14162b;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  width: 340px;
+  gap: 16px;
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #4a6cff;
+  box-shadow: 0 0 12px #4a6cff66;
+  flex-shrink: 0;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 120px;
-  min-height: 120px;
-  box-shadow: 0 4px 18px 0 rgba(37,99,235,0.13), 0 1.5px 6px 0 rgba(0,0,0,0.12);
-  transition: box-shadow 0.18s, border 0.18s, background 0.18s;
-  position: relative;
+  min-width: 0;
+}
+.info h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.info p {
+  margin: 4px 0 8px;
+  font-size: 14px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-icons {
+  display: flex;
+  gap: 12px;
+}
+.status-icons i {
+  color: #888;
+  font-size: 16px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.status-icons i.active {
+  color: #00ffa2;
+  text-shadow: 0 0 6px #00ffa288;
+}
+.status-icons i:hover {
+  transform: scale(1.2);
   cursor: pointer;
 }
-.voice-user-card:hover, .voice-user-card:focus {
-  box-shadow: 0 0 0 3px var(--primary-blue), 0 4px 18px 0 rgba(37,99,235,0.18);
-  border-color: var(--accent);
-  background: linear-gradient(135deg, #23272f 60%, #2563eb44 100%);
+.menu-button {
+  font-size: 18px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.2s ease;
+  margin-left: 8px;
 }
-.voice-user-avatar-wrapper {
-  position: relative;
-  width: 54px;
-  height: 54px;
-  margin-bottom: 0.5rem;
+.menu-button:hover {
+  color: #ccc;
+  transform: scale(1.1);
 }
-.voice-user-avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2.5px solid var(--primary-blue);
-  background: #222;
-  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+@media (max-width: 900px) {
+  .user-card { width: 100%; min-width: 0; }
+  .voice-user-tiles { gap: 0.7rem; padding: 0.7rem; }
 }
-.voice-user-status-dot {
-  position: absolute;
-  right: 2px;
-  bottom: 2px;
-  width: 13px;
-  height: 13px;
-  background: #43b581;
-  border: 2.5px solid #23272f;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #43b58188;
-  z-index: 2;
-}
-.voice-user-name-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4em;
-  margin-top: 0.1rem;
-}
-.voice-user-name {
-  font-size: 1.05rem;
-  text-align: center;
-  color: var(--white);
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  flex: 1;
-}
-.voice-user-mic {
-  color: #b3b3b3;
-  font-size: 1.08em;
-  margin-left: 0.2em;
-  opacity: 0.85;
-  transition: color 0.18s;
-}
-.voice-user-mic.mic-muted, .voice-user-mic .mic-muted {
-  color: #ed4245 !important;
-  opacity: 1;
-}
-.voice-user-deafen {
-  color: #b3b3b3;
-  font-size: 1.08em;
-  margin-left: 0.35em;
-  opacity: 0.85;
-  transition: color 0.18s;
-}
-.voice-user-deafen.deafen-on, .voice-user-deafen .deafen-on {
-  color: #fbbf24 !important;
-  opacity: 1;
-}
-.voice-user-card:hover .voice-user-mic, .voice-user-card:hover .voice-user-deafen {
-  color: var(--primary-blue);
-  opacity: 1;
-}
-@media (max-width: 700px) {
-  .voice-user-card {
-    width: 90px;
-    min-height: 90px;
-    padding: 0.5rem 0.5rem 0.4rem 0.5rem;
-  }
-  .voice-user-avatar-wrapper, .voice-user-avatar {
-    width: 38px;
-    height: 38px;
-  }
-  .voice-user-status-dot {
-    width: 9px;
-    height: 9px;
-    right: 1px;
-    bottom: 1px;
-  }
-  .voice-user-name {
-    font-size: 0.93rem;
-  }
-}
+
 
  
