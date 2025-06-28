@@ -61,6 +61,22 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Server ID copy logic
+  const copyIdBtn = document.getElementById('server-settings-copy-id-btn');
+  const idSpan = document.getElementById('server-settings-id-preview');
+  const feedback = document.getElementById('server-settings-copy-id-feedback');
+  if (copyIdBtn && idSpan && feedback) {
+    copyIdBtn.onclick = () => {
+      const id = idSpan.textContent;
+      if (!id) return;
+      navigator.clipboard.writeText(id).then(() => {
+        feedback.style.display = '';
+        feedback.textContent = 'Copied!';
+        setTimeout(() => { feedback.style.display = 'none'; }, 1200);
+      });
+    };
+  }
 });
 
 // --- Server List UI ---
@@ -1000,7 +1016,15 @@ async function fetchServerInvites() {
   invitesList.querySelectorAll('.friend-request-accept').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.getAttribute('data-id');
+      // Get invite info to know user_id and server_id
+      const { data: invite, error: inviteErr } = await supabaseClient.from('server_invites').select('*').eq('id', id).single();
+      if (!invite || inviteErr) return;
       await supabaseClient.from('server_invites').update({ status: 'accepted' }).eq('id', id);
+      // Add to server_members if not already present
+      const { data: existingMember } = await supabaseClient.from('server_members').select('*').eq('server_id', invite.server_id).eq('user_id', invite.user_id).maybeSingle();
+      if (!existingMember) {
+        await supabaseClient.from('server_members').insert([{ server_id: invite.server_id, user_id: invite.user_id, role: 'member' }]);
+      }
       fetchServerInvites();
     };
   });
