@@ -1236,7 +1236,8 @@ function updateVoiceUserCards(users) {
             menuBtn.classList.remove('menu-close-btn');
             document.removeEventListener('mousedown', outsideMenuHandler);
             menuBtn.onclick = originalMenuHandler;
-            updateVoiceUserCards(users);
+            // Wait for transition to finish, then restore content
+            setTimeout(() => { updateVoiceUserCards(users); }, 350);
           };
           // Save original handler for restore
           const originalMenuHandler = menuBtn.onclick;
@@ -1283,6 +1284,8 @@ function updateVoiceUserCards(users) {
             if (kickBtn) {
               kickBtn.onclick = (ev) => {
                 ev.stopPropagation();
+                // Optimistically remove card immediately
+                tile.remove();
                 if (window.channelSocket && currentVoiceServerId && currentVoiceChannelId) {
                   window.channelSocket.emit('voice_kick', {
                     serverId: currentVoiceServerId,
@@ -1290,8 +1293,6 @@ function updateVoiceUserCards(users) {
                     userId: userId
                   });
                 }
-                tile.classList.add('fade-slide', 'out');
-                tile.addEventListener('transitionend', () => tile.remove(), { once: true });
               };
             }
             const msgBtn = main.querySelector('.message');
@@ -1586,7 +1587,7 @@ if (window.channelSocket) {
       currentVoiceChannelId = null;
       myMicOn = true;
       myDeafenOn = false;
-      // Show join voice UI with special message
+      // Show join voice UI with special message and clear user cards
       const chat = document.querySelector('.chat-messages');
       const footer = document.querySelector('.chat-input-area');
       if (chat) chat.innerHTML = `
@@ -1604,7 +1605,6 @@ if (window.channelSocket) {
       const joinBtn = chat.querySelector('.voice-channel-join-btn');
       if (joinBtn) {
         joinBtn.onclick = function() {
-          // Actually join voice now
           const user = JSON.parse(localStorage.getItem('spice_user'));
           if (window.channelSocket) {
             window.channelSocket.emit('voice_join', {
@@ -1622,7 +1622,6 @@ if (window.channelSocket) {
           isInVoiceChannel = true;
           currentVoiceServerId = serverId;
           currentVoiceChannelId = channelId;
-          // Immediately show own user card (optimistic update)
           if (chat) {
             chat.innerHTML = '<div class="voice-user-tiles"></div>';
             updateVoiceUserCards([JSON.stringify({
