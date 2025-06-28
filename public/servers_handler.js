@@ -1176,9 +1176,9 @@ function updateVoiceUserCards(users) {
     const user = typeof userObj === 'string' ? JSON.parse(userObj) : userObj;
     newUserIds.add(String(user.user_id));
     if (!currentCards[user.user_id]) {
-      // Add new card
+      // Add new card with entrance animation
       const tile = document.createElement('div');
-      tile.className = 'voice-user-card';
+      tile.className = 'voice-user-card fade-in-up';
       tile.setAttribute('data-user-id', user.user_id);
       tile.innerHTML = `
         <div class="voice-user-avatar-wrapper">
@@ -1235,7 +1235,9 @@ function updateVoiceUserCards(users) {
   // Remove cards for users who left
   Object.keys(currentCards).forEach(userId => {
     if (!newUserIds.has(userId)) {
-      currentCards[userId].remove();
+      const card = currentCards[userId];
+      card.classList.add('fade-slide', 'out');
+      card.addEventListener('transitionend', () => card.remove(), { once: true });
     }
   });
 }
