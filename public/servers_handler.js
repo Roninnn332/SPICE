@@ -1180,7 +1180,6 @@ function updateVoiceUserCards(users) {
       const userCardColors = [
         '#4a6cff', '#00b894', '#fdcb6e', '#e17055', '#00b8d4', '#6c5ce7', '#fd79a8', '#00cec9', '#fab1a0', '#6366f1', '#f59e42', '#43b581', '#f14668', '#fbbf24', '#10b981', '#3b82f6', '#ef4444', '#a21caf', '#f472b6', '#14b8a6'
       ];
-      // Hash user_id to pick a color
       function pickColor(id) {
         let hash = 0;
         for (let i = 0; i < String(id).length; i++) hash = String(id).charCodeAt(i) + ((hash << 5) - hash);
@@ -1193,18 +1192,18 @@ function updateVoiceUserCards(users) {
       tile.setAttribute('data-user-id', user.user_id);
       tile.style.background = cardColor;
       tile.innerHTML = `
-        <div class="avatar" style="width:44px;height:44px;min-width:44px;">
-          <img src="${user.avatar_url}" alt="${user.username}" style="width:44px;height:44px;">
+        <div class="avatar" style="width:48px;height:48px;min-width:48px;">
+          <img src="${user.avatar_url}" alt="${user.username}" style="width:48px;height:48px;">
         </div>
         <div class="user-main" style="display:flex;flex-direction:column;justify-content:center;flex:1;min-width:0;">
-          <span class="user-name" style="color:#fff;font-size:15px;font-weight:600;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.username}</span>
-          <span class="user-status" style="color:#fff;font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.status || ''}</span>
+          <span class="user-name" style="color:#fff;font-size:16px;font-weight:600;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.username}</span>
+          <span class="user-status" style="color:#fff;font-size:13px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.status || ''}</span>
+          <div class="status-icons" style="display:flex;flex-direction:row;gap:12px;margin-top:8px;">
+            <i class="fas fa-microphone${user.micOn === false ? '' : ' active'}" title="${user.micOn === false ? 'Mic Off' : 'Mic On'}" style="font-size:16px;"></i>
+            <i class="fas fa-volume-up${user.deafenOn ? '' : ' active'}" title="${user.deafenOn ? 'Deafened' : 'Speaker On'}" style="font-size:16px;"></i>
+          </div>
         </div>
-        <div class="status-icons" style="display:flex;flex-direction:column;gap:6px;margin-left:10px;">
-          <i class="fas fa-microphone${user.micOn === false ? '' : ' active'}" title="${user.micOn === false ? 'Mic Off' : 'Mic On'}" style="font-size:15px;"></i>
-          <i class="fas fa-volume-up${user.deafenOn ? '' : ' active'}" title="${user.deafenOn ? 'Deafened' : 'Speaker On'}" style="font-size:15px;"></i>
-        </div>
-        <div class="menu-button" title="Options" style="font-size:15px;margin-left:8px;align-self:center;">
+        <div class="menu-button" title="Options" style="font-size:16px;margin-left:8px;align-self:center;">
           <i class="fas fa-ellipsis-v"></i>
         </div>
       `;
