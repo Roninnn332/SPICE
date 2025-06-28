@@ -1208,6 +1208,87 @@ function updateVoiceUserCards(users) {
         </div>
       `;
       container.appendChild(tile);
+      // Add menu button handler
+      const menuBtn = tile.querySelector('.menu-button');
+      if (menuBtn) {
+        menuBtn.onclick = async (e) => {
+          e.stopPropagation();
+          // Animate card expansion
+          tile.classList.add('user-card-menu-open');
+          tile.style.transition = 'all 0.35s cubic-bezier(.4,2,.6,1)';
+          tile.style.minHeight = '140px';
+          tile.style.width = '320px';
+          // Fade out main content
+          const main = tile.querySelector('.user-main');
+          const avatar = tile.querySelector('.avatar');
+          if (main) main.style.opacity = '0';
+          if (avatar) avatar.style.opacity = '0.5';
+          setTimeout(async () => {
+            // Build menu options
+            const userId = tile.getAttribute('data-user-id');
+            const friend = await isFriend(userId);
+            let menuHtml = '<div class="user-card-menu animate-menu-in">';
+            if (friend) {
+              menuHtml += '<button class="user-card-menu-btn" disabled><i class="fas fa-user-friends"></i> Friends</button>';
+            } else {
+              menuHtml += '<button class="user-card-menu-btn add-friend"><i class="fas fa-user-plus"></i> Add Friend</button>';
+            }
+            if (isServerOwner()) {
+              menuHtml += '<button class="user-card-menu-btn kick"><i class="fas fa-user-slash"></i> Kick</button>';
+            }
+            menuHtml += '<button class="user-card-menu-btn message"><i class="fas fa-comment-dots"></i> Message</button>';
+            menuHtml += '</div>';
+            main.innerHTML = menuHtml;
+            main.style.opacity = '1';
+            // Add close on click outside
+            function closeMenu(ev) {
+              if (!tile.contains(ev.target)) {
+                tile.classList.remove('user-card-menu-open');
+                tile.style.minHeight = '';
+                tile.style.width = '';
+                main.style.opacity = '1';
+                avatar.style.opacity = '1';
+                document.removeEventListener('mousedown', closeMenu);
+                // Restore original content
+                updateVoiceUserCards(users);
+              }
+            }
+            document.addEventListener('mousedown', closeMenu);
+            // Add action handlers
+            const addBtn = main.querySelector('.add-friend');
+            if (addBtn) {
+              addBtn.onclick = async (ev) => {
+                ev.stopPropagation();
+                // Send friend request
+                const user = JSON.parse(localStorage.getItem('spice_user'));
+                await supabaseClient.from('friends').insert([
+                  { requester_id: user.user_id, receiver_id: userId, status: 'pending' }
+                ]);
+                addBtn.innerHTML = '<i class="fas fa-user-clock"></i> Request Sent';
+                addBtn.disabled = true;
+                setTimeout(() => { updateVoiceUserCards(users); }, 1200);
+              };
+            }
+            const kickBtn = main.querySelector('.kick');
+            if (kickBtn) {
+              kickBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                // Demo: just remove card
+                tile.classList.add('fade-slide', 'out');
+                tile.addEventListener('transitionend', () => tile.remove(), { once: true });
+              };
+            }
+            const msgBtn = main.querySelector('.message');
+            if (msgBtn) {
+              msgBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                msgBtn.innerHTML = '<i class="fas fa-comment-dots"></i> (Demo)';
+                setTimeout(() => { updateVoiceUserCards(users); }, 1200);
+              };
+            }
+          }, 200);
+        };
+      }
     } else {
       // Update icons if user already exists
       const card = currentCards[user.user_id];
@@ -1458,4 +1539,23 @@ function setupChannelSocketIO(serverId, channelId, user) {
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
   });
+}
+
+// Helper: Check if user is a friend
+async function isFriend(userId) {
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (!user || !user.user_id) return false;
+  const { data, error } = await supabaseClient
+    .from('friends')
+    .select('*')
+    .or(`requester_id.eq.${user.user_id},receiver_id.eq.${user.user_id}`)
+    .eq('status', 'accepted');
+  if (error || !data) return false;
+  return data.some(f => f.requester_id === userId || f.receiver_id === userId);
+}
+
+// Helper: Check if current user is server owner
+function isServerOwner() {
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  return currentServer && user && String(currentServer.owner_id) === String(user.user_id);
 } 
