@@ -735,18 +735,18 @@ body {
   border: none;
   border-radius: var(--border-radius-sm);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 1.05rem;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   outline: none;
   position: relative;
 }
 .channel-btn .channel-icon {
   font-size: 1.1em;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   min-width: 22px;
   display: flex;
   align-items: center;
@@ -755,16 +755,15 @@ body {
 .channel-btn.active {
   background: var(--bg-glass);
   color: var(--text-primary);
-  box-shadow: var(--glow-cyan);
 }
 .channel-btn.active .channel-icon {
   color: var(--accent-cyan);
 }
 .channel-btn:hover, .channel-btn:focus {
-  background: var(--bg-glass);
+  background: #18181c;
   color: var(--text-primary);
-  box-shadow: 0 0 0 2px var(--accent-cyan, #00bcd4, 0.12), 0 2px 12px 0 var(--accent-cyan, #00bcd4, 0.10);
-  transform: scale(1.045);
+  box-shadow: none;
+  transform: none;
   z-index: 2;
 }
 .channel-btn:hover .channel-icon, .channel-btn:focus .channel-icon {
@@ -772,6 +771,15 @@ body {
 }
 .channel-btn .channel-icon i {
   color: var(--accent-cyan);
+}
+.channel-category .add-channel {
+  color: var(--text-primary);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+.channel-category:hover .add-channel {
+  opacity: 1;
+  color: var(--text-primary);
 }
 .channels-list-padding {
   height: 12px;
@@ -2606,7 +2614,7 @@ body {
   color: var(--white);
   font-size: 1.04rem;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
+  font-weight: 400;
   padding: 0.38em 0.9em 0.38em 0.9em;
   border-radius: 0.7em;
   cursor: pointer;
@@ -3761,11 +3769,26 @@ input:checked + .slider:before {
   animation-delay: calc(0.08s * var(--channel-index, 1));
 }
 .channel-btn:hover, .channel-btn:focus {
-  background: var(--bg-glass);
+  background: #18181c;
   color: var(--text-primary);
-  box-shadow: 0 0 0 2px var(--accent-cyan, #00bcd4, 0.12), 0 2px 12px 0 var(--accent-cyan, #00bcd4, 0.10);
-  transform: scale(1.045);
+  box-shadow: none;
+  transform: none;
   z-index: 2;
+}
+.channel-btn:hover .channel-icon, .channel-btn:focus .channel-icon {
+  color: var(--accent-cyan);
+}
+.channel-btn .channel-icon i {
+  color: var(--accent-cyan);
+}
+.channel-category .add-channel {
+  color: var(--text-primary);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+.channel-category:hover .add-channel {
+  opacity: 1;
+  color: var(--text-primary);
 }
 
 
