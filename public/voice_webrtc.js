@@ -2,8 +2,6 @@
 // WebRTC voice logic for real-time voice streaming in channels
 // Uses Socket.IO for signaling and the provided TURN server for ICE
 
-import RNNoise from 'https://cdn.jsdelivr.net/npm/@jitsi/rnnoise-wasm@0.2.1/dist/rnnoise.js';
-
 const TURN_CONFIG = {
   iceServers: [
     {
@@ -31,7 +29,16 @@ let denoisedStream = null;
 
 async function loadRNNoise() {
   if (rnnoiseModule) return rnnoiseModule;
-  rnnoiseModule = await RNNoise();
+  if (!window.RNNoise) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'rnnoise-wasm.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  rnnoiseModule = await window.RNNoise();
   return rnnoiseModule;
 }
 
