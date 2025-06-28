@@ -1277,7 +1277,15 @@ function updateVoiceUserCards(users) {
     if (!newUserIds.has(userId)) {
       const card = currentCards[userId];
       card.classList.add('fade-slide', 'out');
-      card.addEventListener('transitionend', () => card.remove(), { once: true });
+      let removed = false;
+      const removeCard = () => {
+        if (!removed) {
+          card.remove();
+          removed = true;
+        }
+      };
+      card.addEventListener('transitionend', removeCard, { once: true });
+      setTimeout(removeCard, 400); // Fallback in case transitionend doesn't fire
     }
   });
 }
