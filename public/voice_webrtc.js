@@ -23,9 +23,21 @@ let isDeafened = false;
 let handleSignalSetup = false;
 let signalingTimeouts = {};
 
-// --- Capture mic audio ---
+// --- RNNoise WASM Integration ---
+let rnnoiseModule = null;
+let denoisedStream = null;
+
+async function loadRNNoise() {
+  if (rnnoiseModule) return rnnoiseModule;
+  if (!window.RNNoise) {
+    throw new Error('RNNoise script not loaded!');
+  }
+  rnnoiseModule = await window.RNNoise();
+  return rnnoiseModule;
+}
+
 async function getLocalStream() {
-  if (localStream) return localStream;
+  if (denoisedStream) return denoisedStream;
   try {
     console.log('[WebRTC] Requesting mic access...');
     const constraints = {
@@ -39,9 +51,44 @@ async function getLocalStream() {
       },
       video: false
     };
-    localStream = await navigator.mediaDevices.getUserMedia(constraints);
-    console.log('[WebRTC] Mic access granted');
-    return localStream;
+    const micStream = await navigator.mediaDevices.getUserMedia(constraints);
+    await loadRNNoise();
+    // Use AudioWorklet if available, else fallback to ScriptProcessorNode
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(micStream);
+    let processor;
+    let outputStream;
+    if (window.MediaStreamTrackGenerator) {
+      // Modern browsers: use MediaStreamTrackGenerator
+      const generator = new window.MediaStreamTrackGenerator({ kind: 'audio' });
+      const writer = generator.writable.getWriter();
+      const workletUrl = 'rnnoise-worklet.js'; // You need to provide this file
+      await audioCtx.audioWorklet.addModule(workletUrl);
+      const rnnoiseNode = new AudioWorkletNode(audioCtx, 'rnnoise-worklet');
+      source.connect(rnnoiseNode).connect(audioCtx.destination);
+      rnnoiseNode.port.onmessage = async (event) => {
+        if (event.data && event.data.audioBuffer) {
+          await writer.write(event.data.audioBuffer);
+        }
+      };
+      outputStream = new MediaStream([generator]);
+    } else {
+      // Fallback: ScriptProcessorNode (deprecated, but works)
+      processor = audioCtx.createScriptProcessor(512, 1, 1);
+      source.connect(processor);
+      processor.connect(audioCtx.destination);
+      const dest = audioCtx.createMediaStreamDestination();
+      processor.connect(dest);
+      processor.onaudioprocess = (e) => {
+        const input = e.inputBuffer.getChannelData(0);
+        const denoised = rnnoiseModule.process(input);
+        e.outputBuffer.getChannelData(0).set(denoised);
+      };
+      outputStream = dest.stream;
+    }
+    denoisedStream = outputStream;
+    console.log('[WebRTC] Mic access granted (RNNoise denoised)');
+    return denoisedStream;
   } catch (err) {
     alert('Microphone access denied or unavailable.');
     console.error('[WebRTC] getUserMedia error:', err);
