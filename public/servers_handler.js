@@ -28,6 +28,9 @@ let serverChatSection = null;
 
 // --- Initialization ---
 window.addEventListener('DOMContentLoaded', () => {
+  if (window.voiceWebRTC && window.channelSocket) {
+    window.voiceWebRTC.handleVoiceSignal(window.channelSocket);
+  }
   serversSidebar = document.querySelector('.servers-sidebar');
   channelsSidebar = document.querySelector('.channels-sidebar');
   serverChatSection = document.querySelector('.chat-section');
@@ -50,17 +53,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // If you have other modal event listeners, wire them here as well
-
-  // WebRTC signaling setup
-  if (window.voiceWebRTC && window.channelSocket) {
-    window.voiceWebRTC.handleVoiceSignal(window.channelSocket);
-  } else {
-    window.addEventListener('load', () => {
-      if (window.voiceWebRTC && window.channelSocket) {
-        window.voiceWebRTC.handleVoiceSignal(window.channelSocket);
-      }
-    });
-  }
 
   // Server ID copy logic
   const copyIdBtn = document.getElementById('server-settings-copy-id-btn');

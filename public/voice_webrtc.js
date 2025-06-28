@@ -20,6 +20,7 @@ let currentServerId = null;
 let myUserId = null;
 let isMuted = false;
 let isDeafened = false;
+let handleSignalSetup = false;
 
 // --- Capture mic audio ---
 async function getLocalStream() {
@@ -50,11 +51,12 @@ async function joinVoiceChannel(serverId, channelId, userId, socket) {
 
 // --- Handle signaling from server ---
 function handleVoiceSignal(socket) {
+  if (handleSignalSetup) return;
+  handleSignalSetup = true;
   socket.on('voice-webrtc-signal', async ({ from, type, data }) => {
     console.log('[WebRTC] Signal received:', { from, type, data });
     if (from === myUserId) return;
     if (type === 'join') {
-      // New peer joined, create a connection to them
       await createPeerConnection(from, socket, true);
       return;
     }
@@ -110,9 +112,8 @@ async function createPeerConnection(peerId, socket, isInitiator) {
       document.body.appendChild(audio);
     }
     audio.srcObject = event.streams[0];
-    audio.muted = false; // Always unmute for remote audio
+    audio.muted = false;
     audio.play().catch(err => console.warn('Audio play blocked:', err));
-    // Log track settings for debugging
     if (event.track) {
       console.log('[WebRTC] Remote audio track settings:', event.track.getSettings());
     }
@@ -121,8 +122,18 @@ async function createPeerConnection(peerId, socket, isInitiator) {
   };
   pc.onconnectionstatechange = () => {
     console.log('[WebRTC] Peer connection state with', peerId, ':', pc.connectionState);
+    updateConnectionStateUI(peerId, pc.connectionState);
+    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+      // Try ICE restart
+      if (isInitiator) {
+        pc.createOffer({ iceRestart: true }).then(offer => {
+          pc.setLocalDescription(offer);
+          socket.emit('voice-webrtc-signal', { to: peerId, from: myUserId, type: 'offer', data: offer });
+          console.log('[WebRTC] ICE restart offer sent to', peerId);
+        });
+      }
+    }
   };
-  // Initiator logic: always let the peer who receives the join create the offer
   if (isInitiator) {
     console.log('[WebRTC] Creating offer for', peerId);
     const offer = await pc.createOffer();
@@ -176,6 +187,26 @@ function updateRemoteAudioMute() {
   document.querySelectorAll('[id^="voice-audio-"]').forEach(audio => {
     audio.muted = isDeafened;
   });
+}
+
+// Add UI indicator for connection state
+function updateConnectionStateUI(peerId, state) {
+  let el = document.getElementById('voice-conn-state-' + peerId);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'voice-conn-state-' + peerId;
+    el.style.position = 'fixed';
+    el.style.bottom = '8px';
+    el.style.right = (8 + 120 * Object.keys(peers).indexOf(peerId)) + 'px';
+    el.style.background = '#222';
+    el.style.color = '#fff';
+    el.style.padding = '4px 10px';
+    el.style.borderRadius = '6px';
+    el.style.zIndex = 9999;
+    el.style.fontSize = '14px';
+    document.body.appendChild(el);
+  }
+  el.textContent = 'Peer ' + peerId + ': ' + state;
 }
 
 // --- Exported functions ---
