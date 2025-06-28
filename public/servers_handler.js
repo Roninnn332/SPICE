@@ -1176,17 +1176,29 @@ function updateVoiceUserCards(users) {
     const user = typeof userObj === 'string' ? JSON.parse(userObj) : userObj;
     newUserIds.add(String(user.user_id));
     if (!currentCards[user.user_id]) {
+      // Color palette for user cards
+      const userCardColors = [
+        '#4a6cff', '#00b894', '#fdcb6e', '#e17055', '#00b8d4', '#6c5ce7', '#fd79a8', '#00cec9', '#fab1a0', '#6366f1', '#f59e42', '#43b581', '#f14668', '#fbbf24', '#10b981', '#3b82f6', '#ef4444', '#a21caf', '#f472b6', '#14b8a6'
+      ];
+      // Hash user_id to pick a color
+      function pickColor(id) {
+        let hash = 0;
+        for (let i = 0; i < String(id).length; i++) hash = String(id).charCodeAt(i) + ((hash << 5) - hash);
+        return userCardColors[Math.abs(hash) % userCardColors.length];
+      }
+      const cardColor = pickColor(user.user_id);
       // Add new card with entrance animation and compact design (no 'info' div)
       const tile = document.createElement('div');
       tile.className = 'user-card fade-in-up';
       tile.setAttribute('data-user-id', user.user_id);
+      tile.style.background = cardColor;
       tile.innerHTML = `
         <div class="avatar" style="width:44px;height:44px;min-width:44px;">
           <img src="${user.avatar_url}" alt="${user.username}" style="width:44px;height:44px;">
         </div>
         <div class="user-main" style="display:flex;flex-direction:column;justify-content:center;flex:1;min-width:0;">
           <span class="user-name" style="color:#fff;font-size:15px;font-weight:600;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.username}</span>
-          <span class="user-status" style="color:#aaa;font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.status || ''}</span>
+          <span class="user-status" style="color:#fff;font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user.status || ''}</span>
         </div>
         <div class="status-icons" style="display:flex;flex-direction:column;gap:6px;margin-left:10px;">
           <i class="fas fa-microphone${user.micOn === false ? '' : ' active'}" title="${user.micOn === false ? 'Mic Off' : 'Mic On'}" style="font-size:15px;"></i>
@@ -1218,6 +1230,18 @@ function updateVoiceUserCards(users) {
       if (volIcon) {
         volIcon.className = `fas fa-volume-up${user.deafenOn ? '' : ' active'}`;
         volIcon.title = user.deafenOn ? 'Deafened' : 'Speaker On';
+      }
+      // Update card color if user_id changes (shouldn't happen, but for safety)
+      if (card && card.getAttribute('data-user-id')) {
+        const userCardColors = [
+          '#4a6cff', '#00b894', '#fdcb6e', '#e17055', '#00b8d4', '#6c5ce7', '#fd79a8', '#00cec9', '#fab1a0', '#6366f1', '#f59e42', '#43b581', '#f14668', '#fbbf24', '#10b981', '#3b82f6', '#ef4444', '#a21caf', '#f472b6', '#14b8a6'
+        ];
+        function pickColor(id) {
+          let hash = 0;
+          for (let i = 0; i < String(id).length; i++) hash = String(id).charCodeAt(i) + ((hash << 5) - hash);
+          return userCardColors[Math.abs(hash) % userCardColors.length];
+        }
+        card.style.background = pickColor(card.getAttribute('data-user-id'));
       }
     }
   });
