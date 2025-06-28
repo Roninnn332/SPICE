@@ -147,14 +147,18 @@ async function renderChannelsList(serverId) {
   const voiceChannels = channels.filter(c => c.type === 'voice');
   // Text Channels Section
   if (textChannels.length) {
-    const textHeader = document.createElement('div');
-    textHeader.className = 'channel-section-header';
-    textHeader.textContent = 'Text Channels';
-    channelsListDiv.appendChild(textHeader);
-    textChannels.forEach(channel => {
+    const textCategory = document.createElement('div');
+    textCategory.className = 'channel-category';
+    textCategory.innerHTML = `<span>Text Channels</span><button class='add-channel' title='Add Text Channel'><i class='fa-solid fa-plus'></i></button>`;
+    textCategory.querySelector('.add-channel').onclick = () => {
+      openCreateChannelModal('text');
+    };
+    channelsListDiv.appendChild(textCategory);
+    textChannels.forEach((channel, idx) => {
       const btn = document.createElement('button');
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-      btn.innerHTML = `<span class='channel-icon'>#</span> ${channel.name}`;
+      btn.innerHTML = `<span class='channel-icon'>#</span> <span>${channel.name}</span>`;
+      btn.style.setProperty('--channel-index', idx + 1);
       btn.onclick = () => {
         currentChannel = channel;
         renderChannelsList(serverId); // re-render to update active
@@ -168,14 +172,18 @@ async function renderChannelsList(serverId) {
   }
   // Voice Channels Section
   if (voiceChannels.length) {
-    const voiceHeader = document.createElement('div');
-    voiceHeader.className = 'channel-section-header';
-    voiceHeader.textContent = 'Voice Channels';
-    channelsListDiv.appendChild(voiceHeader);
-    voiceChannels.forEach(channel => {
+    const voiceCategory = document.createElement('div');
+    voiceCategory.className = 'channel-category';
+    voiceCategory.innerHTML = `<span>Voice Channels</span><button class='add-channel' title='Add Voice Channel'><i class='fa-solid fa-plus'></i></button>`;
+    voiceCategory.querySelector('.add-channel').onclick = () => {
+      openCreateChannelModal('voice');
+    };
+    channelsListDiv.appendChild(voiceCategory);
+    voiceChannels.forEach((channel, idx) => {
       const btn = document.createElement('button');
       btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-      btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> ${channel.name}`;
+      btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> <span>${channel.name}</span>`;
+      btn.style.setProperty('--channel-index', idx + 1);
       btn.onclick = () => {
         currentChannel = channel;
         renderChannelsList(serverId); // re-render to update active
