@@ -8,7 +8,8 @@ const TURN_CONFIG = {
       urls: 'turn:relay1.expressturn.com:3480',
       username: '000000002066459095',
       credential: 'nnidWPj5Cn1hOWAqPwhdjtnRbC4='
-    }
+    },
+    { urls: 'stun:stun.l.google.com:19302' } // Fallback for local testing
   ]
 };
 
@@ -50,42 +51,56 @@ async function joinVoiceChannel(serverId, channelId, userId, socket) {
 // --- Handle signaling from server ---
 function handleVoiceSignal(socket) {
   socket.on('voice-webrtc-signal', async ({ from, type, data }) => {
+    console.log('[WebRTC] Signal received:', { from, type, data });
     if (from === myUserId) return;
     if (type === 'join') {
       // New peer joined, create a connection to them
-      await createPeerConnection(from, socket);
+      await createPeerConnection(from, socket, true);
       return;
     }
     if (!peers[from]) {
-      await createPeerConnection(from, socket);
+      await createPeerConnection(from, socket, false);
     }
     const pc = peers[from];
     if (type === 'offer') {
+      console.log('[WebRTC] Received offer from', from);
       await pc.setRemoteDescription(new RTCSessionDescription(data));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('voice-webrtc-signal', { to: from, from: myUserId, type: 'answer', data: answer });
+      console.log('[WebRTC] Sent answer to', from);
     } else if (type === 'answer') {
+      console.log('[WebRTC] Received answer from', from);
       await pc.setRemoteDescription(new RTCSessionDescription(data));
     } else if (type === 'candidate') {
+      console.log('[WebRTC] Received candidate from', from);
       if (data) await pc.addIceCandidate(new RTCIceCandidate(data));
+    } else if (type === 'leave') {
+      console.log('[WebRTC] Peer left:', from);
+      if (peers[from]) {
+        peers[from].close();
+        delete peers[from];
+        const audio = document.getElementById('voice-audio-' + from);
+        if (audio) audio.remove();
+      }
     }
   });
 }
 
 // --- Create peer connection ---
-async function createPeerConnection(peerId, socket) {
+async function createPeerConnection(peerId, socket, isInitiator) {
+  if (peers[peerId]) return peers[peerId];
   const pc = new RTCPeerConnection(TURN_CONFIG);
   peers[peerId] = pc;
   const stream = await getLocalStream();
   stream.getTracks().forEach(track => pc.addTrack(track, stream));
   pc.onicecandidate = (event) => {
     if (event.candidate) {
+      console.log('[WebRTC] Sending candidate to', peerId);
       socket.emit('voice-webrtc-signal', { to: peerId, from: myUserId, type: 'candidate', data: event.candidate });
     }
   };
   pc.ontrack = (event) => {
-    // Play remote audio
     let audio = document.getElementById('voice-audio-' + peerId);
     if (!audio) {
       audio = document.createElement('audio');
@@ -96,26 +111,36 @@ async function createPeerConnection(peerId, socket) {
     }
     audio.srcObject = event.streams[0];
     setTimeout(updateRemoteAudioMute, 0);
+    console.log('[WebRTC] Remote audio stream attached for', peerId);
   };
-  // If we are the initiator, create offer
-  if (myUserId < peerId) {
+  pc.onconnectionstatechange = () => {
+    console.log('[WebRTC] Peer connection state with', peerId, ':', pc.connectionState);
+  };
+  // Initiator logic: always let the peer who receives the join create the offer
+  if (isInitiator) {
+    console.log('[WebRTC] Creating offer for', peerId);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     socket.emit('voice-webrtc-signal', { to: peerId, from: myUserId, type: 'offer', data: offer });
+    console.log('[WebRTC] Sent offer to', peerId);
   }
   return pc;
 }
 
 // --- Leave voice channel (cleanup) ---
 function leaveVoiceChannel(socket) {
-  Object.values(peers).forEach(pc => pc.close());
-  peers = {};
+  Object.entries(peers).forEach(([peerId, pc]) => {
+    pc.close();
+    delete peers[peerId];
+    const audio = document.getElementById('voice-audio-' + peerId);
+    if (audio) audio.remove();
+    console.log('[WebRTC] Closed connection and removed audio for', peerId);
+  });
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
+    console.log('[WebRTC] Stopped local stream');
   }
-  // Remove remote audio elements
-  document.querySelectorAll('[id^="voice-audio-"]').forEach(el => el.remove());
   socket.emit('voice-webrtc-leave', { serverId: currentServerId, channelId: currentChannelId, userId: myUserId });
   currentChannelId = null;
   currentServerId = null;

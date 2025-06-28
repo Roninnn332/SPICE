@@ -183,15 +183,18 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     socket.voiceWebRTCRoomId = roomId;
     socket.voiceWebRTCUserId = userId;
+    console.log('[SIGNAL] voice-webrtc-join:', { serverId, channelId, userId, socketId: socket.id });
     // Notify others in the room to connect
     socket.to(roomId).emit('voice-webrtc-signal', { from: userId, type: 'join' });
   });
 
   socket.on('voice-webrtc-signal', ({ to, from, type, data }) => {
+    console.log('[SIGNAL] voice-webrtc-signal:', { from, to, type, socketId: socket.id });
     // Relay signaling messages to the intended peer in the same room
     for (const [id, s] of Object.entries(io.sockets.sockets)) {
       if (s.voiceWebRTCRoomId === socket.voiceWebRTCRoomId && s.voiceWebRTCUserId === to) {
         s.emit('voice-webrtc-signal', { from, type, data });
+        console.log('[SIGNAL] Relayed signal to', to, 'via socket', id);
         break;
       }
     }
@@ -202,6 +205,7 @@ io.on('connection', (socket) => {
     socket.leave(roomId);
     // Notify others in the room that this user left
     socket.to(roomId).emit('voice-webrtc-signal', { from: userId, type: 'leave' });
+    console.log('[SIGNAL] voice-webrtc-leave:', { serverId, channelId, userId, socketId: socket.id });
     delete socket.voiceWebRTCRoomId;
     delete socket.voiceWebRTCUserId;
   });
