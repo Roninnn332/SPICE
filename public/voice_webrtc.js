@@ -24,10 +24,13 @@ let isDeafened = false;
 async function getLocalStream() {
   if (localStream) return localStream;
   try {
+    console.log('[WebRTC] Requesting mic access...');
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    console.log('[WebRTC] Mic access granted');
     return localStream;
   } catch (err) {
     alert('Microphone access denied or unavailable.');
+    console.error('[WebRTC] getUserMedia error:', err);
     throw err;
   }
 }
