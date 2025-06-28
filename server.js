@@ -184,8 +184,20 @@ io.on('connection', (socket) => {
     socket.voiceWebRTCRoomId = roomId;
     socket.voiceWebRTCUserId = userId;
     console.log('[SIGNAL] voice-webrtc-join:', { serverId, channelId, userId, socketId: socket.id });
-    // Notify others in the room to connect
+
+    // Notify all existing peers (except the new one) that a new peer joined
     socket.to(roomId).emit('voice-webrtc-signal', { from: userId, type: 'join' });
+
+    // NEW: Notify the new peer about all existing peers in the room
+    for (const [id, s] of Object.entries(io.sockets.sockets)) {
+      if (
+        s.id !== socket.id &&
+        s.voiceWebRTCRoomId === roomId &&
+        s.voiceWebRTCUserId // only if they have joined
+      ) {
+        socket.emit('voice-webrtc-signal', { from: s.voiceWebRTCUserId, type: 'join' });
+      }
+    }
   });
 
   socket.on('voice-webrtc-signal', ({ to, from, type, data }) => {
