@@ -21,6 +21,7 @@ let myUserId = null;
 let isMuted = false;
 let isDeafened = false;
 let handleSignalSetup = false;
+let signalingTimeouts = {};
 
 // --- Capture mic audio ---
 async function getLocalStream() {
@@ -58,6 +59,35 @@ function handleVoiceSignal(socket) {
     if (from === myUserId) return;
     if (type === 'join') {
       await createPeerConnection(from, socket, true);
+      // Fallback: if no offer/answer in 5s, retry
+      if (signalingTimeouts[from]) clearTimeout(signalingTimeouts[from]);
+      signalingTimeouts[from] = setTimeout(() => {
+        if (!peers[from] || peers[from].connectionState !== 'connected') {
+          console.warn('[WebRTC] No offer/answer after join, retrying signaling with', from);
+          createPeerConnection(from, socket, true);
+        }
+      }, 5000);
+      // UI warning if not connected in 10s
+      setTimeout(() => {
+        if (!peers[from] || peers[from].connectionState !== 'connected') {
+          let warn = document.getElementById('voice-signal-warn-' + from);
+          if (!warn) {
+            warn = document.createElement('div');
+            warn.id = 'voice-signal-warn-' + from;
+            warn.style.position = 'fixed';
+            warn.style.bottom = '40px';
+            warn.style.right = (8 + 120 * Object.keys(peers).indexOf(from)) + 'px';
+            warn.style.background = '#c00';
+            warn.style.color = '#fff';
+            warn.style.padding = '6px 14px';
+            warn.style.borderRadius = '6px';
+            warn.style.zIndex = 9999;
+            warn.style.fontSize = '15px';
+            warn.textContent = 'Voice connection to ' + from + ' not established!';
+            document.body.appendChild(warn);
+          }
+        }
+      }, 10000);
       return;
     }
     if (!peers[from]) {
@@ -65,6 +95,7 @@ function handleVoiceSignal(socket) {
     }
     const pc = peers[from];
     if (type === 'offer') {
+      if (signalingTimeouts[from]) clearTimeout(signalingTimeouts[from]);
       console.log('[WebRTC] Received offer from', from);
       await pc.setRemoteDescription(new RTCSessionDescription(data));
       const answer = await pc.createAnswer();
@@ -72,12 +103,14 @@ function handleVoiceSignal(socket) {
       socket.emit('voice-webrtc-signal', { to: from, from: myUserId, type: 'answer', data: answer });
       console.log('[WebRTC] Sent answer to', from);
     } else if (type === 'answer') {
+      if (signalingTimeouts[from]) clearTimeout(signalingTimeouts[from]);
       console.log('[WebRTC] Received answer from', from);
       await pc.setRemoteDescription(new RTCSessionDescription(data));
     } else if (type === 'candidate') {
       console.log('[WebRTC] Received candidate from', from);
       if (data) await pc.addIceCandidate(new RTCIceCandidate(data));
     } else if (type === 'leave') {
+      if (signalingTimeouts[from]) clearTimeout(signalingTimeouts[from]);
       console.log('[WebRTC] Peer left:', from);
       if (peers[from]) {
         peers[from].close();
@@ -85,6 +118,8 @@ function handleVoiceSignal(socket) {
         const audio = document.getElementById('voice-audio-' + from);
         if (audio) audio.remove();
       }
+      let warn = document.getElementById('voice-signal-warn-' + from);
+      if (warn) warn.remove();
     }
   });
 }
