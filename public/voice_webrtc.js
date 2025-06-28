@@ -110,6 +110,12 @@ async function createPeerConnection(peerId, socket, isInitiator) {
       document.body.appendChild(audio);
     }
     audio.srcObject = event.streams[0];
+    audio.muted = false; // Always unmute for remote audio
+    audio.play().catch(err => console.warn('Audio play blocked:', err));
+    // Log track settings for debugging
+    if (event.track) {
+      console.log('[WebRTC] Remote audio track settings:', event.track.getSettings());
+    }
     setTimeout(updateRemoteAudioMute, 0);
     console.log('[WebRTC] Remote audio stream attached for', peerId);
   };
