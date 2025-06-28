@@ -28,7 +28,18 @@ async function getLocalStream() {
   if (localStream) return localStream;
   try {
     console.log('[WebRTC] Requesting mic access...');
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    const constraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 48000,
+        sampleSize: 16
+      },
+      video: false
+    };
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
     console.log('[WebRTC] Mic access granted');
     return localStream;
   } catch (err) {
@@ -172,9 +183,12 @@ async function createPeerConnection(peerId, socket, isInitiator) {
   };
   if (isInitiator) {
     console.log('[WebRTC] Creating offer for', peerId);
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('voice-webrtc-signal', { to: peerId, from: myUserId, type: 'offer', data: offer });
+    let offer = await pc.createOffer();
+    // Prefer Opus, set minptime/ptime for low latency, and set audio bandwidth
+    let updatedSdp = offer.sdp.replace('useinbandfec=1', 'useinbandfec=1; minptime=10; ptime=10');
+    updatedSdp = updatedSdp.replace(/a=mid:audio\r\n/, 'a=mid:audio\r\nb=AS:128\r\n');
+    await pc.setLocalDescription({ type: 'offer', sdp: updatedSdp });
+    socket.emit('voice-webrtc-signal', { to: peerId, from: myUserId, type: 'offer', data: { type: 'offer', sdp: updatedSdp } });
     console.log('[WebRTC] Sent offer to', peerId);
   }
   return pc;
