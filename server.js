@@ -203,12 +203,18 @@ io.on('connection', (socket) => {
   socket.on('voice-webrtc-signal', ({ to, from, type, data }) => {
     console.log('[SERVER SIGNAL] from:', from, 'to:', to, 'type:', type, 'socketId:', socket.id);
     // Relay signaling messages to the intended peer in the same room
+    let found = false;
     for (const [id, s] of Object.entries(io.sockets.sockets)) {
+      console.log('[SERVER DEBUG] Checking socket', id, 'userId:', s.voiceWebRTCUserId, 'roomId:', s.voiceWebRTCRoomId);
       if (s.voiceWebRTCRoomId === socket.voiceWebRTCRoomId && s.voiceWebRTCUserId === to) {
         s.emit('voice-webrtc-signal', { from, type, data });
         console.log('[SERVER SIGNAL] Relayed signal to', to, 'via socket', id);
+        found = true;
         break;
       }
+    }
+    if (!found) {
+      console.warn('[SERVER WARN] No socket found to relay signal to', to, 'in room', socket.voiceWebRTCRoomId);
     }
   });
 
