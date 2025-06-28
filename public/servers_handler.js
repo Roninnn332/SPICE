@@ -73,29 +73,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // --- Server List UI ---
 async function renderServersList() {
-  if (!supabaseClient || !serversSidebar) return;
   const user = JSON.parse(localStorage.getItem('spice_user'));
-  if (!user || !user.user_id || !serversSidebar) return;
-  const { data: memberships, error: memErr } = await supabaseClient
-    .from('server_members')
-    .select('server_id, role, servers!inner(id, name, icon_url, owner_id, banner_url, banner_color)')
-    .eq('user_id', user.user_id);
-  if (memErr || !memberships) return;
-  serversList = memberships.map(m => m.servers);
-  // Render
+  if (!user) return;
+  // Fetch servers from memory (already loaded)
+  // serversList is an array of server objects
   const serversListDiv = serversSidebar.querySelector('.servers-list');
   if (!serversListDiv) return;
   serversListDiv.innerHTML = '';
+
   // Add "+" button
   const addBtn = document.createElement('button');
   addBtn.className = 'server-btn add-server-btn';
   addBtn.title = 'Add Server';
   addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
   addBtn.onclick = () => {
-    // Show modal for create/join
     openCreateServerModal();
   };
   serversListDiv.appendChild(addBtn);
+
+  // Divider
+  const divider = document.createElement('div');
+  divider.className = 'servers-divider';
+  serversListDiv.appendChild(divider);
+
+  // Example: Special AI Server (static, always present)
+  const aiBtn = document.createElement('button');
+  aiBtn.className = 'server-btn special';
+  aiBtn.title = 'AI Server';
+  aiBtn.innerHTML = '<i class="fa-solid fa-robot"></i>';
+  aiBtn.onclick = () => {
+    // You can add AI server logic here
+    alert('AI Server coming soon!');
+  };
+  serversListDiv.appendChild(aiBtn);
+
   // Render each server
   serversList.forEach(server => {
     const btn = document.createElement('button');
@@ -107,11 +118,12 @@ async function renderServersList() {
       btn.innerHTML = `<span class="user-avatar-initial">${server.name[0] ? server.name[0].toUpperCase() : '?'}</span>`;
     }
     btn.onclick = () => {
-      currentServer = server;
-      renderServersList(); // re-render to update active
-      renderChannelsList(server.id);
+      if (!currentServer || currentServer.id !== server.id) {
+        currentServer = server;
+        renderServersList(); // re-render to update active
+        renderChannelsList(server.id);
+      }
     };
-    // Add double-click event for owner to open server settings modal
     btn.ondblclick = () => {
       openServerSettingsModal();
     };
