@@ -1213,21 +1213,19 @@ function updateVoiceUserCards(users) {
       if (menuBtn) {
         menuBtn.onclick = async (e) => {
           e.stopPropagation();
-          // Animate card expansion
           tile.classList.add('user-card-menu-open');
           tile.style.transition = 'all 0.35s cubic-bezier(.4,2,.6,1)';
           tile.style.minHeight = '140px';
           tile.style.width = '320px';
-          // Fade out main content
           const main = tile.querySelector('.user-main');
           const avatar = tile.querySelector('.avatar');
           if (main) main.style.opacity = '0';
           if (avatar) avatar.style.opacity = '0.5';
           setTimeout(async () => {
-            // Build menu options
             const userId = tile.getAttribute('data-user-id');
             const friend = await isFriend(userId);
             let menuHtml = '<div class="user-card-menu animate-menu-in">';
+            menuHtml += '<button class="user-card-menu-btn back-btn"><i class="fas fa-arrow-left"></i> Back</button>';
             if (friend) {
               menuHtml += '<button class="user-card-menu-btn" disabled><i class="fas fa-user-friends"></i> Friends</button>';
             } else {
@@ -1240,7 +1238,6 @@ function updateVoiceUserCards(users) {
             menuHtml += '</div>';
             main.innerHTML = menuHtml;
             main.style.opacity = '1';
-            // Add close on click outside
             function closeMenu(ev) {
               if (!tile.contains(ev.target)) {
                 tile.classList.remove('user-card-menu-open');
@@ -1249,17 +1246,29 @@ function updateVoiceUserCards(users) {
                 main.style.opacity = '1';
                 avatar.style.opacity = '1';
                 document.removeEventListener('mousedown', closeMenu);
-                // Restore original content
                 updateVoiceUserCards(users);
               }
             }
             document.addEventListener('mousedown', closeMenu);
+            // Back button
+            const backBtn = main.querySelector('.back-btn');
+            if (backBtn) {
+              backBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                tile.classList.remove('user-card-menu-open');
+                tile.style.minHeight = '';
+                tile.style.width = '';
+                main.style.opacity = '1';
+                avatar.style.opacity = '1';
+                document.removeEventListener('mousedown', closeMenu);
+                updateVoiceUserCards(users);
+              };
+            }
             // Add action handlers
             const addBtn = main.querySelector('.add-friend');
             if (addBtn) {
               addBtn.onclick = async (ev) => {
                 ev.stopPropagation();
-                // Send friend request
                 const user = JSON.parse(localStorage.getItem('spice_user'));
                 await supabaseClient.from('friends').insert([
                   { requester_id: user.user_id, receiver_id: userId, status: 'pending' }
@@ -1273,7 +1282,14 @@ function updateVoiceUserCards(users) {
             if (kickBtn) {
               kickBtn.onclick = (ev) => {
                 ev.stopPropagation();
-                // Demo: just remove card
+                // Emit kick event to server
+                if (window.channelSocket && currentVoiceServerId && currentVoiceChannelId) {
+                  window.channelSocket.emit('voice_kick', {
+                    serverId: currentVoiceServerId,
+                    channelId: currentVoiceChannelId,
+                    userId: userId
+                  });
+                }
                 tile.classList.add('fade-slide', 'out');
                 tile.addEventListener('transitionend', () => tile.remove(), { once: true });
               };
@@ -1558,4 +1574,128 @@ async function isFriend(userId) {
 function isServerOwner() {
   const user = JSON.parse(localStorage.getItem('spice_user'));
   return currentServer && user && String(currentServer.owner_id) === String(user.user_id);
+}
+
+// Listen for being kicked from voice channel
+if (window.channelSocket) {
+  window.channelSocket.off('voice_kicked');
+  window.channelSocket.on('voice_kicked', ({ serverId, channelId }) => {
+    if (String(currentVoiceServerId) === String(serverId) && String(currentVoiceChannelId) === String(channelId)) {
+      isInVoiceChannel = false;
+      currentVoiceServerId = null;
+      currentVoiceChannelId = null;
+      myMicOn = true;
+      myDeafenOn = false;
+      // Show join voice UI with special message
+      const chat = document.querySelector('.chat-messages');
+      const footer = document.querySelector('.chat-input-area');
+      if (chat) chat.innerHTML = `
+        <div class="voice-channel-welcome">
+          <div class="voice-channel-bg"></div>
+          <div class="voice-channel-center">
+            <div class="voice-channel-icon"><i class='fa-solid fa-volume-high'></i></div>
+            <div class="voice-channel-title"><span class='voice-channel-title-text'>You got kicked by owner</span></div>
+            <div class="voice-channel-desc">You have been removed from the voice channel.</div>
+            <button class="voice-channel-join-btn">Join Voice</button>
+          </div>
+        </div>
+      `;
+      if (footer) footer.innerHTML = '';
+      const joinBtn = chat.querySelector('.voice-channel-join-btn');
+      if (joinBtn) {
+        joinBtn.onclick = function() {
+          // Actually join voice now
+          const user = JSON.parse(localStorage.getItem('spice_user'));
+          if (window.channelSocket) {
+            window.channelSocket.emit('voice_join', {
+              serverId,
+              channelId,
+              user: {
+                user_id: user.user_id,
+                username: user.username,
+                avatar_url: user.avatar_url,
+                micOn: myMicOn,
+                deafenOn: myDeafenOn
+              }
+            });
+          }
+          isInVoiceChannel = true;
+          currentVoiceServerId = serverId;
+          currentVoiceChannelId = channelId;
+          // Immediately show own user card (optimistic update)
+          if (chat) {
+            chat.innerHTML = '<div class="voice-user-tiles"></div>';
+            updateVoiceUserCards([JSON.stringify({
+              user_id: user.user_id,
+              username: user.username,
+              avatar_url: user.avatar_url,
+              micOn: myMicOn,
+              deafenOn: myDeafenOn
+            })]);
+          }
+          if (footer) {
+            footer.innerHTML = `
+              <div class="voice-controls animate-stagger">
+                <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
+                <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
+                <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
+              </div>
+            `;
+            // Mic toggle
+            const micBtn = footer.querySelector('.mic-btn');
+            if (micBtn) {
+              micBtn.onclick = function() {
+                myMicOn = !myMicOn;
+                micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+                micBtn.classList.toggle('off', !myMicOn);
+                if (window.channelSocket) {
+                  window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+                }
+              };
+            }
+            // Deafen toggle
+            const deafenBtn = footer.querySelector('.deafen-btn');
+            if (deafenBtn) {
+              const icon = deafenBtn.querySelector('i');
+              deafenBtn.onclick = function() {
+                myDeafenOn = !myDeafenOn;
+                if (icon) {
+                  icon.className = 'fa-solid fa-headphones';
+                }
+                let slash = deafenBtn.querySelector('.deafen-slash-fallback');
+                if (myDeafenOn) {
+                  if (!slash) {
+                    slash = document.createElement('span');
+                    slash.className = 'deafen-slash-fallback';
+                    deafenBtn.appendChild(slash);
+                  }
+                } else {
+                  if (slash) slash.remove();
+                }
+                deafenBtn.classList.toggle('off', myDeafenOn);
+                if (window.channelSocket) {
+                  window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+                }
+              };
+            }
+            // Leave button
+            const leaveBtn = footer.querySelector('.leave-btn');
+            if (leaveBtn) {
+              leaveBtn.onclick = function() {
+                if (window.channelSocket) {
+                  window.channelSocket.emit('voice_leave');
+                }
+                isInVoiceChannel = false;
+                currentVoiceServerId = null;
+                currentVoiceChannelId = null;
+                myMicOn = true;
+                myDeafenOn = false;
+                openVoiceChannel(serverId, channelId);
+              };
+            }
+          }
+        };
+      }
+    }
+  });
 } 
