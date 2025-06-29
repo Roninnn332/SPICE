@@ -228,24 +228,28 @@ async function appendChannelMessage(msg, who) {
   // Emoji reactions
   let emojiHtml = '';
   if (Array.isArray(reactions) && reactions.length) {
-    emojiHtml = `<div class="emoji-reaction-container">` +
-      reactions.map(r => `<span class="emoji-reaction">${r.emoji} ${r.count}</span>`).join('') +
+    emojiHtml = `<div class=\"emoji-reaction-container\">` +
+      reactions.map(r => `<span class=\"emoji-reaction\">${r.emoji} ${r.count}</span>`).join('') +
       `</div>`;
   }
+  // Alignment
+  const alignStyle = who === 'me' ? 'style="flex-direction: row-reverse;"' : '';
+  const avatarClass = who === 'me' ? 'avatar guest' : 'avatar';
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'dm-message ' + who;
-  msgDiv.dataset.timestamp = msg.timestamp;
+  msgDiv.className = 'message-bubble';
+  msgDiv.setAttribute('data-timestamp', msg.timestamp);
+  msgDiv.setAttribute('tabindex', '0');
   msgDiv.innerHTML = `
-    <div class="dm-chat-avatar${role ? ' ' + role : ''}">
+    <div class="${avatarClass}">
       <img src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" />
     </div>
-    <div class="dm-message-bubble">
-      <div class="dm-message-meta">
-        <span class="dm-chat-username${role ? ' ' + role : ''}">${username}</span>
+    <div class="message-content">
+      <div class="message-meta">
+        <span class="username${role ? ' ' + role : ''}">${username}</span>
         ${roleBadge}
-        <span class="dm-message-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        <span class="timestamp">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
-      <span class="dm-message-text">${content}</span>
+      <div class="message-text">${content}</div>
       ${emojiHtml}
     </div>
     <div class="message-actions">
@@ -254,6 +258,7 @@ async function appendChannelMessage(msg, who) {
       <button class="action-button"><i class="fas fa-ellipsis-h"></i></button>
     </div>
   `;
+  if (who === 'me') msgDiv.style.flexDirection = 'row-reverse';
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
   msgDiv.classList.add('dm-message-animate-in');
