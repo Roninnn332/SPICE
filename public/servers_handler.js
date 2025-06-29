@@ -1,3 +1,8 @@
+// Polyfill fetch and Headers if not available (for older browsers)
+if (typeof fetch === 'undefined' || typeof Headers === 'undefined') {
+  document.write('<script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"><\/script>');
+}
+
 // servers_handler.js
 // Handles all logic for servers (group chats), channels, and server chat UI
 // This keeps app.js focused on DMs/friends only
@@ -182,12 +187,12 @@ async function renderChannelsList(serverId) {
 if (!window.channelSocket) {
   const socketUrl = window.location.origin;
   window.channelSocket = window.io(socketUrl);
-}
+  }
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => u.username));
   updateVoiceUserCards(users);
-});
+  });
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
