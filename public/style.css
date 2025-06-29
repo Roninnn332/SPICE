@@ -3643,39 +3643,12 @@ input:checked + .slider:before {
   }
 }
 
-
-/* --- Server Icon Crop Modal: Circular Crop Area (Appended for Priority) --- */
-#server-icon-crop-area {
-  width: 220px;
-  height: 220px;
-  background: var(--pure-black);
+.server-avatar-cropped-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#server-icon-crop-area::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 50%;
-  box-shadow: 0 0 0 9999px rgba(10,10,10,0.55);
-  pointer-events: none;
-}
-.server-avatar-upload-preview.uploaded {
-  border-radius: 50%;
-  width: 64px;
-  height: 64px;
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.13);
-  border: 2.5px solid var(--primary-blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 } 
 
  

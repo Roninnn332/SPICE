@@ -488,9 +488,7 @@ function updateCreateServerAvatarPreview() {
   const name = serverNameInput.value.trim();
   if (url) {
     createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview uploaded';
-    createServerAvatarPreviewDiv.style.backgroundImage = `url('${url}')`;
-    createServerAvatarPreviewDiv.innerHTML = `<span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>`;
-    // Ensure preview is a perfect circle (CSS handles border-radius)
+    createServerAvatarPreviewDiv.innerHTML = `<img src="${url}" class="server-avatar-cropped-preview" alt="Avatar" />`;
   } else if (name) {
     createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview letter';
     createServerAvatarPreviewDiv.style.backgroundImage = '';
@@ -597,7 +595,7 @@ if (createServerAvatarCropConfirm) {
         }
         if (createServerAvatarCropper) { createServerAvatarCropper.destroy(); createServerAvatarCropper = null; }
       }
-    }, 'image/jpeg', 0.95);
+    }, 'image/webp', 0.95);
   };
 }
 
