@@ -1094,7 +1094,7 @@ async function fetchServerMembers() {
   membersSection.innerHTML = '<div>Loading...</div>';
   const { data: members, error } = await supabaseClient
     .from('server_members')
-    .select('user_id, role, users!inner(username, avatar_url)')
+    .select('user_id, role, created_at, users!inner(username, avatar_url)')
     .eq('server_id', currentServer.id);
   if (error || !members) {
     membersSection.innerHTML = '<div>Error loading members.</div>';
@@ -1103,11 +1103,22 @@ async function fetchServerMembers() {
   membersSection.innerHTML = '';
   members.forEach(m => {
     const div = document.createElement('div');
-    div.className = 'server-member-row';
+    div.className = 'server-member-card';
+    const joinDate = m.created_at ? new Date(m.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
     div.innerHTML = `
-      <img src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:0.7em;">
-      <span>${m.users.username || m.user_id}</span>
-      <span style="margin-left:auto;font-size:0.98em;color:var(--gray);">${m.role}</span>
+      <div class="server-member-avatar-wrap">
+        <img src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" class="server-member-avatar">
+      </div>
+      <div class="server-member-info">
+        <div class="server-member-name-row">
+          <span class="server-member-name">${m.users.username || m.user_id}</span>
+          <span class="server-member-role ${m.role}">${m.role.charAt(0).toUpperCase() + m.role.slice(1)}</span>
+        </div>
+        <div class="server-member-meta">
+          <span class="server-member-id">ID: <span>${m.user_id}</span></span>
+          <span class="server-member-since">Member since: <span>${joinDate}</span></span>
+        </div>
+      </div>
     `;
     membersSection.appendChild(div);
   });

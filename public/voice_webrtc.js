@@ -79,6 +79,27 @@ function handleVoiceSignal(socket) {
           createPeerConnection(from, socket, true);
         }
       }, 5000);
+      // UI warning if not connected in 10s
+      setTimeout(() => {
+        if (!peers[from] || peers[from].connectionState !== 'connected') {
+          let warn = document.getElementById('voice-signal-warn-' + from);
+          if (!warn) {
+            warn = document.createElement('div');
+            warn.id = 'voice-signal-warn-' + from;
+            warn.style.position = 'fixed';
+            warn.style.bottom = '40px';
+            warn.style.right = (8 + 120 * Object.keys(peers).indexOf(from)) + 'px';
+            warn.style.background = '#c00';
+            warn.style.color = '#fff';
+            warn.style.padding = '6px 14px';
+            warn.style.borderRadius = '6px';
+            warn.style.zIndex = 9999;
+            warn.style.fontSize = '15px';
+            warn.textContent = 'Voice connection to ' + from + ' not established!';
+            document.body.appendChild(warn);
+          }
+        }
+      }, 10000);
       return;
     }
     if (!peers[from]) {
@@ -109,6 +130,8 @@ function handleVoiceSignal(socket) {
         const audio = document.getElementById('voice-audio-' + from);
         if (audio) audio.remove();
       }
+      let warn = document.getElementById('voice-signal-warn-' + from);
+      if (warn) warn.remove();
     }
   });
 }
