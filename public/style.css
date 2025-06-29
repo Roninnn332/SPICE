@@ -1,15 +1,14 @@
 /* Root color variables for easy theme management */
 :root {
-  --primary-gold: #8452ef;
-  --primary-purple-dark: #2a2139;
-  --pure-black: #0c0c0d;
-  --deep-carbon: #1a1a1d;
-  --plasma-white: #eae6f2;
-  --carbon-gray: #888a9d;
-  --accent-iris: #9381ff;
-  --shadow: 0 12px 42px rgba(147, 129, 255, 0.25);
+  --primary-blue: #4cc9f0;
+  --primary-blue-dark: #1d3557;
+  --pure-black: #0b0f14;
+  --off-black: #171c23;
+  --white: #f1f1f5;
+  --gray: #8a94a6;
+  --accent: #ff4d9d;
+  --shadow: 0 10px 40px rgba(76, 201, 240, 0.3);
 }
-
 
 html, body {
   height: 100%;
