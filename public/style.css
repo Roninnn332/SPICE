@@ -1,19 +1,20 @@
 /* Root color variables for easy theme management */
 :root {
-  --primary-blue: #00bcd4;         /* Neon Cyan — energetic and futuristic */
-  --primary-blue-dark: #007a8a;    /* Deep teal — perfect for hover states */
-  --pure-black: #0a0f1c;           /* True deep blue-black for immersive backgrounds */
-  --off-black: #1c1f2b;            /* Card/background contrast layer */
-  --white: #eaeef3;                /* Soft near-white, easier on the eyes */
-  --gray: #7a7f91;                 /* Muted steel gray for secondary text */
-  --accent: #ff4081;               /* Bold hot pink accent — for alerts, focus, buttons */
-  --shadow: 0 8px 30px rgba(0, 188, 212, 0.25); /* Clean neon-cyan shadow */
+  --primary-gold: #8452ef;
+  --primary-purple-dark: #2a2139;
+  --pure-black: #0c0c0d;
+  --deep-carbon: #1a1a1d;
+  --plasma-white: #eae6f2;
+  --carbon-gray: #888a9d;
+  --accent-iris: #9381ff;
+  --shadow: 0 12px 42px rgba(147, 129, 255, 0.25);
 }
+
 
 html, body {
   height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 0; 
   font-family: 'Roboto', Arial, sans-serif;
   background: linear-gradient(135deg, var(--pure-black) 60%, var(--primary-blue-dark) 100%);
   color: var(--white);
