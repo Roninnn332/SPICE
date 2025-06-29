@@ -443,12 +443,12 @@ async function openServerChannel(serverId, channelId) {
           timestamp: Date.now()
         });
       };
+      // Setup mention autocomplete only if input exists
+      setupMentionAutocomplete(input, window.currentServerMembers || []);
     } else {
       footer.innerHTML = '';
     }
   }
-  // Setup mention autocomplete
-  setupMentionAutocomplete(input, window.currentServerMembers || []);
 }
 
 // --- Server Creation/Join ---
