@@ -1,8 +1,3 @@
-// Polyfill fetch and Headers if not available (for older browsers)
-if (typeof fetch === 'undefined' || typeof Headers === 'undefined') {
-  document.write('<script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"><\/script>');
-}
-
 // servers_handler.js
 // Handles all logic for servers (group chats), channels, and server chat UI
 // This keeps app.js focused on DMs/friends only
@@ -187,12 +182,12 @@ async function renderChannelsList(serverId) {
 if (!window.channelSocket) {
   const socketUrl = window.location.origin;
   window.channelSocket = window.io(socketUrl);
-  }
+}
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => u.username));
   updateVoiceUserCards(users);
-  });
+});
 
 // --- Premium Message Rendering ---
 async function appendChannelMessage(msg, who) {
@@ -1097,49 +1092,22 @@ async function fetchServerMembers() {
   const membersSection = document.getElementById('server-settings-section-members');
   if (!membersSection) return;
   membersSection.innerHTML = '<div>Loading...</div>';
-  // Fetch server members (no join)
   const { data: members, error } = await supabaseClient
     .from('server_members')
-    .select('user_id, role, created_at')
+    .select('user_id, role, users!inner(username, avatar_url)')
     .eq('server_id', currentServer.id);
   if (error || !members) {
     membersSection.innerHTML = '<div>Error loading members.</div>';
     return;
   }
-  // Fetch user info for all user_ids
-  const userIds = members.map(m => m.user_id);
-  let users = [];
-  if (userIds.length) {
-    const { data: usersData } = await supabaseClient
-      .from('users')
-      .select('user_id, username, avatar_url')
-      .in('user_id', userIds);
-    users = usersData || [];
-  }
-  // Merge user info into members
-  const membersWithUserInfo = members.map(m => ({
-    ...m,
-    users: users.find(u => u.user_id === m.user_id) || {}
-  }));
   membersSection.innerHTML = '';
-  membersWithUserInfo.forEach(m => {
+  members.forEach(m => {
     const div = document.createElement('div');
-    div.className = 'server-member-card';
-    const joinDate = m.created_at ? new Date(m.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+    div.className = 'server-member-row';
     div.innerHTML = `
-      <div class="server-member-avatar-wrap">
-        <img src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" class="server-member-avatar">
-      </div>
-      <div class="server-member-info">
-        <div class="server-member-name-row">
-          <span class="server-member-name">${m.users.username || m.user_id}</span>
-          <span class="server-member-role ${m.role}">${m.role.charAt(0).toUpperCase() + m.role.slice(1)}</span>
-        </div>
-        <div class="server-member-meta">
-          <span class="server-member-id">ID: <span>${m.user_id}</span></span>
-          <span class="server-member-since">Member since: <span>${joinDate}</span></span>
-        </div>
-      </div>
+      <img src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:0.7em;">
+      <span>${m.users.username || m.user_id}</span>
+      <span style="margin-left:auto;font-size:0.98em;color:var(--gray);">${m.role}</span>
     `;
     membersSection.appendChild(div);
   });
