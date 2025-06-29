@@ -1655,16 +1655,19 @@ function setupMentionAutocomplete(input, members) {
   dropdown.style.zIndex = 9999;
   dropdown.style.background = '#23272f';
   dropdown.style.borderRadius = '0.7em';
-  dropdown.style.boxShadow = '0 4px 24px 0 rgba(37,99,235,0.13)';
+  dropdown.style.boxShadow = '0 -4px 24px 0 rgba(37,99,235,0.13)';
   dropdown.style.padding = '0.3em 0';
-  dropdown.style.minWidth = '180px';
+  dropdown.style.minWidth = input.offsetWidth + 'px';
   dropdown.style.maxHeight = '220px';
   dropdown.style.overflowY = 'auto';
   dropdown.style.display = 'none';
   dropdown.style.fontFamily = 'Montserrat,Roboto,sans-serif';
   dropdown.style.fontSize = '1.05rem';
-  dropdown.style.left = input.offsetLeft + 'px';
-  dropdown.style.top = (input.offsetTop + input.offsetHeight + 4) + 'px';
+  // Position above the input
+  const rect = input.getBoundingClientRect();
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  dropdown.style.left = rect.left + 'px';
+  dropdown.style.top = (rect.top + scrollTop - 8 - 220) + 'px'; // 8px margin, 220px max height
   input.parentNode.appendChild(dropdown);
 
   let filtered = [];
