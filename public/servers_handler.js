@@ -240,6 +240,8 @@ async function appendChannelMessage(msg, who) {
 
 // --- Refactor openServerChannel for Real-time & Premium UI ---
 async function openServerChannel(serverId, channelId) {
+  // Fetch and set current server members for mentions
+  await setCurrentServerMembers(serverId);
   if (!serverId || !channelId || !serverChatSection) return;
   // Always join the Socket.IO room for this channel FIRST
   if (window.channelSocket) {
