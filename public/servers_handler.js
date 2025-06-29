@@ -455,7 +455,7 @@ async function openServerChannel(serverId, channelId) {
     if (channel && channel.type === 'text') {
       footer.innerHTML = `
         <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-          <div class="server-chat-input" contenteditable="true" spellcheck="true" style="flex:1;min-height:38px;max-height:120px;overflow-y:auto;border:none;outline:none;"></div>
+          <div class="server-chat-input" contenteditable="true" spellcheck="true" data-placeholder="Message #${channel ? channel.name : ''}" style="flex:1;min-height:28px;max-height:80px;overflow-y:auto;border:none;outline:none;padding:0.4em 0.7em;"></div>
           <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
         </form>
       `;
@@ -1646,7 +1646,7 @@ async function openVoiceChannel(serverId, channelId) {
   if (footer) {
     footer.innerHTML = `
       <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-        <div class="server-chat-input" contenteditable="true" spellcheck="true" style="flex:1;min-height:38px;max-height:120px;overflow-y:auto;border:none;outline:none;"></div>
+        <div class="server-chat-input" contenteditable="true" spellcheck="true" data-placeholder="Message #${channel ? channel.name : ''}" style="flex:1;min-height:28px;max-height:80px;overflow-y:auto;border:none;outline:none;padding:0.4em 0.7em;"></div>
         <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
       </form>
     `;
@@ -1754,20 +1754,62 @@ function setupMentionAutocomplete(input, members) {
     dropdown.style.display = 'block';
   }
 
+  // --- Contenteditable caret helpers ---
+  function getCaretInfo() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return { text: input.innerText, caret: 0 };
+    const range = sel.getRangeAt(0);
+    // Only support single text node for now
+    let preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(input);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    const text = preCaretRange.toString();
+    return { text: input.innerText, caret: text.length };
+  }
+  function setCaret(pos) {
+    input.focus();
+    const set = (el, chars) => {
+      if (!el) return chars;
+      if (el.nodeType === 3) { // text node
+        if (el.length >= chars) {
+          const range = document.createRange();
+          range.setStart(el, chars);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return 0;
+        } else {
+          return chars - el.length;
+        }
+      } else {
+        for (let i = 0; i < el.childNodes.length; i++) {
+          chars = set(el.childNodes[i], chars);
+          if (chars === 0) break;
+        }
+        return chars;
+      }
+    };
+    set(input, pos);
+  }
+
   function selectMember(idx) {
     const member = filtered[idx];
     if (!member) return;
     // Replace the @mention text in the input
-    const caret = input.selectionStart;
-    const value = input.value;
+    const { text, caret } = getCaretInfo();
     // Find the last @... before caret
-    const match = value.slice(0, caret).match(/@([\w\d_]*)$/);
+    const beforeCaret = text.slice(0, caret);
+    const afterCaret = text.slice(caret);
+    const match = beforeCaret.match(/@([\w\d_]*)$/);
     if (match) {
-      const before = value.slice(0, match.index);
-      const after = value.slice(caret);
-      input.value = before + '@' + member.username + ' ' + after;
+      const before = beforeCaret.slice(0, match.index);
+      const after = afterCaret;
+      const mentionHtml = `<span class="mention">@${member.username}</span>&nbsp;`;
+      // Replace the contenteditable HTML
+      input.innerHTML = before + mentionHtml + after;
       // Move caret to after inserted mention
-      input.selectionStart = input.selectionEnd = (before + '@' + member.username + ' ').length;
+      setCaret((before + member.username).length + 2); // +2 for @ and space
       dropdown.style.display = 'none';
       filtered = [];
     }
@@ -1779,10 +1821,10 @@ function setupMentionAutocomplete(input, members) {
   input.addEventListener('blur', () => { setTimeout(() => { dropdown.style.display = 'none'; }, 120); });
 
   function onInput(e) {
-    const caret = input.selectionStart;
-    const value = input.value;
+    const { text, caret } = getCaretInfo();
+    const beforeCaret = text.slice(0, caret);
     // Find @mention being typed before caret
-    const match = value.slice(0, caret).match(/@([\w\d_]*)$/);
+    const match = beforeCaret.match(/@([\w\d_]*)$/);
     if (match) {
       const query = match[1].toLowerCase();
       filtered = members.filter(m => m.username.toLowerCase().startsWith(query));
@@ -1870,3 +1912,21 @@ function setupMentionHighlighting(input, members) {
   }
   input.addEventListener('input', highlight);
 }
+
+// Add this at the end of the file to handle the placeholder effect for all .server-chat-input elements:
+document.addEventListener('input', function(e) {
+  if (e.target.classList && e.target.classList.contains('server-chat-input')) {
+    if (e.target.innerText.trim() === '') {
+      e.target.classList.remove('has-content');
+    } else {
+      e.target.classList.add('has-content');
+    }
+  }
+});
+document.addEventListener('focusin', function(e) {
+  if (e.target.classList && e.target.classList.contains('server-chat-input')) {
+    if (e.target.innerText.trim() === '') {
+      e.target.classList.remove('has-content');
+    }
+  }
+});

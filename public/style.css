@@ -4035,4 +4035,33 @@ input:checked + .slider:before {
 }
 /* --- End Elite Chat Interface Styles --- */
 
+/* ... existing code ... */
+.server-chat-input[data-placeholder]:not(.has-content):empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-secondary, #888);
+  opacity: 0.7;
+  pointer-events: none;
+  font-style: italic;
+  font-size: 1.01rem;
+  position: absolute;
+  left: 0.7em;
+  top: 0.4em;
+}
+.server-chat-input {
+  min-height: 28px !important;
+  max-height: 80px !important;
+  padding: 0.4em 0.7em !important;
+  position: relative;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-family: 'Montserrat', 'Roboto', sans-serif;
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+/* ... existing code ... */ 
+
  
