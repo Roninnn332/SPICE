@@ -1101,16 +1101,47 @@ async function fetchServerMembers() {
     return;
   }
   membersSection.innerHTML = '';
+  // Group members by role
+  const grouped = { owner: [], admin: [], mod: [], member: [], other: [] };
   members.forEach(m => {
-    const div = document.createElement('div');
-    div.className = 'server-member-row';
-    div.innerHTML = `
-      <img src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:0.7em;">
-      <span>${m.users.username || m.user_id}</span>
-      <span style="margin-left:auto;font-size:0.98em;color:var(--gray);">${m.role}</span>
-    `;
-    membersSection.appendChild(div);
+    if (m.role === 'owner') grouped.owner.push(m);
+    else if (m.role === 'admin') grouped.admin.push(m);
+    else if (m.role === 'mod') grouped.mod.push(m);
+    else if (m.role === 'member') grouped.member.push(m);
+    else grouped.other.push(m);
   });
+  // Helper for role tag
+  function roleTag(role) {
+    let color = '#43b581', label = role;
+    if (role === 'owner') { color = '#FFD700'; label = 'Owner'; }
+    else if (role === 'admin') { color = '#2563eb'; label = 'Admin'; }
+    else if (role === 'mod') { color = '#00b894'; label = 'Mod'; }
+    else if (role === 'member') { color = '#43b581'; label = 'Member'; }
+    else { color = '#888'; label = role; }
+    return `<span class="server-role-tag${role === 'owner' ? ' owner-gold-tag' : ''}" style="background:${color};color:${role==='owner'?'#222':'#fff'};">${label}</span>`;
+  }
+  // Render group
+  function renderGroup(arr, role) {
+    arr.forEach(m => {
+      const isOwner = m.role === 'owner';
+      const div = document.createElement('div');
+      div.className = 'server-member-row fade-in-up' + (isOwner ? ' server-owner-row' : '');
+      div.innerHTML = `
+        <img class="server-member-avatar" src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+        <div class="server-member-info">
+          <span class="server-member-username">${m.users.username || m.user_id}</span>
+          <span class="server-member-id">${m.user_id}</span>
+        </div>
+        ${roleTag(m.role)}
+      `;
+      membersSection.appendChild(div);
+    });
+  }
+  if (grouped.owner.length) renderGroup(grouped.owner, 'owner');
+  if (grouped.admin.length) renderGroup(grouped.admin, 'admin');
+  if (grouped.mod.length) renderGroup(grouped.mod, 'mod');
+  if (grouped.member.length) renderGroup(grouped.member, 'member');
+  if (grouped.other.length) renderGroup(grouped.other, 'other');
 }
 
 // --- Server Settings Modal: Change Server Icon ---

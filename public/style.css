@@ -3541,5 +3541,107 @@ input:checked + .slider:before {
   .voice-user-tiles { gap: 0.5rem; padding: 0.5rem; }
 }
 
+/* --- Server Members List Modern Styles --- */
+.server-member-row {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  background: #181c25;
+  border-radius: 13px;
+  padding: 0.7rem 1.2rem;
+  margin-bottom: 0.6rem;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.07);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+  position: relative;
+  border: 2px solid transparent;
+}
+.server-member-row:hover {
+  background: #23283a;
+  box-shadow: 0 4px 16px 0 rgba(96,165,250,0.13);
+  transform: scale(1.02);
+  border-color: var(--primary-blue);
+}
+.server-owner-row {
+  border: 2.5px solid #FFD700;
+  background: linear-gradient(90deg, #23283a 80%, #ffe066 100%);
+  box-shadow: 0 4px 24px 0 rgba(255,215,0,0.10);
+}
+.server-member-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--primary-blue);
+  background: #222;
+  flex-shrink: 0;
+}
+.server-member-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 0;
+}
+.server-member-username {
+  color: #fff;
+  font-size: 1.13rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.server-member-id {
+  color: #8ca0c7;
+  font-size: 0.98rem;
+  font-family: 'Roboto Mono', monospace;
+  margin-top: 1px;
+  opacity: 0.82;
+  letter-spacing: 0.01em;
+}
+.server-role-tag {
+  margin-left: auto;
+  font-size: 0.99rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  border-radius: 0.7em;
+  padding: 0.18em 0.95em;
+  background: #43b581;
+  color: #fff;
+  box-shadow: 0 1px 4px 0 rgba(67,181,129,0.10);
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+  display: inline-block;
+  border: none;
+  transition: background 0.18s, color 0.18s;
+}
+.server-role-tag.owner-gold-tag {
+  background: #FFD700;
+  color: #222;
+  border: 1.5px solid #ffe066;
+  box-shadow: 0 2px 8px 0 rgba(255,215,0,0.13);
+  text-shadow: 0 1px 4px #fffbe6;
+}
+@media (max-width: 700px) {
+  .server-member-row {
+    padding: 0.5rem 0.5rem;
+    gap: 0.6rem;
+  }
+  .server-member-avatar {
+    width: 34px;
+    height: 34px;
+  }
+  .server-member-username {
+    font-size: 1rem;
+  }
+  .server-member-id {
+    font-size: 0.89rem;
+  }
+  .server-role-tag {
+    font-size: 0.91rem;
+    padding: 0.13em 0.7em;
+  }
+}
+
 
  
