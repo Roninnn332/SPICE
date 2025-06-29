@@ -1753,4 +1753,19 @@ function setupMentionAutocomplete(input, members) {
       filtered = [];
     }
   }
-} 
+}
+
+// Helper: fetch and set currentServerMembers for mention autocomplete
+async function setCurrentServerMembers(serverId) {
+  if (!serverId) { window.currentServerMembers = []; return; }
+  const { data: members, error } = await supabaseClient
+    .from('server_members')
+    .select('user_id, users!inner(username, avatar_url)')
+    .eq('server_id', serverId);
+  if (error || !members) { window.currentServerMembers = []; return; }
+  window.currentServerMembers = members.map(m => ({
+    user_id: m.user_id,
+    username: m.users.username,
+    avatar_url: m.users.avatar_url
+  }));
+}
