@@ -1871,30 +1871,50 @@ async function setCurrentServerMembers(serverId) {
 }
 
 function setupMentionHighlighting(input, members) {
-  // Helper to get caret position in contenteditable
+  // Save caret as character offset
   function saveCaret() {
     const sel = window.getSelection();
-    if (!sel.rangeCount) return null;
+    if (!sel.rangeCount) return 0;
     const range = sel.getRangeAt(0);
-    return { node: range.startContainer, offset: range.startOffset };
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(input);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    return preCaretRange.toString().length;
   }
-  function restoreCaret(saved) {
-    if (!saved) return;
-    const sel = window.getSelection();
-    const range = document.createRange();
-    try {
-      range.setStart(saved.node, Math.min(saved.offset, saved.node.length));
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } catch (e) {}
+  // Restore caret by walking the DOM to the offset
+  function restoreCaret(offset) {
+    input.focus();
+    let chars = offset;
+    function set(node) {
+      if (chars === 0) return true;
+      if (node.nodeType === 3) { // text node
+        if (node.length >= chars) {
+          const range = document.createRange();
+          range.setStart(node, chars);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          chars = 0;
+          return true;
+        } else {
+          chars -= node.length;
+        }
+      } else {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          if (set(node.childNodes[i])) return true;
+        }
+      }
+      return false;
+    }
+    set(input);
   }
   function highlight() {
-    const saved = saveCaret();
+    const caretOffset = saveCaret();
     let html = input.innerText;
     if (!html) {
       input.innerHTML = '';
-      restoreCaret(saved);
+      restoreCaret(0);
       return;
     }
     // Sort by username length descending to avoid partial matches
@@ -1907,7 +1927,7 @@ function setupMentionHighlighting(input, members) {
     // Only update if changed (avoid breaking IME/emoji input)
     if (input.innerHTML !== html) {
       input.innerHTML = html;
-      restoreCaret(saved);
+      restoreCaret(caretOffset);
     }
   }
   input.addEventListener('input', highlight);
