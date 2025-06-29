@@ -490,6 +490,7 @@ function updateCreateServerAvatarPreview() {
     createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview uploaded';
     createServerAvatarPreviewDiv.style.backgroundImage = `url('${url}')`;
     createServerAvatarPreviewDiv.innerHTML = `<span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>`;
+    // Ensure preview is a perfect circle (CSS handles border-radius)
   } else if (name) {
     createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview letter';
     createServerAvatarPreviewDiv.style.backgroundImage = '';
