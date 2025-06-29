@@ -1194,6 +1194,17 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
   };
 }
 
+function playVoiceSfx(type) {
+  // type: 'join' | 'left'
+  let src = '';
+  if (type === 'join') src = '/assets/audios/user_join.mp3';
+  else if (type === 'left') src = '/assets/audios/user_left.mp3';
+  if (!src) return;
+  const audio = new Audio(src);
+  audio.volume = 0.7;
+  audio.play().catch(() => {});
+}
+
 function updateVoiceUserCards(users) {
   if (!isInVoiceChannel) return; // Only update if user is in voice
   const chat = document.querySelector('.chat-messages');
@@ -1215,6 +1226,7 @@ function updateVoiceUserCards(users) {
 
   // Parse new users and build a set
   const newUserIds = new Set();
+  let playedJoin = false;
   users.forEach(userObj => {
     // Accept both stringified and object user (for backward compat)
     const user = typeof userObj === 'string' ? JSON.parse(userObj) : userObj;
@@ -1252,6 +1264,7 @@ function updateVoiceUserCards(users) {
         </div>
       `;
       container.appendChild(tile);
+      playedJoin = true;
     } else {
       // Update icons if user already exists
       const card = currentCards[user.user_id];
@@ -1288,8 +1301,10 @@ function updateVoiceUserCards(users) {
       }
     }
   });
+  if (playedJoin) playVoiceSfx('join');
 
   // Remove cards for users who left
+  let playedLeft = false;
   Object.keys(currentCards).forEach(userId => {
     if (!newUserIds.has(userId)) {
       const card = currentCards[userId];
@@ -1303,8 +1318,10 @@ function updateVoiceUserCards(users) {
       };
       card.addEventListener('transitionend', removeCard, { once: true });
       setTimeout(removeCard, 400); // Fallback in case transitionend doesn't fire
+      playedLeft = true;
     }
   });
+  if (playedLeft) playVoiceSfx('left');
 }
 
 // --- Socket.IO for Voice Channel ---
