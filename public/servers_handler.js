@@ -190,6 +190,18 @@ window.channelSocket.on('voice_user_joined', (users) => {
 });
 
 // --- Premium Message Rendering ---
+function highlightMentions(text, members) {
+  if (!members || !Array.isArray(members)) return text;
+  // Sort by username length descending to avoid partial matches
+  const sorted = [...members].sort((a, b) => b.username.length - a.username.length);
+  let result = text;
+  sorted.forEach(member => {
+    const regex = new RegExp(`(^|\s)@${member.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\b)`, 'gi');
+    result = result.replace(regex, `$1<span class="mention">@${member.username}</span>`);
+  });
+  return result;
+}
+
 async function appendChannelMessage(msg, who) {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
@@ -201,6 +213,12 @@ async function appendChannelMessage(msg, who) {
     username = info.username;
     avatar_url = info.avatar_url;
   }
+  // Get server members for mention highlighting
+  let members = window.currentServerMembers || [];
+  let content = msg.content || '';
+  if (members.length) {
+    content = highlightMentions(content, members);
+  }
   const msgDiv = document.createElement('div');
   msgDiv.className = 'dm-message ' + who;
   msgDiv.dataset.timestamp = msg.timestamp;
@@ -211,7 +229,7 @@ async function appendChannelMessage(msg, who) {
         <span class="dm-chat-username" style="font-size:1.01em;">${username}</span>
         <span class="dm-message-time" style="font-size:0.93em;color:var(--gray);margin-left:0.7em;">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
-      <span class="dm-message-text">${msg.content || ''}</span>
+      <span class="dm-message-text">${content}</span>
     </div>
   `;
   chat.appendChild(msgDiv);
@@ -429,6 +447,8 @@ async function openServerChannel(serverId, channelId) {
       footer.innerHTML = '';
     }
   }
+  // Setup mention autocomplete
+  setupMentionAutocomplete(input, window.currentServerMembers || []);
 }
 
 // --- Server Creation/Join ---
@@ -1604,7 +1624,8 @@ async function openVoiceChannel(serverId, channelId) {
       });
     };
   }
-  // ... (rest of text channel message loading logic, if any) ...
+  // Setup mention autocomplete
+  setupMentionAutocomplete(input, window.currentServerMembers || []);
 }
 
 // --- Minimal Socket.IO setup for text channels ---
@@ -1618,4 +1639,116 @@ function setupChannelSocketIO(serverId, channelId, user) {
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
   });
+}
+
+// --- Mention Autocomplete Dropdown for Text Channel Input ---
+function setupMentionAutocomplete(input, members) {
+  // Remove any existing dropdown
+  let dropdown = document.getElementById('mention-autocomplete-dropdown');
+  if (dropdown) dropdown.remove();
+  // Create dropdown
+  dropdown = document.createElement('div');
+  dropdown.id = 'mention-autocomplete-dropdown';
+  dropdown.style.position = 'absolute';
+  dropdown.style.zIndex = 9999;
+  dropdown.style.background = '#23272f';
+  dropdown.style.borderRadius = '0.7em';
+  dropdown.style.boxShadow = '0 4px 24px 0 rgba(37,99,235,0.13)';
+  dropdown.style.padding = '0.3em 0';
+  dropdown.style.minWidth = '180px';
+  dropdown.style.maxHeight = '220px';
+  dropdown.style.overflowY = 'auto';
+  dropdown.style.display = 'none';
+  dropdown.style.fontFamily = 'Montserrat,Roboto,sans-serif';
+  dropdown.style.fontSize = '1.05rem';
+  dropdown.style.left = input.offsetLeft + 'px';
+  dropdown.style.top = (input.offsetTop + input.offsetHeight + 4) + 'px';
+  input.parentNode.appendChild(dropdown);
+
+  let filtered = [];
+  let selectedIdx = 0;
+
+  function renderDropdown() {
+    dropdown.innerHTML = '';
+    if (!filtered.length) {
+      dropdown.style.display = 'none';
+      return;
+    }
+    filtered.forEach((member, idx) => {
+      const item = document.createElement('div');
+      item.className = 'mention-autocomplete-item' + (idx === selectedIdx ? ' selected' : '');
+      item.style.padding = '0.4em 1em';
+      item.style.cursor = 'pointer';
+      item.style.display = 'flex';
+      item.style.alignItems = 'center';
+      item.style.gap = '0.7em';
+      item.style.background = idx === selectedIdx ? '#2563eb' : 'transparent';
+      item.style.color = idx === selectedIdx ? '#fff' : '#fff';
+      item.innerHTML = `<img src="${member.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"> <span>@${member.username}</span>`;
+      item.onmousedown = (e) => {
+        e.preventDefault();
+        selectMember(idx);
+      };
+      dropdown.appendChild(item);
+    });
+    dropdown.style.display = 'block';
+  }
+
+  function selectMember(idx) {
+    const member = filtered[idx];
+    if (!member) return;
+    // Replace the @mention text in the input
+    const caret = input.selectionStart;
+    const value = input.value;
+    // Find the last @... before caret
+    const match = value.slice(0, caret).match(/@([\w\d_]*)$/);
+    if (match) {
+      const before = value.slice(0, match.index);
+      const after = value.slice(caret);
+      input.value = before + '@' + member.username + ' ' + after;
+      // Move caret to after inserted mention
+      input.selectionStart = input.selectionEnd = (before + '@' + member.username + ' ').length;
+      dropdown.style.display = 'none';
+      filtered = [];
+    }
+    input.focus();
+  }
+
+  input.addEventListener('input', onInput);
+  input.addEventListener('keydown', onKeyDown);
+  input.addEventListener('blur', () => { setTimeout(() => { dropdown.style.display = 'none'; }, 120); });
+
+  function onInput(e) {
+    const caret = input.selectionStart;
+    const value = input.value;
+    // Find @mention being typed before caret
+    const match = value.slice(0, caret).match(/@([\w\d_]*)$/);
+    if (match) {
+      const query = match[1].toLowerCase();
+      filtered = members.filter(m => m.username.toLowerCase().startsWith(query));
+      selectedIdx = 0;
+      renderDropdown();
+    } else {
+      dropdown.style.display = 'none';
+      filtered = [];
+    }
+  }
+  function onKeyDown(e) {
+    if (!filtered.length || dropdown.style.display === 'none') return;
+    if (e.key === 'ArrowDown') {
+      selectedIdx = (selectedIdx + 1) % filtered.length;
+      renderDropdown();
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      selectedIdx = (selectedIdx - 1 + filtered.length) % filtered.length;
+      renderDropdown();
+      e.preventDefault();
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      selectMember(selectedIdx);
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      dropdown.style.display = 'none';
+      filtered = [];
+    }
+  }
 } 

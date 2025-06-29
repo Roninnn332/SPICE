@@ -3651,4 +3651,32 @@ input:checked + .slider:before {
   display: block;
 } 
 
+.mention-autocomplete-item {
+  padding: 0.4em 1em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  background: transparent;
+  color: #fff;
+  font-family: 'Montserrat', 'Roboto', sans-serif;
+  font-size: 1.05rem;
+  border: none;
+  transition: background 0.16s, color 0.16s;
+}
+.mention-autocomplete-item.selected,
+.mention-autocomplete-item:hover {
+  background: #2563eb;
+  color: #fff;
+}
+.mention-autocomplete-item img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 0.5em;
+  background: #181c25;
+  border: 2px solid #23272f;
+} 
+
  
