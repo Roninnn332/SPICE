@@ -208,6 +208,8 @@ async function appendChannelMessage(msg, who) {
   // Get user info for avatar/username
   let username = msg.username || msg.userId || '';
   let avatar_url = msg.avatar_url || '';
+  let role = msg.role || '';
+  let reactions = msg.reactions || [];
   if (!username || !avatar_url) {
     const info = await getUserInfo(msg.userId);
     username = info.username;
@@ -219,17 +221,37 @@ async function appendChannelMessage(msg, who) {
   if (members.length) {
     content = highlightMentions(content, members);
   }
+  // Role badge
+  let roleBadge = '';
+  if (role === 'admin') roleBadge = '<span class="role-badge">Admin</span>';
+  else if (role === 'mod') roleBadge = '<span class="role-badge mod">Mod</span>';
+  // Emoji reactions
+  let emojiHtml = '';
+  if (Array.isArray(reactions) && reactions.length) {
+    emojiHtml = `<div class="emoji-reaction-container">` +
+      reactions.map(r => `<span class="emoji-reaction">${r.emoji} ${r.count}</span>`).join('') +
+      `</div>`;
+  }
   const msgDiv = document.createElement('div');
   msgDiv.className = 'dm-message ' + who;
   msgDiv.dataset.timestamp = msg.timestamp;
   msgDiv.innerHTML = `
+    <div class="dm-chat-avatar${role ? ' ' + role : ''}">
+      <img src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" />
+    </div>
     <div class="dm-message-bubble">
-      <div style="display:flex;align-items:center;gap:0.7em;margin-bottom:0.2em;">
-        <img class="dm-chat-avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">
-        <span class="dm-chat-username" style="font-size:1.01em;">${username}</span>
-        <span class="dm-message-time" style="font-size:0.93em;color:var(--gray);margin-left:0.7em;">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+      <div class="dm-message-meta">
+        <span class="dm-chat-username${role ? ' ' + role : ''}">${username}</span>
+        ${roleBadge}
+        <span class="dm-message-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
       </div>
       <span class="dm-message-text">${content}</span>
+      ${emojiHtml}
+    </div>
+    <div class="message-actions">
+      <button class="action-button"><i class="fas fa-reply"></i></button>
+      <button class="action-button"><i class="fas fa-plus-circle"></i></button>
+      <button class="action-button"><i class="fas fa-ellipsis-h"></i></button>
     </div>
   `;
   chat.appendChild(msgDiv);
