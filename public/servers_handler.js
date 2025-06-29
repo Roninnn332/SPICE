@@ -461,7 +461,16 @@ async function openServerChannel(serverId, channelId) {
         const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
         input.value = '';
-        // Send via Socket.IO
+        // --- Optimistically render the message for sender ---
+        const now = Date.now();
+        appendChannelMessage({
+          userId: Number(user.user_id),
+          username: user.username,
+          avatar_url: user.avatar_url,
+          content,
+          timestamp: now
+        }, 'me');
+        // --- THEN emit to server as before ---
         channelSocket.emit('channel_message', {
           serverId,
           channelId,
@@ -469,7 +478,7 @@ async function openServerChannel(serverId, channelId) {
           username: user.username,
           avatar_url: user.avatar_url,
           content,
-          timestamp: Date.now()
+          timestamp: now
         });
       };
       // Setup mention autocomplete only if input exists
@@ -1641,15 +1650,24 @@ async function openVoiceChannel(serverId, channelId) {
       const content = input.value.trim();
       if (!user || !user.user_id || !content) return;
       input.value = '';
-      // Send via Socket.IO
-      window.channelSocket.emit('channel_message', {
+      // --- Optimistically render the message for sender ---
+      const now = Date.now();
+      appendChannelMessage({
+        userId: Number(user.user_id),
+        username: user.username,
+        avatar_url: user.avatar_url,
+        content,
+        timestamp: now
+      }, 'me');
+      // --- THEN emit to server as before ---
+      channelSocket.emit('channel_message', {
         serverId,
         channelId,
         userId: Number(user.user_id),
         username: user.username,
         avatar_url: user.avatar_url,
         content,
-        timestamp: Date.now()
+        timestamp: now
       });
     };
   }
