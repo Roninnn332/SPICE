@@ -1097,16 +1097,32 @@ async function fetchServerMembers() {
   const membersSection = document.getElementById('server-settings-section-members');
   if (!membersSection) return;
   membersSection.innerHTML = '<div>Loading...</div>';
+  // Fetch server members (no join)
   const { data: members, error } = await supabaseClient
     .from('server_members')
-    .select('user_id, role, created_at, users!inner(username, avatar_url)')
+    .select('user_id, role, created_at')
     .eq('server_id', currentServer.id);
   if (error || !members) {
     membersSection.innerHTML = '<div>Error loading members.</div>';
     return;
   }
+  // Fetch user info for all user_ids
+  const userIds = members.map(m => m.user_id);
+  let users = [];
+  if (userIds.length) {
+    const { data: usersData } = await supabaseClient
+      .from('users')
+      .select('user_id, username, avatar_url')
+      .in('user_id', userIds);
+    users = usersData || [];
+  }
+  // Merge user info into members
+  const membersWithUserInfo = members.map(m => ({
+    ...m,
+    users: users.find(u => u.user_id === m.user_id) || {}
+  }));
   membersSection.innerHTML = '';
-  members.forEach(m => {
+  membersWithUserInfo.forEach(m => {
     const div = document.createElement('div');
     div.className = 'server-member-card';
     const joinDate = m.created_at ? new Date(m.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
