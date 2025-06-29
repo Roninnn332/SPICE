@@ -475,6 +475,14 @@ const createServerForm = document.getElementById('create-server-form');
 const createServerSubmitBtn = createServerForm ? createServerForm.querySelector('button[type="submit"]') : null;
 let isServerAvatarUploading = false;
 
+// --- Add: Server Avatar Crop Modal Elements ---
+let createServerAvatarCropper = null;
+let createServerAvatarCropModal = document.getElementById('server-icon-crop-modal');
+let createServerAvatarCropArea = document.getElementById('server-icon-crop-area');
+let createServerAvatarCropConfirm = document.getElementById('server-icon-crop-confirm');
+let createServerAvatarCropCancel = document.getElementById('server-icon-crop-cancel');
+let createServerAvatarLoading = document.getElementById('server-icon-upload-loading');
+
 function updateCreateServerAvatarPreview() {
   const url = createServerAvatarUrlInput.value;
   const name = serverNameInput.value.trim();
@@ -510,49 +518,86 @@ if (createServerAvatarInput) {
   createServerAvatarInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // Show preview immediately
+    // Show crop modal
     const reader = new FileReader();
     reader.onload = function (ev) {
-      createServerAvatarPreviewDiv.style.backgroundImage = `url('${ev.target.result}')`;
-      createServerAvatarPreviewDiv.className = 'server-avatar-upload-preview uploaded';
-      createServerAvatarPreviewDiv.innerHTML = `<span class='server-avatar-upload-plus'><i class='fa-solid fa-plus'></i></span>`;
+      createServerAvatarCropArea.innerHTML = `<img id="server-avatar-crop-img" src="${ev.target.result}" style="max-width:100%;max-height:100%;display:block;" />`;
+      createServerAvatarCropModal.style.display = 'flex';
+      setTimeout(() => {
+        const img = document.getElementById('server-avatar-crop-img');
+        if (createServerAvatarCropper) createServerAvatarCropper.destroy();
+        createServerAvatarCropper = new window.Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          background: false,
+          dragMode: 'move',
+          guides: false,
+          autoCropArea: 1,
+          movable: true,
+          zoomable: true,
+          rotatable: false,
+          scalable: false,
+          cropBoxResizable: true,
+          minCropBoxWidth: 100,
+          minCropBoxHeight: 100,
+        });
+      }, 100);
     };
     reader.readAsDataURL(file);
-    // Disable submit and show spinner
+  });
+}
+if (createServerAvatarCropCancel) {
+  createServerAvatarCropCancel.onclick = () => {
+    createServerAvatarCropModal.style.display = 'none';
+    if (createServerAvatarCropper) { createServerAvatarCropper.destroy(); createServerAvatarCropper = null; }
+    isServerAvatarUploading = false;
+    if (createServerSubmitBtn) {
+      createServerSubmitBtn.disabled = false;
+      createServerSubmitBtn.textContent = 'Create Server';
+    }
+  };
+}
+if (createServerAvatarCropConfirm) {
+  createServerAvatarCropConfirm.onclick = async () => {
+    if (!createServerAvatarCropper) return;
+    createServerAvatarCropModal.style.display = 'none';
+    createServerAvatarLoading.style.display = 'flex';
     isServerAvatarUploading = true;
     if (createServerSubmitBtn) {
       createServerSubmitBtn.disabled = true;
       createServerSubmitBtn.textContent = 'Uploading Avatar...';
     }
-    // Upload to Cloudinary
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'user_media');
-    fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
-      method: 'POST',
-      body: formData
-    })
-      .then(res => res.json())
-      .then(data => {
+    createServerAvatarCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', 'user_media');
+        const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
         if (data.secure_url) {
           createServerAvatarUrlInput.value = data.secure_url;
+          updateCreateServerAvatarPreview();
         } else {
           alert('Avatar upload failed.');
           createServerAvatarUrlInput.value = '';
         }
-      })
-      .catch(() => {
+      } catch (err) {
         alert('Avatar upload error.');
         createServerAvatarUrlInput.value = '';
-      })
-      .finally(() => {
+      } finally {
+        createServerAvatarLoading.style.display = 'none';
         isServerAvatarUploading = false;
         if (createServerSubmitBtn) {
           createServerSubmitBtn.disabled = false;
           createServerSubmitBtn.textContent = 'Create Server';
         }
-      });
-  });
+        if (createServerAvatarCropper) { createServerAvatarCropper.destroy(); createServerAvatarCropper = null; }
+      }
+    }, 'image/jpeg', 0.95);
+  };
 }
 
 // --- Create Server Modal Success Celebration ---
