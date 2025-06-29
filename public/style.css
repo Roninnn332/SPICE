@@ -1,19 +1,19 @@
 /* Root color variables for easy theme management */
 :root {
-  --primary-blue: #4cc9f0;
-  --primary-blue-dark: #1d3557;
-  --pure-black: #0b0f14;
-  --off-black: #171c23;
-  --white: #f1f1f5;
-  --gray: #8a94a6;
-  --accent: #ff4d9d;
-  --shadow: 0 10px 40px rgba(76, 201, 240, 0.3);
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1e40af;
+  --pure-black: #0a0a0a;
+  --off-black: #18181b;
+  --white: #fff;
+  --gray: #b3b3b3;
+  --accent: #60a5fa;
+  --shadow: 0 8px 32px 0 rgba(37, 99, 235, 0.25);
 }
 
 html, body {
   height: 100%;
   margin: 0;
-  padding: 0; 
+  padding: 0;
   font-family: 'Roboto', Arial, sans-serif;
   background: linear-gradient(135deg, var(--pure-black) 60%, var(--primary-blue-dark) 100%);
   color: var(--white);
