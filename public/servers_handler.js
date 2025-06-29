@@ -205,6 +205,10 @@ function highlightMentions(text, members) {
 async function appendChannelMessage(msg, who) {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
+  // --- Deduplication: skip if message with same timestamp and userId exists ---
+  if (chat.querySelector(`.message-bubble[data-timestamp="${msg.timestamp}"][data-userid="${msg.userId || msg.user_id}"]`)) {
+    return;
+  }
   // Get user info for avatar/username
   let username = msg.username || msg.userId || '';
   let avatar_url = msg.avatar_url || '';
@@ -238,6 +242,7 @@ async function appendChannelMessage(msg, who) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'message-bubble';
   msgDiv.setAttribute('data-timestamp', msg.timestamp);
+  msgDiv.setAttribute('data-userid', msg.userId || msg.user_id);
   msgDiv.setAttribute('tabindex', '0');
   msgDiv.innerHTML = `
     <div class="${avatarClass}">
@@ -450,17 +455,18 @@ async function openServerChannel(serverId, channelId) {
     if (channel && channel.type === 'text') {
       footer.innerHTML = `
         <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-          <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
+          <div class="server-chat-input" contenteditable="true" spellcheck="true" style="flex:1;min-height:38px;max-height:120px;overflow-y:auto;border:none;outline:none;"></div>
           <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
         </form>
       `;
       const form = footer.querySelector('.server-chat-input-form');
       const input = footer.querySelector('.server-chat-input');
+      const user = JSON.parse(localStorage.getItem('spice_user'));
       form.onsubmit = async (e) => {
         e.preventDefault();
-        const content = input.value.trim();
+        const content = input.innerText.trim();
         if (!user || !user.user_id || !content) return;
-        input.value = '';
+        input.innerHTML = '';
         // --- Optimistically render the message for sender ---
         const now = Date.now();
         appendChannelMessage({
@@ -481,8 +487,10 @@ async function openServerChannel(serverId, channelId) {
           timestamp: now
         });
       };
-      // Setup mention autocomplete only if input exists
+      // Setup mention autocomplete
       setupMentionAutocomplete(input, window.currentServerMembers || []);
+      // Setup mention highlighting
+      setupMentionHighlighting(input, window.currentServerMembers || []);
     } else {
       footer.innerHTML = '';
     }
@@ -1638,7 +1646,7 @@ async function openVoiceChannel(serverId, channelId) {
   if (footer) {
     footer.innerHTML = `
       <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-        <input type="text" class="server-chat-input" placeholder="Message #${channel ? channel.name : ''}" autocomplete="off" style="flex:1;" />
+        <div class="server-chat-input" contenteditable="true" spellcheck="true" style="flex:1;min-height:38px;max-height:120px;overflow-y:auto;border:none;outline:none;"></div>
         <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
       </form>
     `;
@@ -1647,9 +1655,9 @@ async function openVoiceChannel(serverId, channelId) {
     const user = JSON.parse(localStorage.getItem('spice_user'));
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const content = input.value.trim();
+      const content = input.innerText.trim();
       if (!user || !user.user_id || !content) return;
-      input.value = '';
+      input.innerHTML = '';
       // --- Optimistically render the message for sender ---
       const now = Date.now();
       appendChannelMessage({
@@ -1670,9 +1678,11 @@ async function openVoiceChannel(serverId, channelId) {
         timestamp: now
       });
     };
+    // Setup mention autocomplete
+    setupMentionAutocomplete(input, window.currentServerMembers || []);
+    // Setup mention highlighting
+    setupMentionHighlighting(input, window.currentServerMembers || []);
   }
-  // Setup mention autocomplete
-  setupMentionAutocomplete(input, window.currentServerMembers || []);
 }
 
 // --- Minimal Socket.IO setup for text channels ---
@@ -1816,4 +1826,47 @@ async function setCurrentServerMembers(serverId) {
     username: m.users.username,
     avatar_url: m.users.avatar_url
   }));
+}
+
+function setupMentionHighlighting(input, members) {
+  // Helper to get caret position in contenteditable
+  function saveCaret() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return null;
+    const range = sel.getRangeAt(0);
+    return { node: range.startContainer, offset: range.startOffset };
+  }
+  function restoreCaret(saved) {
+    if (!saved) return;
+    const sel = window.getSelection();
+    const range = document.createRange();
+    try {
+      range.setStart(saved.node, Math.min(saved.offset, saved.node.length));
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) {}
+  }
+  function highlight() {
+    const saved = saveCaret();
+    let html = input.innerText;
+    if (!html) {
+      input.innerHTML = '';
+      restoreCaret(saved);
+      return;
+    }
+    // Sort by username length descending to avoid partial matches
+    const sorted = [...members].sort((a, b) => b.username.length - a.username.length);
+    sorted.forEach(member => {
+      // Only match @username as a word
+      const regex = new RegExp(`(^|\\s)@${member.username}(?=\\b)`, 'g');
+      html = html.replace(regex, `$1<span class=\"mention\">@${member.username}</span>`);
+    });
+    // Only update if changed (avoid breaking IME/emoji input)
+    if (input.innerHTML !== html) {
+      input.innerHTML = html;
+      restoreCaret(saved);
+    }
+  }
+  input.addEventListener('input', highlight);
 }
