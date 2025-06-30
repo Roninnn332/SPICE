@@ -4171,3 +4171,16 @@ input:checked + .slider:before {
 .chat__conversation-board__message__bubble:hover + .chat__conversation-board__message__options {
   opacity: 1;
 }
+
+.chat__conversation-board__message__context {
+  max-width: 90vw;
+  min-width: 0;
+  word-wrap: normal;
+}
+.chat__conversation-board__message__bubble {
+  min-width: unset;
+  max-width: 100%;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
