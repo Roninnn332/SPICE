@@ -251,7 +251,6 @@ async function appendChannelMessage(msg, who) {
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
         <span>${content}</span>
-        <button class="more-button" title="More">⋯</button>
       </div>
     </div>
   `;
