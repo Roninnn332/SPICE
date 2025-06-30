@@ -263,6 +263,8 @@ async function appendChannelMessage(msg, who) {
 
 // --- Refactor openServerChannel for Real-time & Premium UI ---
 async function openServerChannel(serverId, channelId) {
+  // Hide friends sidebar when entering any channel
+  if (typeof hideFriendsSidebar === 'function') hideFriendsSidebar();
   // Fetch and set current server members for mentions
   await setCurrentServerMembers(serverId);
   if (!serverId || !channelId || !serverChatSection) return;
@@ -1510,6 +1512,8 @@ let myDeafenOn = false;
 
 // --- openVoiceChannel ---
 async function openVoiceChannel(serverId, channelId) {
+  // Hide friends sidebar when entering a voice channel
+  if (typeof hideFriendsSidebar === 'function') hideFriendsSidebar();
   if (!serverId || !channelId || !serverChatSection) return;
   // Fetch channel info
   const channel = channelsList.find(c => c.id === channelId);
