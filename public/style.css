@@ -4072,7 +4072,9 @@ input:checked + .slider:before {
   max-width: 80vw;
   min-width: 40px;
   word-break: break-word;
-  transition: background 0.22s cubic-bezier(.4,2,.6,1), box-shadow 0.22s cubic-bezier(.4,2,.6,1);
+  transition: background 0.22s cubic-bezier(.4,2,.6,1), box-shadow 0.22s cubic-bezier(.4,2,.6,1), border-color 0.22s cubic-bezier(.4,2,.6,1);
+  box-sizing: border-box;
+  border: 1.5px solid transparent;
 }
 .chat__conversation-board__message.reversed .chat__conversation-board__message__bubble {
   background: #444343;
@@ -4103,7 +4105,7 @@ input:checked + .slider:before {
 .chat__conversation-board__message__bubble:hover {
   background: #181c1f;
   box-shadow: 0 4px 16px 0 rgba(20,24,26,0.18);
-  /* No transform, so no layout shift */
+  border-color: #23272f;
 }
 @media (max-width: 700px) {
   .chat__conversation-board__message {

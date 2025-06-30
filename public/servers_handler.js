@@ -251,24 +251,19 @@ async function appendChannelMessage(msg, who) {
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
         <span>${content}</span>
-        <button class="emoji-button" title="React" style="display:none;">😊</button>
         <button class="more-button" title="More" style="display:none;">⋯</button>
       </div>
     </div>
   `;
-  // Show emoji/more buttons only when hovering the bubble
+  // Show more button only when hovering the bubble
   const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
   if (bubble) {
     bubble.addEventListener('mouseenter', () => {
-      const emojiBtn = bubble.querySelector('.emoji-button');
       const moreBtn = bubble.querySelector('.more-button');
-      if (emojiBtn) emojiBtn.style.display = 'inline-block';
       if (moreBtn) moreBtn.style.display = 'inline-block';
     });
     bubble.addEventListener('mouseleave', () => {
-      const emojiBtn = bubble.querySelector('.emoji-button');
       const moreBtn = bubble.querySelector('.more-button');
-      if (emojiBtn) emojiBtn.style.display = 'none';
       if (moreBtn) moreBtn.style.display = 'none';
     });
   }
