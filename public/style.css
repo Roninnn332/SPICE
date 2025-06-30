@@ -4016,15 +4016,17 @@ input:checked + .slider:before {
 
 /* From Uiverse.io by vinodjangid07 */ 
 .messageBox {
-  width: fit-content;
+  width: 100%;
+  min-width: 0;
   height: 40px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   background-color: #2d2d2d;
   padding: 0 15px;
   border-radius: 10px;
-  border: 1px solid rgb(63, 63, 63);
+  border: 1px solid rgb(14, 72, 209);
+  box-sizing: border-box;
 }
 .messageBox:focus-within {
   border: 1px solid rgb(110, 110, 110);
@@ -4086,7 +4088,8 @@ input:checked + .slider:before {
   transition: all 0.3s;
 }
 #messageInput {
-  width: 200px;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   background-color: transparent;
   outline: none;
@@ -4122,6 +4125,23 @@ input:checked + .slider:before {
 #sendButton:hover svg path {
   fill: #3c3c3c;
   stroke: white;
+} 
+
+.fileUploadWrapper label svg path,
+.fileUploadWrapper label svg circle,
+#sendButton svg path {
+  stroke: #2563eb;
+  fill: none;
+  transition: all 0.3s;
+}
+#sendButton svg path[fill] {
+  fill: #2563eb;
+}
+.fileUploadWrapper label:hover svg path,
+.fileUploadWrapper label:hover svg circle,
+#sendButton:hover svg path {
+  stroke: #fff;
+  fill: #3c3c3c;
 } 
 
  

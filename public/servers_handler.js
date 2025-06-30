@@ -1756,7 +1756,7 @@ function setupMentionAutocomplete(input, members) {
   dropdown.style.zIndex = 9999;
   dropdown.style.background = '#23272f';
   dropdown.style.borderRadius = '0.7em';
-  dropdown.style.boxShadow = '0 -4px 24px 0 rgba(37,99,235,0.13)';
+  dropdown.style.boxShadow = '0 4px 24px 0 rgba(37,99,235,0.13)';
   dropdown.style.padding = '0.3em 0';
   dropdown.style.minWidth = input.offsetWidth + 'px';
   dropdown.style.maxHeight = '220px';
@@ -1764,11 +1764,16 @@ function setupMentionAutocomplete(input, members) {
   dropdown.style.display = 'none';
   dropdown.style.fontFamily = 'Montserrat,Roboto,sans-serif';
   dropdown.style.fontSize = '1.05rem';
-  // Position above the input
-  const rect = input.getBoundingClientRect();
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  dropdown.style.left = rect.left + 'px';
-  dropdown.style.top = (rect.top + scrollTop - 8 - 220) + 'px'; // 8px margin, 220px max height
+  // Position below the input
+  function positionDropdown() {
+    const rect = input.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.top = (rect.bottom + scrollTop + 4) + 'px';
+    dropdown.style.minWidth = rect.width + 'px';
+  }
+  positionDropdown();
+  window.addEventListener('resize', positionDropdown);
   input.parentNode.appendChild(dropdown);
 
   let filtered = [];
@@ -1798,64 +1803,27 @@ function setupMentionAutocomplete(input, members) {
       dropdown.appendChild(item);
     });
     dropdown.style.display = 'block';
-  }
-
-  // --- Contenteditable caret helpers ---
-  function getCaretInfo() {
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return { text: input.innerText, caret: 0 };
-    const range = sel.getRangeAt(0);
-    // Only support single text node for now
-    let preCaretRange = range.cloneRange();
-    preCaretRange.selectNodeContents(input);
-    preCaretRange.setEnd(range.endContainer, range.endOffset);
-    const text = preCaretRange.toString();
-    return { text: input.innerText, caret: text.length };
-  }
-  function setCaret(pos) {
-    input.focus();
-    const set = (el, chars) => {
-      if (!el) return chars;
-      if (el.nodeType === 3) { // text node
-        if (el.length >= chars) {
-          const range = document.createRange();
-          range.setStart(el, chars);
-          range.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-          return 0;
-        } else {
-          return chars - el.length;
-        }
-      } else {
-        for (let i = 0; i < el.childNodes.length; i++) {
-          chars = set(el.childNodes[i], chars);
-          if (chars === 0) break;
-        }
-        return chars;
-      }
-    };
-    set(input, pos);
+    positionDropdown();
   }
 
   function selectMember(idx) {
     const member = filtered[idx];
     if (!member) return;
-    // Replace the @mention text in the input
-    const { text, caret } = getCaretInfo();
+    // Insert @username at caret position
+    const value = input.value;
+    const caret = input.selectionStart;
     // Find the last @... before caret
-    const beforeCaret = text.slice(0, caret);
-    const afterCaret = text.slice(caret);
+    const beforeCaret = value.slice(0, caret);
+    const afterCaret = value.slice(caret);
     const match = beforeCaret.match(/@([\w\d_]*)$/);
     if (match) {
       const before = beforeCaret.slice(0, match.index);
       const after = afterCaret;
-      const mentionHtml = `<span class="mention">@${member.username}</span>&nbsp;`;
-      // Replace the contenteditable HTML
-      input.innerHTML = before + mentionHtml + after;
+      const mentionText = `@${member.username} `;
+      input.value = before + mentionText + after;
       // Move caret to after inserted mention
-      setCaret((before + member.username).length + 2); // +2 for @ and space
+      const newCaret = (before + mentionText).length;
+      input.setSelectionRange(newCaret, newCaret);
       dropdown.style.display = 'none';
       filtered = [];
     }
@@ -1867,8 +1835,9 @@ function setupMentionAutocomplete(input, members) {
   input.addEventListener('blur', () => { setTimeout(() => { dropdown.style.display = 'none'; }, 120); });
 
   function onInput(e) {
-    const { text, caret } = getCaretInfo();
-    const beforeCaret = text.slice(0, caret);
+    const value = input.value;
+    const caret = input.selectionStart;
+    const beforeCaret = value.slice(0, caret);
     // Find @mention being typed before caret
     const match = beforeCaret.match(/@([\w\d_]*)$/);
     if (match) {
