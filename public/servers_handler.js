@@ -182,12 +182,12 @@ async function renderChannelsList(serverId) {
 if (!window.channelSocket) {
   const socketUrl = window.location.origin;
   window.channelSocket = window.io(socketUrl);
-}
+  }
 window.channelSocket.off('voice_user_joined');
 window.channelSocket.on('voice_user_joined', (users) => {
   console.log('[Client] Received users:', users.map(u => u.username));
   updateVoiceUserCards(users);
-});
+  });
 
 // --- Premium Message Rendering ---
 function highlightMentions(text, members) {
@@ -247,7 +247,7 @@ async function appendChannelMessage(msg, who) {
   msgDiv.innerHTML = `
     <div class="${avatarClass}">
       <img src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" />
-    </div>
+      </div>
     <div class="message-content">
       <div class="message-meta">
         <span class="username${role ? ' ' + role : ''}">${username}</span>
@@ -634,12 +634,12 @@ if (createServerAvatarCropConfirm) {
     }
     createServerAvatarCropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
       try {
-        const formData = new FormData();
+    const formData = new FormData();
         formData.append('file', blob);
-        formData.append('upload_preset', 'user_media');
+    formData.append('upload_preset', 'user_media');
         const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
-          method: 'POST',
-          body: formData
+      method: 'POST',
+      body: formData
         });
         const data = await res.json();
         if (data.secure_url) {
@@ -1234,18 +1234,18 @@ async function fetchServerMembers() {
   function renderGroup(arr, role) {
     arr.forEach(m => {
       const isOwner = m.role === 'owner';
-      const div = document.createElement('div');
+    const div = document.createElement('div');
       div.className = 'server-member-row fade-in-up' + (isOwner ? ' server-owner-row' : '');
-      div.innerHTML = `
+    div.innerHTML = `
         <img class="server-member-avatar" src="${m.users.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
         <div class="server-member-info">
           <span class="server-member-username">${m.users.username || m.user_id}</span>
           <span class="server-member-id">${m.user_id}</span>
         </div>
         ${roleTag(m.role)}
-      `;
-      membersSection.appendChild(div);
-    });
+    `;
+    membersSection.appendChild(div);
+  });
   }
   if (grouped.owner.length) renderGroup(grouped.owner, 'owner');
   if (grouped.admin.length) renderGroup(grouped.admin, 'admin');
@@ -1333,7 +1333,7 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
     serverSettingsNameText.style.display = '';
     serverSettingsEditNameBtn.style.display = '';
   };
-}
+} 
 
 function playVoiceSfx(type) {
   // type: 'join' | 'left'

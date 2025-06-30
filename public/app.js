@@ -70,9 +70,24 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
   if (reply && (reply.message || reply.media_url)) {
     replyHtml = `<div class='dm-reply-bubble'><span class='dm-reply-label'>Replying to:</span> <span class='dm-reply-msg'>${reply.message ? reply.message : '[media]'}</span></div>`;
   }
+  // --- Mention highlighting logic ---
+  let highlightedMessage = message;
+  try {
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const friend = window.currentDM;
+    const mentionUsernames = [];
+    if (user && user.username) mentionUsernames.push(user.username);
+    if (friend && friend.username && friend.username !== user.username) mentionUsernames.push(friend.username);
+    // Sort by length descending to avoid partial matches
+    mentionUsernames.sort((a, b) => b.length - a.length);
+    mentionUsernames.forEach(username => {
+      const regex = new RegExp(`(^|\\s)@${username.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}(?=\\b)`, 'g');
+      highlightedMessage = highlightedMessage.replace(regex, `$1<span class=\"mention\">@${username}</span>`);
+    });
+  } catch (e) {}
   msgDiv.innerHTML = `
     <div class=\"dm-message-bubble\">\n      ${replyHtml}
-      ${mediaHtml}\n      ${message ? `<span class=\"dm-message-text\">${message}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
+      ${mediaHtml}\n      ${highlightedMessage ? `<span class=\"dm-message-text\">${highlightedMessage}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
   const dropdown = document.createElement('div');
   dropdown.className = 'dm-message-dropdown';
   dropdown.style.display = 'none';
