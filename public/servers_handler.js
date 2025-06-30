@@ -454,19 +454,28 @@ async function openServerChannel(serverId, channelId) {
   if (footer) {
     if (channel && channel.type === 'text') {
       footer.innerHTML = `
-        <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-          <div class="server-chat-input" contenteditable="true" spellcheck="true" data-placeholder="Message #${channel ? channel.name : ''}" style="flex:1;min-height:28px;max-height:80px;overflow-y:auto;border:none;outline:none;padding:0.4em 0.7em;"></div>
-          <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
+        <form class="messageBox fade-in-up" autocomplete="off" style="width:100%;">
+          <div class="fileUploadWrapper">
+            <label for="file" title="Attach file">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-8"/><path d="M8 12h8"/></svg>
+              <input id="file" type="file" style="display:none" />
+              <span class="tooltip">Attach file</span>
+            </label>
+          </div>
+          <input id="messageInput" type="text" autocomplete="off" placeholder="Message #${channel ? channel.name : ''}" required />
+          <button type="submit" id="sendButton" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg></button>
         </form>
       `;
-      const form = footer.querySelector('.server-chat-input-form');
-      const input = footer.querySelector('.server-chat-input');
-      const user = JSON.parse(localStorage.getItem('spice_user'));
+      const form = footer.querySelector('.messageBox');
+      const input = form.querySelector('#messageInput');
+      const sendBtn = form.querySelector('#sendButton');
+      const fileInput = form.querySelector('#file');
+      // Send message
       form.onsubmit = async (e) => {
         e.preventDefault();
-        const content = input.innerText.trim();
+        const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
-        input.innerHTML = '';
+        input.value = '';
         // --- Optimistically render the message for sender ---
         const now = Date.now();
         appendChannelMessage({
@@ -486,6 +495,20 @@ async function openServerChannel(serverId, channelId) {
           content,
           timestamp: now
         });
+      };
+      // ENTER key always sends unless mention dropdown is open
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          const dropdown = document.getElementById('mention-autocomplete-dropdown');
+          if (!dropdown || dropdown.style.display === 'none') {
+            e.preventDefault();
+            form.requestSubmit();
+          }
+        }
+      });
+      // File upload (optional: you can add your logic here)
+      fileInput.onchange = async (e) => {
+        // You can implement file upload logic here if needed
       };
       // Setup mention autocomplete
       setupMentionAutocomplete(input, window.currentServerMembers || []);
@@ -1645,19 +1668,28 @@ async function openVoiceChannel(serverId, channelId) {
   // If not a voice channel, do not leave voice! Just render text input.
   if (footer) {
     footer.innerHTML = `
-      <form class="server-chat-input-form fade-in-up" style="display:flex;width:100%;gap:0.5rem;">
-        <div class="server-chat-input" contenteditable="true" spellcheck="true" data-placeholder="Message #${channel ? channel.name : ''}" style="flex:1;min-height:28px;max-height:80px;overflow-y:auto;border:none;outline:none;padding:0.4em 0.7em;"></div>
-        <button type="submit" class="server-chat-send-btn"><i class='fa-solid fa-paper-plane'></i></button>
+      <form class="messageBox fade-in-up" autocomplete="off" style="width:100%;">
+        <div class="fileUploadWrapper">
+          <label for="file" title="Attach file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-8"/><path d="M8 12h8"/></svg>
+            <input id="file" type="file" style="display:none" />
+            <span class="tooltip">Attach file</span>
+          </label>
+        </div>
+        <input id="messageInput" type="text" autocomplete="off" placeholder="Message #${channel ? channel.name : ''}" required />
+        <button type="submit" id="sendButton" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg></button>
       </form>
     `;
-    const form = footer.querySelector('.server-chat-input-form');
-    const input = footer.querySelector('.server-chat-input');
-    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const form = footer.querySelector('.messageBox');
+    const input = form.querySelector('#messageInput');
+    const sendBtn = form.querySelector('#sendButton');
+    const fileInput = form.querySelector('#file');
+    // Send message
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const content = input.innerText.trim();
+      const content = input.value.trim();
       if (!user || !user.user_id || !content) return;
-      input.innerHTML = '';
+      input.value = '';
       // --- Optimistically render the message for sender ---
       const now = Date.now();
       appendChannelMessage({
@@ -1677,6 +1709,20 @@ async function openVoiceChannel(serverId, channelId) {
         content,
         timestamp: now
       });
+    };
+    // ENTER key always sends unless mention dropdown is open
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const dropdown = document.getElementById('mention-autocomplete-dropdown');
+        if (!dropdown || dropdown.style.display === 'none') {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
+    // File upload (optional: you can add your logic here)
+    fileInput.onchange = async (e) => {
+      // You can implement file upload logic here if needed
     };
     // Setup mention autocomplete
     setupMentionAutocomplete(input, window.currentServerMembers || []);
