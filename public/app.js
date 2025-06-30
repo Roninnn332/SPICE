@@ -445,6 +445,10 @@ function showMainApp(user) {
   renderFriendsSidebar();
   setupSocketIO(user.user_id);
   if (typeof renderServersList === 'function') renderServersList();
+  // Hide site loader overlay
+  const loader = document.getElementById('site-loader');
+  if (loader) loader.style.display = 'none';
+  document.body.classList.remove('pre-auth');
 }
 
 // Helper to update profile preview card with real user data
