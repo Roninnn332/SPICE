@@ -4020,10 +4020,9 @@ input:checked + .slider:before {
 .chat__conversation-board__message {
   display: flex;
   align-items: flex-end;
-  gap: 0.7em;
-  margin-bottom: 0.7em;
-  width: 100%;
-  transition: background 0.18s;
+  width: fit-content;
+  max-width: 75%;
+  position: relative;
 }
 .chat__conversation-board__message.reversed {
   flex-direction: row-reverse;

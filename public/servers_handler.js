@@ -256,19 +256,22 @@ async function appendChannelMessage(msg, who) {
       </div>
     </div>
   `;
-  // Show emoji/more buttons on hover
-  msgDiv.addEventListener('mouseenter', () => {
-    const emojiBtn = msgDiv.querySelector('.emoji-button');
-    const moreBtn = msgDiv.querySelector('.more-button');
-    if (emojiBtn) emojiBtn.style.display = 'inline-block';
-    if (moreBtn) moreBtn.style.display = 'inline-block';
-  });
-  msgDiv.addEventListener('mouseleave', () => {
-    const emojiBtn = msgDiv.querySelector('.emoji-button');
-    const moreBtn = msgDiv.querySelector('.more-button');
-    if (emojiBtn) emojiBtn.style.display = 'none';
-    if (moreBtn) moreBtn.style.display = 'none';
-  });
+  // Show emoji/more buttons only when hovering the bubble
+  const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
+  if (bubble) {
+    bubble.addEventListener('mouseenter', () => {
+      const emojiBtn = bubble.querySelector('.emoji-button');
+      const moreBtn = bubble.querySelector('.more-button');
+      if (emojiBtn) emojiBtn.style.display = 'inline-block';
+      if (moreBtn) moreBtn.style.display = 'inline-block';
+    });
+    bubble.addEventListener('mouseleave', () => {
+      const emojiBtn = bubble.querySelector('.emoji-button');
+      const moreBtn = bubble.querySelector('.more-button');
+      if (emojiBtn) emojiBtn.style.display = 'none';
+      if (moreBtn) moreBtn.style.display = 'none';
+    });
+  }
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
   msgDiv.classList.add('dm-message-animate-in');
