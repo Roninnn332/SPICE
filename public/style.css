@@ -4126,7 +4126,7 @@ input:checked + .slider:before {
 }
 /* --- End Modern Chat Message Bubble Redesign --- */
 
-.chat__conversation-board__message.reversed .chat__conversation-board__message__bubble:hover {
+.chat__conversation-board__message__bubble:hover {
   /* Remove hover effect for reversed (my) messages */
   background: inherit;
   box-shadow: none;
