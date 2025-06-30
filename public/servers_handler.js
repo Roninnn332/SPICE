@@ -251,22 +251,11 @@ async function appendChannelMessage(msg, who) {
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
         <span>${content}</span>
-        <button class="more-button" title="More" style="display:none;">⋯</button>
+        <button class="more-button" title="More">⋯</button>
       </div>
     </div>
   `;
-  // Show more button only when hovering the bubble
-  const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
-  if (bubble) {
-    bubble.addEventListener('mouseenter', () => {
-      const moreBtn = bubble.querySelector('.more-button');
-      if (moreBtn) moreBtn.style.display = 'inline-block';
-    });
-    bubble.addEventListener('mouseleave', () => {
-      const moreBtn = bubble.querySelector('.more-button');
-      if (moreBtn) moreBtn.style.display = 'none';
-    });
-  }
+  // No JS for showing/hiding .more-button; CSS handles it now
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
   msgDiv.classList.add('dm-message-animate-in');

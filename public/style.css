@@ -4149,3 +4149,25 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
 } 
+
+.chat__conversation-board__message__context {
+  max-width: 60%;
+  word-wrap: break-word;
+}
+.more-button {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.chat__conversation-board__message__bubble:hover .more-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* For future-proofing: options row */
+.chat__conversation-board__message__options {
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+.chat__conversation-board__message__bubble:hover + .chat__conversation-board__message__options {
+  opacity: 1;
+}
