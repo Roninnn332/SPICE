@@ -4051,10 +4051,10 @@ input:checked + .slider:before {
   font-family: 'Lato', sans-serif;
 }
 .chat__conversation-board__message__context {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   gap: 0.2em;
-  width: 100%;
+  min-width: 0;
 }
 .chat__conversation-board__message__bubble {
   display: inline-flex;
