@@ -2479,96 +2479,93 @@ body {
 .server-chat-input-form {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(30, 34, 44, 0.85);
-  border-radius: 2.2em;
-  padding: 0.35em 0.7em 0.35em 1.1em;
-  border: 1.5px solid rgba(0,191,255,0.13);
-  box-shadow: 0 2px 16px 0 rgba(0,191,255,0.08), 0 1.5px 6px 0 rgba(138,43,226,0.10);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  min-height: 44px;
-  max-width: 700px;
-  margin: 0 auto 1.1em auto;
+  gap: 0.3rem;
+  background: none;
+  border-radius: 1.5em;
+  padding: 0.1em 0.5em 0.1em 0.7em;
+  border: 1px solid #d1d5db;
+  box-shadow: none;
+  min-height: 36px;
+  max-width: 600px;
+  margin: 0 auto 0.7em auto;
   position: relative;
 }
 .server-chat-input {
   flex-grow: 1;
-  background: transparent;
+  background: none;
   border: none;
   outline: none;
   color: var(--text-primary);
-  font-size: 1.08rem;
+  font-size: 1.01rem;
   font-family: 'Montserrat', 'Roboto', sans-serif;
-  padding: 0.3em 0.2em 0.3em 0.1em;
-  min-height: 28px !important;
-  max-height: 60px !important;
-  border-radius: 1.2em;
+  padding: 0.2em 0.1em 0.2em 0.1em;
+  min-height: 22px !important;
+  max-height: 36px !important;
+  border-radius: 0.7em;
   box-shadow: none;
   resize: none;
   overflow-y: auto;
   box-sizing: border-box;
-  transition: background 0.18s, box-shadow 0.18s;
+  border: none;
+  transition: border 0.15s;
 }
 .server-chat-input:focus {
-  background: rgba(0,191,255,0.07);
-  box-shadow: 0 0 0 2px var(--primary-blue-dark);
+  border-bottom: 1.5px solid #2563eb;
 }
 .server-chat-input[data-placeholder]:not(.has-content):empty::before {
   content: attr(data-placeholder);
-  color: var(--text-secondary, #8ab4f8);
-  opacity: 0.8;
+  color: #b0b8c9;
+  opacity: 0.7;
   pointer-events: none;
   font-style: italic;
-  font-size: 1.04rem;
+  font-size: 1.01rem;
   position: absolute;
-  left: 1.2em;
-  top: 0.7em;
+  left: 0.9em;
+  top: 0.5em;
   font-family: 'Montserrat', 'Roboto', sans-serif;
 }
 .server-chat-send-btn {
-  background: linear-gradient(135deg, #00BFFF 60%, #8A2BE2 100%);
-  border: none;
-  width: 2.5em;
-  height: 2.5em;
-  min-width: 2.5em;
-  min-height: 2.5em;
+  background: none;
+  border: 1.2px solid #d1d5db;
+  width: 2em;
+  height: 2em;
+  min-width: 2em;
+  min-height: 2em;
   border-radius: 50%;
-  color: #fff;
-  font-size: 1.25em;
-  font-weight: 700;
+  color: #2563eb;
+  font-size: 1.1em;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 12px 0 #00BFFF33, 0 1.5px 6px 0 #8A2BE233;
-  transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
-  margin-left: 0.2em;
+  box-shadow: none;
+  transition: border 0.15s, color 0.15s, background 0.15s;
+  margin-left: 0.1em;
 }
 .server-chat-send-btn:hover, .server-chat-send-btn:focus {
-  background: linear-gradient(135deg, #8A2BE2 60%, #00BFFF 100%);
-  box-shadow: 0 4px 18px 0 #8A2BE288, 0 2px 8px 0 #00BFFF55;
-  transform: scale(1.08);
-  opacity: 0.95;
+  border-color: #2563eb;
+  background: #f3f6fa;
+  color: #1741a6;
 }
 @media (max-width: 700px) {
   .server-chat-input-form {
-    padding: 0.25em 0.5em 0.25em 0.7em;
-    min-height: 38px;
+    padding: 0.08em 0.3em 0.08em 0.5em;
+    min-height: 30px;
     max-width: 98vw;
-    margin: 0.3em auto 0.7em auto;
+    margin: 0.2em auto 0.5em auto;
   }
   .server-chat-send-btn {
-    width: 2em;
-    height: 2em;
-    min-width: 2em;
-    min-height: 2em;
-    font-size: 1.05em;
+    width: 1.6em;
+    height: 1.6em;
+    min-width: 1.6em;
+    min-height: 1.6em;
+    font-size: 0.98em;
   }
   .server-chat-input {
-    font-size: 0.98rem;
-    min-height: 22px !important;
-    max-height: 40px !important;
+    font-size: 0.93rem;
+    min-height: 18px !important;
+    max-height: 30px !important;
   }
 }
 /* ... existing code ... */
@@ -4088,14 +4085,15 @@ input:checked + .slider:before {
 /* ... existing code ... */
 .server-chat-input[data-placeholder]:not(.has-content):empty::before {
   content: attr(data-placeholder);
-  color: var(--text-secondary, #888);
-  opacity: 0.7;
+  color: var(--text-secondary, #8ab4f8);
+  opacity: 0.8;
   pointer-events: none;
   font-style: italic;
-  font-size: 1.01rem;
+  font-size: 1.04rem;
   position: absolute;
-  left: 0.7em;
-  top: 0.4em;
+  left: 1.2em;
+  top: 0.7em;
+  font-family: 'Montserrat', 'Roboto', sans-serif;
 }
 .server-chat-input {
   min-height: 28px !important;
