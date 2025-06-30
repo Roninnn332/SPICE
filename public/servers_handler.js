@@ -203,10 +203,10 @@ function highlightMentions(text, members) {
 }
 
 async function appendChannelMessage(msg, who) {
-  const chat = document.querySelector('.chat-messages .chat__conversation-board') || document.querySelector('.chat-messages');
+  const chat = document.querySelector('.chat-messages');
   if (!chat) return;
   // --- Deduplication: skip if message with same timestamp and userId exists ---
-  if (chat.querySelector(`.chat__conversation-board__message-container[data-timestamp="${msg.timestamp}"][data-userid="${msg.userId || msg.user_id}"]`)) {
+  if (chat.querySelector(`.chat__conversation-board__message[data-timestamp="${msg.timestamp}"][data-userid="${msg.userId || msg.user_id}"]`)) {
     return;
   }
   // Get user info for avatar/username
@@ -229,7 +229,7 @@ async function appendChannelMessage(msg, who) {
   let roleBadge = '';
   if (role === 'admin') roleBadge = '<span class="role-badge">Admin</span>';
   else if (role === 'mod') roleBadge = '<span class="role-badge mod">Mod</span>';
-  // Emoji reactions
+  // Emoji reactions (not shown in new design, but keep for future)
   let emojiHtml = '';
   if (Array.isArray(reactions) && reactions.length) {
     emojiHtml = `<div class=\"emoji-reaction-container\">` +
@@ -239,31 +239,36 @@ async function appendChannelMessage(msg, who) {
   // Alignment
   const reversed = who === 'me' ? 'reversed' : '';
   const msgDiv = document.createElement('div');
-  msgDiv.className = `chat__conversation-board__message-container ${reversed}`;
+  msgDiv.className = `chat__conversation-board__message ${reversed}`;
   msgDiv.setAttribute('data-timestamp', msg.timestamp);
   msgDiv.setAttribute('data-userid', msg.userId || msg.user_id);
   msgDiv.setAttribute('tabindex', '0');
   msgDiv.innerHTML = `
     <div class="chat__conversation-board__message__person">
-      <div class="chat__conversation-board__message__person__avatar">
-        <img src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="${username}" />
-      </div>
-      <span class="chat__conversation-board__message__person__nickname">${username}</span>
+      <img class="chat__conversation-board__message__person__avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" width="35" height="35" />
+      <span class="chat__conversation-board__message__person__nickname" style="display:none;">${username}</span>
     </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
         <span>${content}</span>
+        <button class="emoji-button" title="React" style="display:none;">😊</button>
+        <button class="more-button" title="More" style="display:none;">⋯</button>
       </div>
     </div>
-    <div class="chat__conversation-board__message__options">
-      <button class="btn-icon chat__conversation-board__message__option-button option-item emoji-button" title="React">
-        <svg class="feather feather-smile" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-      </button>
-      <button class="btn-icon chat__conversation-board__message__option-button option-item more-button" title="More">
-        <svg class="feather feather-more-horizontal" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-      </button>
-    </div>
   `;
+  // Show emoji/more buttons on hover
+  msgDiv.addEventListener('mouseenter', () => {
+    const emojiBtn = msgDiv.querySelector('.emoji-button');
+    const moreBtn = msgDiv.querySelector('.more-button');
+    if (emojiBtn) emojiBtn.style.display = 'inline-block';
+    if (moreBtn) moreBtn.style.display = 'inline-block';
+  });
+  msgDiv.addEventListener('mouseleave', () => {
+    const emojiBtn = msgDiv.querySelector('.emoji-button');
+    const moreBtn = msgDiv.querySelector('.more-button');
+    if (emojiBtn) emojiBtn.style.display = 'none';
+    if (moreBtn) moreBtn.style.display = 'none';
+  });
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
   msgDiv.classList.add('dm-message-animate-in');
@@ -287,12 +292,6 @@ async function openServerChannel(serverId, channelId) {
   if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
-  // Ensure chat__conversation-board wrapper exists for text channels
-  if (channel && channel.type === 'text' && chat) {
-    if (!chat.querySelector('.chat__conversation-board')) {
-      chat.innerHTML = '<div class="chat__conversation-board"></div>';
-    }
-  }
   if (channel && channel.type === 'voice') {
     // Do NOT join voice yet! Only show the welcome UI and set up the Join Voice button.
     // Remove any previous voice state
@@ -444,8 +443,6 @@ async function openServerChannel(serverId, channelId) {
   }
   // Render messages with premium UI
   const user = JSON.parse(localStorage.getItem('spice_user'));
-  const board = chat ? chat.querySelector('.chat__conversation-board') : null;
-  if (board) board.innerHTML = '';
   for (const msg of messages) {
     const isMe = String(msg.user_id) === String(user.user_id);
     await appendChannelMessage({
