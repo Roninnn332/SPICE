@@ -715,13 +715,15 @@ body {
   scrollbar-color: var(--accent-blue) transparent;
 }
 .chat-messages::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
   background: transparent;
 }
 .chat-messages::-webkit-scrollbar-thumb {
   background-color: rgba(0, 191, 255, 0.3);
   border-radius: 10px;
   border: 2px solid transparent;
+  min-height: 16px;
+  max-height: 32px;
 }
 .chat-input-area {
   min-height: 44px;
@@ -3951,28 +3953,6 @@ input:checked + .slider:before {
   padding-left: 10px;
   color: white;
 }
-#messageInput:focus ~ #sendButton svg path,
-#messageInput:valid ~ #sendButton svg path {
-  fill: #3c3c3c;
-  stroke: white;
-}
-
-#sendButton {
-  width: fit-content;
-  height: 100%;
-  background-color: transparent;
-  outline: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-#sendButton svg {
-  height: 18px;
-  transition: all 0.3s;
-}
 #sendButton svg path {
   transition: all 0.3s;
 }
@@ -4077,6 +4057,9 @@ input:checked + .slider:before {
   width: 100%;
 }
 .chat__conversation-board__message__bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
   background: #14181a;
   color: #a3a3a3;
   padding: 0.5em 0.8em;
@@ -4084,18 +4067,15 @@ input:checked + .slider:before {
   font-family: 'Lato', sans-serif;
   font-size: 1.08rem;
   line-height: 1.5;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
   position: relative;
   box-shadow: 0 2px 8px 0 rgba(20,24,26,0.12);
   max-width: 80vw;
   min-width: 40px;
   word-break: break-word;
-  transition: background 0.18s;
+  transition: background 0.18s, box-shadow 0.25s, transform 0.22s, border-color 0.22s;
 }
 .chat__conversation-board__message.reversed .chat__conversation-board__message__bubble {
-  background: #181c1f;
+  background: #444343;
   color: #a3a3a3;
   align-self: flex-end;
 }
@@ -4119,6 +4099,12 @@ input:checked + .slider:before {
 .chat__conversation-board__message__bubble:hover .emoji-button,
 .chat__conversation-board__message__bubble:hover .more-button {
   display: inline-block;
+}
+.chat__conversation-board__message__bubble:hover {
+  background: #181c1f;
+  box-shadow: 0 4px 16px 0 rgba(20,24,26,0.18);
+  transform: translateY(-3px) scale(1.025);
+  border-color: #23272f;
 }
 @media (max-width: 700px) {
   .chat__conversation-board__message {
