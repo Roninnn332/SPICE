@@ -4308,3 +4308,170 @@ input:checked + .slider:before {
 }
 /* Remove old loader spinner/tagline styles if present */
 .site-loader-spinner, .site-loader-tagline { display: none !important; }
+
+/* --- Premium Create Channel Modal --- */
+.create-channel-modal-premium {
+  background: #fff;
+  border-radius: 1.3rem;
+  box-shadow: 0 8px 48px 0 rgba(0,0,0,0.18);
+  padding: 0;
+  min-width: 370px;
+  max-width: 98vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.create-channel-modal-content-premium {
+  background: #fff;
+  border-radius: 1.3rem;
+  padding: 2.2rem 2.5rem 2rem 2.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.create-channel-title-premium {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #111;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.01em;
+}
+.create-channel-form-premium {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.7rem;
+}
+.channel-type-toggle-premium {
+  display: flex;
+  gap: 1.2rem;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 0.7rem;
+}
+.channel-type-btn-premium {
+  background: #f6f6f6;
+  border: 2px solid #e5e5e5;
+  border-radius: 1.1rem;
+  padding: 0.7rem 1.7rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #222;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s, color 0.18s, box-shadow 0.18s;
+  outline: none;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+}
+.channel-type-btn-premium.selected, .channel-type-btn-premium:focus {
+  background: #111;
+  color: #fff;
+  border: 2px solid #111;
+  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.10);
+}
+.channel-type-icon-premium {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+}
+.channel-type-label-premium {
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.channel-name-label-premium {
+  color: #222;
+  font-size: 1.08rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+  margin-top: 0.2rem;
+  align-self: flex-start;
+}
+.channel-name-input-group-premium {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #f6f6f6;
+  border-radius: 0.9rem;
+  padding: 0.2rem 1.1rem;
+  border: 2px solid #e5e5e5;
+  margin-bottom: 0.2rem;
+}
+.channel-name-prefix-premium {
+  color: #aaa;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+.channel-name-input-premium {
+  border: none;
+  background: transparent;
+  font-size: 1.13rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  color: #111;
+  outline: none;
+  width: 100%;
+  padding: 0.7rem 0;
+}
+.channel-name-input-premium::placeholder {
+  color: #bbb;
+  font-weight: 500;
+}
+.modal-actions-premium {
+  display: flex;
+  gap: 1.2rem;
+  width: 100%;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+}
+.modal-cancel-btn-premium {
+  background: #fff;
+  color: #111;
+  border: 2px solid #e5e5e5;
+  border-radius: 1.1rem;
+  padding: 0.6em 1.7em;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+}
+.modal-cancel-btn-premium:hover, .modal-cancel-btn-premium:focus {
+  background: #f6f6f6;
+  color: #111;
+  border: 2px solid #111;
+}
+.modal-create-btn-premium {
+  background: #111;
+  color: #fff;
+  border: 2px solid #111;
+  border-radius: 1.1rem;
+  padding: 0.6em 1.7em;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+}
+.modal-create-btn-premium:hover, .modal-create-btn-premium:focus {
+  background: #fff;
+  color: #111;
+  border: 2px solid #111;
+}
+@media (max-width: 700px) {
+  .create-channel-modal-premium, .create-channel-modal-content-premium {
+    padding: 1rem 0.5rem 1rem 0.5rem;
+    min-width: 0;
+    max-width: 98vw;
+  }
+}

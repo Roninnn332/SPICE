@@ -45,6 +45,23 @@ window.addEventListener('DOMContentLoaded', () => {
   const closeCreateChannelModalBtn = document.getElementById('close-create-channel-modal');
   const createChannelForm = document.getElementById('create-channel-form');
   const cancelCreateChannelBtn = document.getElementById('cancel-create-channel');
+  const channelTypeTextBtn = document.getElementById('channel-type-text-btn');
+  const channelTypeVoiceBtn = document.getElementById('channel-type-voice-btn');
+  const channelTypeHidden = document.getElementById('channel-type-hidden');
+  if (channelTypeTextBtn && channelTypeVoiceBtn && channelTypeHidden) {
+    channelTypeTextBtn.onclick = (e) => {
+      e.preventDefault();
+      channelTypeHidden.value = 'text';
+      channelTypeTextBtn.classList.add('selected');
+      channelTypeVoiceBtn.classList.remove('selected');
+    };
+    channelTypeVoiceBtn.onclick = (e) => {
+      e.preventDefault();
+      channelTypeHidden.value = 'voice';
+      channelTypeVoiceBtn.classList.add('selected');
+      channelTypeTextBtn.classList.remove('selected');
+    };
+  }
   if (createChannelBtn && createChannelModalOverlay) {
     createChannelBtn.onclick = () => {
       createChannelModalOverlay.style.display = 'flex';
@@ -67,13 +84,13 @@ window.addEventListener('DOMContentLoaded', () => {
     createChannelForm.onsubmit = async (e) => {
       e.preventDefault();
       const nameInput = document.getElementById('new-channel-name');
-      const typeInput = createChannelForm.querySelector('input[name="channel-type"]:checked');
-      if (!currentServer || !nameInput || !typeInput) {
+      // Use the new hidden input for type
+      const type = channelTypeHidden ? channelTypeHidden.value : 'text';
+      if (!currentServer || !nameInput) {
         alert('No server selected or missing input.');
         return;
       }
       const name = nameInput.value.trim();
-      const type = typeInput.value;
       if (!name) {
         alert('Channel name required.');
         return;
