@@ -263,18 +263,12 @@ async function appendChannelMessage(msg, who) {
 
 // --- Refactor openServerChannel for Real-time & Premium UI ---
 async function openServerChannel(serverId, channelId) {
-  // Remove DM UI if present
+  // Hide the entire users-sidebar (friends sidebar)
   const usersSidebar = document.querySelector('.users-sidebar');
   if (usersSidebar) {
     usersSidebar.classList.remove('dm-active', 'dm-animate-in');
     usersSidebar.innerHTML = '';
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-friend-btn';
-    addBtn.id = 'open-add-friend-modal';
-    addBtn.textContent = '+ Add Friends';
-    addBtn.onclick = openAddFriendModal;
-    usersSidebar.appendChild(addBtn);
-    if (typeof renderFriendsSidebar === 'function') renderFriendsSidebar();
+    usersSidebar.style.display = 'none';
   }
   // Hide friends sidebar when entering any channel
   if (typeof hideFriendsSidebar === 'function') hideFriendsSidebar();
@@ -1525,18 +1519,12 @@ let myDeafenOn = false;
 
 // --- openVoiceChannel ---
 async function openVoiceChannel(serverId, channelId) {
-  // Remove DM UI if present
+  // Hide the entire users-sidebar (friends sidebar)
   const usersSidebar = document.querySelector('.users-sidebar');
   if (usersSidebar) {
     usersSidebar.classList.remove('dm-active', 'dm-animate-in');
     usersSidebar.innerHTML = '';
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-friend-btn';
-    addBtn.id = 'open-add-friend-modal';
-    addBtn.textContent = '+ Add Friends';
-    addBtn.onclick = openAddFriendModal;
-    usersSidebar.appendChild(addBtn);
-    if (typeof renderFriendsSidebar === 'function') renderFriendsSidebar();
+    usersSidebar.style.display = 'none';
   }
   // Hide friends sidebar when entering a voice channel
   if (typeof hideFriendsSidebar === 'function') hideFriendsSidebar();

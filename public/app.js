@@ -874,6 +874,7 @@ function openAddFriendModal() {
       .subscribe();
   }
 }
+window.openAddFriendModal = openAddFriendModal;
 
 function closeAddFriendModal() {
   if (!addFriendModal) return;
@@ -1238,6 +1239,8 @@ function showFriendsSidebar() {
   layout.classList.remove('friends-hidden');
   const tab = document.getElementById('show-friends-tab');
   if (tab) tab.style.display = 'none';
+  const usersSidebar = document.querySelector('.users-sidebar');
+  if (usersSidebar) usersSidebar.style.display = '';
 }
 window.showFriendsSidebar = showFriendsSidebar;
 // Call hideFriendsSidebar() when entering a channel (text or voice)
