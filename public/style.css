@@ -4417,26 +4417,48 @@ input:checked + .slider:before {
 }
 .channel-name-input {
   position: relative;
+  margin-top: 0;
 }
 .channel-name-input span {
   position: absolute;
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: #bbb;
   font-weight: 600;
+  font-size: 1.1em;
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
 }
 .channel-name-input input {
   width: 100%;
-  padding: 10px 10px 10px 30px;
+  padding: 10px 10px 10px 34px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s ease;
+  background: #fff;
+  position: relative;
+  z-index: 1;
 }
 .channel-name-input input:focus {
   outline: none;
   border-color: #000;
+  background: #fff;
+}
+.channel-name-input input::placeholder {
+  color: #ccc;
+  opacity: 1;
+}
+/* Enable private channel toggle for visual feedback */
+.toggle-switch input:disabled + .toggle-slider {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.toggle-switch input:not(:disabled) + .toggle-slider {
+  opacity: 1;
+  cursor: pointer;
 }
 .private-channel {
   display: flex;
