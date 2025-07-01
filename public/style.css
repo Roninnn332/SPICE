@@ -229,7 +229,7 @@ body {
   pointer-events: auto;
 }
 .modal {
-  background: linear-gradient(135deg, var(--off-black) 80%, var(--primary-blue-dark) 100%);
+  background: ;
   border-radius: 2rem;
   box-shadow: var(--shadow);
   padding: 2.5rem 2.5rem 2rem 2.5rem;
@@ -2588,11 +2588,11 @@ body {
 #new-channel-name {
   flex: 1 1 0;
   background: transparent;
-  border: none;
+  border: ;
   color: var(--white);
   font-size: 1.05rem;
   outline: none;
-  padding: 0.7em 0;
+  width: 90%;
 }
 #new-channel-name:focus {
   color: var(--accent);
