@@ -200,6 +200,12 @@ window.openDMChat = async function(friend) {
     setTimeout(() => {
       sidebar.classList.remove('dm-active');
       sidebar.innerHTML = '';
+      // Restore hide button and add friend button
+      const hideBtn = document.createElement('button');
+      hideBtn.className = 'hide-users-sidebar-btn';
+      hideBtn.title = 'Hide Sidebar';
+      hideBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+      sidebar.appendChild(hideBtn);
       const addBtn = document.createElement('button');
       addBtn.className = 'add-friend-btn';
       addBtn.id = 'open-add-friend-modal';
@@ -207,6 +213,28 @@ window.openDMChat = async function(friend) {
       addBtn.onclick = openAddFriendModal;
       sidebar.appendChild(addBtn);
       renderFriendsSidebar();
+      // Re-attach hide/unhide logic
+      const mainApp = document.querySelector('.main-app-layout');
+      const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
+      const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
+      if (hideBtn && sidebar && mainApp && unhideWrapper && unhideBtn) {
+        hideBtn.addEventListener('click', function() {
+          sidebar.classList.add('sidebar-hidden');
+          mainApp.classList.add('sidebar-hidden');
+          setTimeout(() => {
+            sidebar.style.display = 'none';
+            unhideWrapper.style.display = 'block';
+          }, 350);
+        });
+        unhideBtn.addEventListener('click', function() {
+          sidebar.style.display = '';
+          setTimeout(() => {
+            sidebar.classList.remove('sidebar-hidden');
+            mainApp.classList.remove('sidebar-hidden');
+            unhideWrapper.style.display = 'none';
+          }, 10);
+        });
+      }
     }, 350);
   };
   const user = JSON.parse(localStorage.getItem('spice_user'));
@@ -543,10 +571,17 @@ window.addEventListener('DOMContentLoaded', function() {
   const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
   const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
   const user = JSON.parse(localStorage.getItem('spice_user'));
+  const loader = document.getElementById('site-loader');
   if (user && user.username && user.user_id) {
     showMainApp(user);
     renderSidebarUserProfile(user);
     updateProfilePreview(user);
+  } else {
+    // Not logged in: hide loader after 4s and show login/signup UI
+    setTimeout(() => {
+      if (loader) loader.style.display = 'none';
+      document.body.classList.remove('pre-auth');
+    }, 4000);
   }
 
   // Footer animation
@@ -1088,7 +1123,7 @@ if (addFriendForm) {
       ]);
       if (error) throw error;
       input.value = '';
-      showAddFriendFeedback('Friend request sent!', 'success');
+      showAddFriendFeedback('Friend request sent! Waiting for approval.', 'success');
       fetchFriendRequests();
     } catch (err) {
       showAddFriendFeedback('Error sending request: ' + (err.message || err), 'error');
