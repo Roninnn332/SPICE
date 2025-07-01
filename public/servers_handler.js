@@ -43,6 +43,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const createChannelBtn = document.getElementById('create-channel-btn');
   const createChannelModalOverlay = document.getElementById('create-channel-modal-overlay');
   const closeCreateChannelModalBtn = document.getElementById('close-create-channel-modal');
+  const createChannelForm = document.getElementById('create-channel-form');
+  const cancelCreateChannelBtn = document.getElementById('cancel-create-channel');
   if (createChannelBtn && createChannelModalOverlay) {
     createChannelBtn.onclick = () => {
       createChannelModalOverlay.style.display = 'flex';
@@ -53,6 +55,41 @@ window.addEventListener('DOMContentLoaded', () => {
     closeCreateChannelModalBtn.onclick = () => {
       createChannelModalOverlay.classList.remove('active');
       setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
+    };
+  }
+  if (cancelCreateChannelBtn && createChannelModalOverlay) {
+    cancelCreateChannelBtn.onclick = () => {
+      createChannelModalOverlay.classList.remove('active');
+      setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
+    };
+  }
+  if (createChannelForm) {
+    createChannelForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('new-channel-name');
+      const typeInput = createChannelForm.querySelector('input[name="channel-type"]:checked');
+      if (!currentServer || !nameInput || !typeInput) {
+        alert('No server selected or missing input.');
+        return;
+      }
+      const name = nameInput.value.trim();
+      const type = typeInput.value;
+      if (!name) {
+        alert('Channel name required.');
+        return;
+      }
+      // Insert channel into Supabase
+      const { data, error } = await supabaseClient.from('channels').insert([
+        { name, type, server_id: currentServer.id }
+      ]).select().single();
+      if (error) {
+        alert('Error creating channel: ' + error.message);
+        return;
+      }
+      // Close modal and refresh channel list
+      createChannelModalOverlay.classList.remove('active');
+      setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
+      await renderChannelsList(currentServer.id);
     };
   }
 
