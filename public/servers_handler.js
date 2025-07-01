@@ -150,6 +150,16 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     };
   }
+
+  // --- New Create Channel Modal Logic ---
+  const privateChannelToggle = document.getElementById('private-channel-toggle');
+  if (privateChannelToggle) {
+    privateChannelToggle.removeAttribute('disabled');
+    privateChannelToggle.onclick = function() {
+      // No backend logic, just visual toggle
+      this.checked = !this.checked;
+    };
+  }
 });
 
 // --- Server List UI ---

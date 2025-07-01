@@ -4417,24 +4417,21 @@ input:checked + .slider:before {
 }
 .channel-name-input {
   position: relative;
-  margin-top: 0;
 }
 .channel-name-input span {
   position: absolute;
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #bbb;
+  color: #666;
   font-weight: 600;
-  font-size: 1.1em;
-  user-select: none;
   pointer-events: none;
   z-index: 2;
 }
 .channel-name-input input {
   width: 100%;
-  padding: 10px 10px 10px 34px;
-  border: 1px solid #ddd;
+  padding: 10px 10px 10px 32px; /* Increased left padding for # */
+  border: 1.5px solid #bbb; /* Stronger border */
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s ease;
@@ -4448,15 +4445,24 @@ input:checked + .slider:before {
   background: #fff;
 }
 .channel-name-input input::placeholder {
-  color: #ccc;
+  color: #aaa;
   opacity: 1;
+  font-weight: 400;
 }
-/* Enable private channel toggle for visual feedback */
+/* --- Private Channel Toggle: visually enabled --- */
 .toggle-switch input:disabled + .toggle-slider {
   opacity: 0.7;
   cursor: not-allowed;
 }
-.toggle-switch input:not(:disabled) + .toggle-slider {
+.toggle-switch input:enabled + .toggle-slider {
+  opacity: 1;
+  cursor: pointer;
+}
+/* Enable toggle for demo (no backend logic) */
+#private-channel-toggle:disabled {
+  pointer-events: auto;
+}
+#private-channel-toggle:disabled + .toggle-slider {
   opacity: 1;
   cursor: pointer;
 }
