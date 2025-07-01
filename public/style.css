@@ -4425,46 +4425,18 @@ input:checked + .slider:before {
   transform: translateY(-50%);
   color: #666;
   font-weight: 600;
-  pointer-events: none;
-  z-index: 2;
 }
 .channel-name-input input {
   width: 100%;
-  padding: 10px 10px 10px 32px; /* Increased left padding for # */
-  border: 1.5px solid #bbb; /* Stronger border */
+  padding: 10px 10px 10px 30px;
+  border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s ease;
-  background: #fff;
-  position: relative;
-  z-index: 1;
 }
 .channel-name-input input:focus {
   outline: none;
   border-color: #000;
-  background: #fff;
-}
-.channel-name-input input::placeholder {
-  color: #aaa;
-  opacity: 1;
-  font-weight: 400;
-}
-/* --- Private Channel Toggle: visually enabled --- */
-.toggle-switch input:disabled + .toggle-slider {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-.toggle-switch input:enabled + .toggle-slider {
-  opacity: 1;
-  cursor: pointer;
-}
-/* Enable toggle for demo (no backend logic) */
-#private-channel-toggle:disabled {
-  pointer-events: auto;
-}
-#private-channel-toggle:disabled + .toggle-slider {
-  opacity: 1;
-  cursor: pointer;
 }
 .private-channel {
   display: flex;
