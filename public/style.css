@@ -4267,3 +4267,44 @@ input:checked + .slider:before {
   margin-right: 0 !important;
   width: 100% !important;
 }
+
+/* --- New Loader Animation (no transparency, modern look) --- */
+.loader {
+  width: 65px;
+  aspect-ratio: 1;
+  position: relative;
+}
+.loader:before,
+.loader:after {
+  content: "";
+  position: absolute;
+  border-radius: 50px;
+  box-shadow: 0 0 0 3px inset #fff;
+  animation: l4 2.5s infinite;
+}
+.loader:after {
+  animation-delay: -1.25s;
+}
+@keyframes l4 {
+  0% { inset: 0 35px 35px 0; }
+  12.5% { inset: 0 35px 0 0; }
+  25% { inset: 35px 35px 0 0; }
+  37.5% { inset: 35px 0 0 0; }
+  50% { inset: 35px 0 0 35px; }
+  62.5% { inset: 0 0 0 35px; }
+  75% { inset: 0 0 35px 35px; }
+  87.5% { inset: 0 0 35px 0; }
+  100% { inset: 0 35px 35px 0; }
+}
+.loading-text {
+  font-size: 1.4rem;
+  color: #ffffffcc;
+  letter-spacing: 1px;
+  animation: pulse 2s infinite ease-in-out;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+/* Remove old loader spinner/tagline styles if present */
+.site-loader-spinner, .site-loader-tagline { display: none !important; }
