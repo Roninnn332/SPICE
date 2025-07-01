@@ -434,7 +434,7 @@ function showMainApp(user) {
     if (el) el.style.display = 'none';
   });
   // Show main app layout
-  const mainApp = document.getElementById('main-app-layout');
+  const mainApp = document.querySelector('.main-app-layout');
   if (mainApp) mainApp.style.display = 'flex';
   renderSidebarUserProfile(user);
   // Close login/signup modal if open
@@ -500,7 +500,12 @@ function updateProfilePreview(user) {
 }
 
 // Call updateProfilePreview after login/signup and after avatar upload
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', function() {
+  const usersSidebar = document.querySelector('.users-sidebar');
+  const mainApp = document.querySelector('.main-app-layout');
+  const hideBtn = document.querySelector('.hide-users-sidebar-btn');
+  const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
+  const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (user && user.username && user.user_id) {
     showMainApp(user);
@@ -591,17 +596,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const serversSidebar = document.querySelector('.servers-sidebar');
   const channelsSidebar = document.querySelector('.channels-sidebar');
   const chatSection = document.querySelector('.chat-section');
-  const usersSidebar = document.querySelector('.users-sidebar');
   if (serversSidebar) serversSidebar.classList.add('layout-animate-in-left');
   if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left');
   if (chatSection) chatSection.classList.add('layout-animate-in-up');
   if (usersSidebar) usersSidebar.classList.add('layout-animate-in-right');
 
   // --- Hide/Unhide Users Sidebar Logic ---
-  const hideBtn = document.querySelector('.hide-users-sidebar-btn');
-  const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
-  const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
-
   if (hideBtn && usersSidebar && mainApp && unhideWrapper && unhideBtn) {
     hideBtn.addEventListener('click', function() {
       usersSidebar.classList.add('sidebar-hidden');
