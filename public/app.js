@@ -874,7 +874,6 @@ function openAddFriendModal() {
       .subscribe();
   }
 }
-window.openAddFriendModal = openAddFriendModal;
 
 function closeAddFriendModal() {
   if (!addFriendModal) return;
@@ -1214,35 +1213,4 @@ if (joinServerForm) {
       setupJoinRequestRealtime(serverId, user.user_id);
     }
   };
-}
-
-// Helper to show/hide friends sidebar and tab
-function hideFriendsSidebar() {
-  const layout = document.querySelector('.main-app-layout');
-  if (!layout) return;
-  layout.classList.add('friends-hidden');
-  let tab = document.getElementById('show-friends-tab');
-  if (!tab) {
-    tab = document.createElement('div');
-    tab.id = 'show-friends-tab';
-    tab.textContent = 'Show Friends';
-    tab.onclick = showFriendsSidebar;
-    document.body.appendChild(tab);
-  } else {
-    tab.style.display = 'block';
-  }
-}
-window.hideFriendsSidebar = hideFriendsSidebar;
-function showFriendsSidebar() {
-  const layout = document.querySelector('.main-app-layout');
-  if (!layout) return;
-  layout.classList.remove('friends-hidden');
-  const tab = document.getElementById('show-friends-tab');
-  if (tab) tab.style.display = 'none';
-  const usersSidebar = document.querySelector('.users-sidebar');
-  if (usersSidebar) usersSidebar.style.display = '';
-}
-window.showFriendsSidebar = showFriendsSidebar;
-// Call hideFriendsSidebar() when entering a channel (text or voice)
-// Example: in openServerChannel or similar, after loading the channel, call hideFriendsSidebar();
-// You may want to call showFriendsSidebar() when the tab is clicked. 
+} 
