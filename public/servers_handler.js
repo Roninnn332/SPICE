@@ -247,7 +247,7 @@ async function appendChannelMessage(msg, who) {
     <div class="chat__conversation-board__message__person">
       <img class="chat__conversation-board__message__person__avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" width="35" height="35" />
       <span class="chat__conversation-board__message__person__nickname" style="display:none;">${username}</span>
-    </div>
+      </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
         <span>${content}</span>

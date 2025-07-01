@@ -157,7 +157,43 @@ window.openDMChat = async function(friend) {
   if (!sidebar) return;
   sidebar.classList.add('dm-active');
   sidebar.innerHTML = `
-    <div class=\"dm-chat-header\">\n      <button class=\"dm-back-btn\" title=\"Back\">&#8592;</button>\n      <img class=\"dm-chat-avatar\" src=\"${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}\" alt=\"Avatar\">\n      <span class=\"dm-chat-username\">${friend.username}</span>\n    </div>\n    <div class=\"dm-chat-messages\"></div>\n    <form class=\"dm-chat-input-area\">\n      <button type=\"button\" class=\"dm-chat-attach-btn\" title=\"Attach Media\"><i class=\"fa-solid fa-paperclip\"></i></button>\n      <input type=\"file\" class=\"dm-chat-file-input\" style=\"display:none;\" accept=\"image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg\" />\n      <input type=\"text\" class=\"dm-chat-input\" placeholder=\"Type a message...\" autocomplete=\"off\" />\n      <button type=\"submit\" class=\"dm-chat-send-btn\"><i class=\"fa-solid fa-paper-plane\"></i></button>\n    </form>\n  `;
+    <button class="hide-users-sidebar-btn" title="Hide Sidebar"><i class="fa-solid fa-chevron-right"></i></button>
+    <div class="dm-chat-header">
+      <button class="dm-back-btn" title="Back">&#8592;</button>
+      <img class="dm-chat-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar">
+      <span class="dm-chat-username">${friend.username}</span>
+    </div>
+    <div class="dm-chat-messages"></div>
+    <form class="dm-chat-input-area">
+      <button type="button" class="dm-chat-attach-btn" title="Attach Media"><i class="fa-solid fa-paperclip"></i></button>
+      <input type="file" class="dm-chat-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.mp3,.wav,.ogg" />
+      <input type="text" class="dm-chat-input" placeholder="Type a message..." autocomplete="off" />
+      <button type="submit" class="dm-chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+  `;
+  // --- Re-attach hide sidebar logic ---
+  const mainApp = document.querySelector('.main-app-layout');
+  const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
+  const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
+  const hideBtn = sidebar.querySelector('.hide-users-sidebar-btn');
+  if (hideBtn && sidebar && mainApp && unhideWrapper && unhideBtn) {
+    hideBtn.addEventListener('click', function() {
+      sidebar.classList.add('sidebar-hidden');
+      mainApp.classList.add('sidebar-hidden');
+      setTimeout(() => {
+        sidebar.style.display = 'none';
+        unhideWrapper.style.display = 'block';
+      }, 350);
+    });
+    unhideBtn.addEventListener('click', function() {
+      sidebar.style.display = '';
+      setTimeout(() => {
+        sidebar.classList.remove('sidebar-hidden');
+        mainApp.classList.remove('sidebar-hidden');
+        unhideWrapper.style.display = 'none';
+      }, 10);
+    });
+  }
   setTimeout(() => sidebar.classList.add('dm-animate-in'), 10);
   sidebar.querySelector('.dm-back-btn').onclick = () => {
     sidebar.classList.remove('dm-animate-in');
