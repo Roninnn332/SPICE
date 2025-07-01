@@ -40,64 +40,74 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Create Channel Modal Logic ---
-  const createChannelBtn = document.getElementById('create-channel-btn');
   const createChannelModalOverlay = document.getElementById('create-channel-modal-overlay');
-  const closeCreateChannelModalBtn = document.getElementById('close-create-channel-modal');
-  const createChannelForm = document.getElementById('create-channel-form');
+  const createChannelModal = document.getElementById('create-channel-modal');
+  const openCreateChannelBtn = document.getElementById('create-channel-btn');
   const cancelCreateChannelBtn = document.getElementById('cancel-create-channel');
-  const channelTypeTextBtn = document.getElementById('channel-type-text-btn');
-  const channelTypeVoiceBtn = document.getElementById('channel-type-voice-btn');
-  const channelTypeHidden = document.getElementById('channel-type-hidden');
-  if (channelTypeTextBtn && channelTypeVoiceBtn && channelTypeHidden) {
-    channelTypeTextBtn.onclick = (e) => {
-      e.preventDefault();
-      channelTypeHidden.value = 'text';
-      channelTypeTextBtn.classList.add('selected');
-      channelTypeVoiceBtn.classList.remove('selected');
-    };
-    channelTypeVoiceBtn.onclick = (e) => {
-      e.preventDefault();
-      channelTypeHidden.value = 'voice';
-      channelTypeVoiceBtn.classList.add('selected');
-      channelTypeTextBtn.classList.remove('selected');
-    };
-  }
-  if (createChannelBtn && createChannelModalOverlay) {
-    createChannelBtn.onclick = () => {
+  const submitCreateChannelBtn = document.getElementById('submit-create-channel');
+  const channelOptionText = document.getElementById('channel-option-text');
+  const channelOptionVoice = document.getElementById('channel-option-voice');
+  const channelOptions = [channelOptionText, channelOptionVoice];
+  const channelNameInput = document.getElementById('new-channel-name');
+
+  // Open modal
+  if (openCreateChannelBtn && createChannelModalOverlay) {
+    openCreateChannelBtn.onclick = () => {
       createChannelModalOverlay.style.display = 'flex';
       setTimeout(() => createChannelModalOverlay.classList.add('active'), 10);
+      // Reset modal state
+      channelOptions.forEach(opt => opt.classList.remove('selected'));
+      channelOptionText.classList.add('selected');
+      if (channelNameInput) channelNameInput.value = '';
     };
   }
-  if (closeCreateChannelModalBtn && createChannelModalOverlay) {
-    closeCreateChannelModalBtn.onclick = () => {
-      createChannelModalOverlay.classList.remove('active');
-      setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
-    };
-  }
+  // Close modal (cancel button)
   if (cancelCreateChannelBtn && createChannelModalOverlay) {
     cancelCreateChannelBtn.onclick = () => {
       createChannelModalOverlay.classList.remove('active');
       setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
     };
   }
-  if (createChannelForm) {
-    createChannelForm.onsubmit = async (e) => {
+  // Close modal when clicking outside
+  if (createChannelModalOverlay && createChannelModal) {
+    createChannelModalOverlay.addEventListener('click', function(e) {
+      if (e.target === createChannelModalOverlay) {
+        createChannelModalOverlay.classList.remove('active');
+        setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
+      }
+    });
+  }
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && createChannelModalOverlay && createChannelModalOverlay.classList.contains('active')) {
+      createChannelModalOverlay.classList.remove('active');
+      setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
+    }
+  });
+  // Channel type selection
+  channelOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      channelOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+    });
+  });
+  // Create channel logic
+  if (submitCreateChannelBtn) {
+    submitCreateChannelBtn.onclick = async (e) => {
       e.preventDefault();
-      const nameInput = document.getElementById('new-channel-name');
-      // Use the new hidden input for type
-      const type = channelTypeHidden ? channelTypeHidden.value : 'text';
-      if (!currentServer || !nameInput) {
-        alert('No server selected or missing input.');
+      if (!currentServer) {
+        alert('No server selected.');
         return;
       }
-      const name = nameInput.value.trim();
+      const name = channelNameInput ? channelNameInput.value.trim() : '';
       if (!name) {
         alert('Channel name required.');
         return;
       }
+      const selectedType = channelOptionText.classList.contains('selected') ? 'text' : 'voice';
       // Insert channel into Supabase
       const { data, error } = await supabaseClient.from('channels').insert([
-        { name, type, server_id: currentServer.id }
+        { name, type: selectedType, server_id: currentServer.id }
       ]).select().single();
       if (error) {
         alert('Error creating channel: ' + error.message);

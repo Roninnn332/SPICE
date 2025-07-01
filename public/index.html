@@ -294,34 +294,48 @@
     </div>
   </div>
 
-  <!-- Create Channel Modal (hidden by default) -->
+  <!-- Create Channel Modal (new design) -->
   <div class="modal-overlay" id="create-channel-modal-overlay" style="display:none;">
-    <div class="modal create-channel-modal-premium" id="create-channel-modal">
-      <button class="modal-close" id="close-create-channel-modal">&times;</button>
-      <div class="modal-content create-channel-modal-content-premium">
-        <h2 class="modal-title create-channel-title-premium">Create Channel</h2>
-        <form id="create-channel-form" class="create-channel-form-premium">
-          <div class="channel-type-toggle-premium">
-            <button type="button" class="channel-type-btn-premium selected" id="channel-type-text-btn">
-              <span class="channel-type-icon-premium">#</span>
-              <span class="channel-type-label-premium">Text</span>
-            </button>
-            <button type="button" class="channel-type-btn-premium" id="channel-type-voice-btn">
-              <span class="channel-type-icon-premium"><i class="fa-solid fa-volume-high"></i></span>
-              <span class="channel-type-label-premium">Voice</span>
-            </button>
-            <input type="hidden" name="channel-type" id="channel-type-hidden" value="text" />
+    <div class="modal" id="create-channel-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Create Channel</h2>
+      </div>
+      <div class="channel-type">
+        <div class="channel-type-title">Channel Type</div>
+        <div class="channel-options">
+          <div class="channel-option selected" data-type="text" id="channel-option-text">
+            <div class="channel-option-icon">#</div>
+            <div class="channel-option-title">Text</div>
+            <div class="channel-option-desc">Send messages, images, GIFs, emoji, opinions, and puns</div>
           </div>
-          <label for="new-channel-name" class="channel-name-label-premium">Channel Name</label>
-          <div class="channel-name-input-group-premium">
-            <span class="channel-name-prefix-premium" id="channel-name-prefix">#</span>
-            <input type="text" id="new-channel-name" name="new-channel-name" required maxlength="32" placeholder="new-channel" autocomplete="off" class="channel-name-input-premium" />
+          <div class="channel-option" data-type="voice" id="channel-option-voice">
+            <div class="channel-option-icon">🔊</div>
+            <div class="channel-option-title">Voice</div>
+            <div class="channel-option-desc">Hang out together with voice, video, and screen share</div>
           </div>
-          <div class="modal-actions-premium">
-            <button type="button" class="modal-cancel-btn-premium" id="cancel-create-channel">Cancel</button>
-            <button type="submit" class="modal-create-btn-premium" id="submit-create-channel">Create Channel</button>
-          </div>
-        </form>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="channel-name">
+        <div class="channel-name-title">Channel Name</div>
+        <div class="channel-name-input">
+          <span>#</span>
+          <input type="text" id="new-channel-name" placeholder="new-channel" maxlength="32" autocomplete="off" />
+        </div>
+      </div>
+      <div class="private-channel">
+        <div class="private-channel-info">
+          <div class="private-channel-icon">🔒</div>
+          <div class="private-channel-text">Private Channel</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="private-channel-toggle" disabled />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn" id="cancel-create-channel">Cancel</button>
+        <button class="modal-btn create-btn" id="submit-create-channel">Create Channel</button>
       </div>
     </div>
   </div>
