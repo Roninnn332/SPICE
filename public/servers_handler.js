@@ -39,6 +39,23 @@ window.addEventListener('DOMContentLoaded', () => {
     renderServersList();
   }
 
+  // --- Create Channel Modal Logic ---
+  const createChannelBtn = document.getElementById('create-channel-btn');
+  const createChannelModalOverlay = document.getElementById('create-channel-modal-overlay');
+  const closeCreateChannelModalBtn = document.getElementById('close-create-channel-modal');
+  if (createChannelBtn && createChannelModalOverlay) {
+    createChannelBtn.onclick = () => {
+      createChannelModalOverlay.style.display = 'flex';
+      setTimeout(() => createChannelModalOverlay.classList.add('active'), 10);
+    };
+  }
+  if (closeCreateChannelModalBtn && createChannelModalOverlay) {
+    closeCreateChannelModalBtn.onclick = () => {
+      createChannelModalOverlay.classList.remove('active');
+      setTimeout(() => createChannelModalOverlay.style.display = 'none', 300);
+    };
+  }
+
   // Server icon crop modal elements
   window.serverIconCropConfirm = document.getElementById('server-icon-crop-confirm');
   window.serverIconCropModal = document.getElementById('server-icon-crop-modal');
