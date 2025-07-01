@@ -215,6 +215,30 @@ async function renderChannelsList(serverId) {
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
   channelsListDiv.innerHTML = '';
+  // --- Add Create Channel Button ---
+  const createBtn = document.createElement('button');
+  createBtn.className = 'modal-btn create-btn';
+  createBtn.id = 'create-channel-btn';
+  createBtn.textContent = '+ Create Channel';
+  createBtn.style.marginBottom = '18px';
+  channelsListDiv.appendChild(createBtn);
+  // Re-attach open modal logic
+  createBtn.onclick = () => {
+    const overlay = document.getElementById('create-channel-modal-overlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      setTimeout(() => overlay.classList.add('active'), 10);
+      // Reset modal state
+      const channelOptionText = document.getElementById('channel-option-text');
+      const channelOptionVoice = document.getElementById('channel-option-voice');
+      const channelOptions = [channelOptionText, channelOptionVoice];
+      channelOptions.forEach(opt => opt && opt.classList.remove('selected'));
+      if (channelOptionText) channelOptionText.classList.add('selected');
+      const channelNameInput = document.getElementById('new-channel-name');
+      if (channelNameInput) channelNameInput.value = '';
+    }
+  };
+  // --- End Create Channel Button ---
   // Split channels by type
   const textChannels = channels.filter(c => c.type === 'text');
   const voiceChannels = channels.filter(c => c.type === 'voice');
