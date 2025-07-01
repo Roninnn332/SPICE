@@ -1231,6 +1231,7 @@ function hideFriendsSidebar() {
     tab.style.display = 'block';
   }
 }
+window.hideFriendsSidebar = hideFriendsSidebar;
 function showFriendsSidebar() {
   const layout = document.querySelector('.main-app-layout');
   if (!layout) return;
@@ -1238,6 +1239,7 @@ function showFriendsSidebar() {
   const tab = document.getElementById('show-friends-tab');
   if (tab) tab.style.display = 'none';
 }
+window.showFriendsSidebar = showFriendsSidebar;
 // Call hideFriendsSidebar() when entering a channel (text or voice)
 // Example: in openServerChannel or similar, after loading the channel, call hideFriendsSidebar();
 // You may want to call showFriendsSidebar() when the tab is clicked. 
