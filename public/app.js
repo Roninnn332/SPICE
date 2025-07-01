@@ -596,6 +596,30 @@ window.addEventListener('DOMContentLoaded', () => {
   if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left');
   if (chatSection) chatSection.classList.add('layout-animate-in-up');
   if (usersSidebar) usersSidebar.classList.add('layout-animate-in-right');
+
+  // --- Hide/Unhide Users Sidebar Logic ---
+  const hideBtn = document.querySelector('.hide-users-sidebar-btn');
+  const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
+  const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
+
+  if (hideBtn && usersSidebar && mainApp && unhideWrapper && unhideBtn) {
+    hideBtn.addEventListener('click', function() {
+      usersSidebar.classList.add('sidebar-hidden');
+      mainApp.classList.add('sidebar-hidden');
+      setTimeout(() => {
+        usersSidebar.style.display = 'none';
+        unhideWrapper.style.display = 'block';
+      }, 350);
+    });
+    unhideBtn.addEventListener('click', function() {
+      usersSidebar.style.display = '';
+      setTimeout(() => {
+        usersSidebar.classList.remove('sidebar-hidden');
+        mainApp.classList.remove('sidebar-hidden');
+        unhideWrapper.style.display = 'none';
+      }, 10);
+    });
+  }
 });
 
 // Optional: Prevent form submission (for now)

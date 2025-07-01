@@ -664,13 +664,13 @@ body {
 }
 .servers-sidebar {
   width: 56px;
-  border-right: 2.5px solid var(--primary-blue);
+  border-right: 0.5px solid var(--primary-blue);
   align-items: center;
   padding: 0.5rem 0 0.5rem 0;
 }
 .channels-sidebar {
   width: 180px;
-  border-right: 2.5px solid var(--primary-blue);
+  border-right: 0.5px solid var(--primary-blue);
   padding: 0.5rem 0.5rem;
   display: flex;
   flex-direction: column;
@@ -678,7 +678,7 @@ body {
 }
 .users-sidebar {
   width: 180px;
-  border-left: 2.5px solid var(--primary-blue);
+  border-left: 0.5px solid var(--primary-blue);
   padding: 0.5rem 0.5rem;
 }
 .chat-section {
@@ -4183,4 +4183,87 @@ input:checked + .slider:before {
   white-space: pre-line;
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+/* --- Hide/Unhide Users Sidebar --- */
+.hide-users-sidebar-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(37,99,235,0.85);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 12px 0 #2563eb44;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.13s;
+  outline: none;
+  animation: scaleIn 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+.hide-users-sidebar-btn:hover, .hide-users-sidebar-btn:focus {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 1.2rem #2563ebcc;
+  transform: scale(1.08);
+}
+
+.unhide-users-sidebar-btn-wrapper {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 100;
+  pointer-events: none;
+}
+.unhide-users-sidebar-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 0 1.5rem #2563ebcc, 0 2px 12px 0 #2563eb44;
+  cursor: pointer;
+  outline: none;
+  pointer-events: auto;
+  animation: scaleIn 0.7s cubic-bezier(.4,2,.6,1) both, voice-btn-glow 2.2s ease-in-out infinite alternate;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.13s;
+}
+.unhide-users-sidebar-btn:hover, .unhide-users-sidebar-btn:focus {
+  background: #1741a6;
+  color: #fff;
+  box-shadow: 0 0 2.2rem #2563ebcc;
+  transform: scale(1.10);
+}
+
+/* Sidebar hide/expand transitions */
+.users-sidebar {
+  transition: width 0.35s cubic-bezier(.4,2,.6,1), opacity 0.25s cubic-bezier(.4,2,.6,1), margin 0.35s cubic-bezier(.4,2,.6,1);
+  position: relative;
+}
+.users-sidebar.sidebar-hidden {
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+  margin-left: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.chat-section {
+  transition: margin-right 0.35s cubic-bezier(.4,2,.6,1), width 0.35s cubic-bezier(.4,2,.6,1);
+}
+.main-app-layout.sidebar-hidden .chat-section {
+  margin-right: 0 !important;
+  width: 100% !important;
 }
