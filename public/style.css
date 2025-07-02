@@ -2588,11 +2588,10 @@ body {
 #new-channel-name {
   flex: 1 1 0;
   background: transparent;
-  border: none;
   color: var(--white);
   font-size: 1.05rem;
   outline: none;
-  padding: 0.7em 0;
+  width:90%;
 }
 #new-channel-name:focus {
   color: var(--accent);
@@ -4716,4 +4715,14 @@ input:checked + .toggle-slider:before {
 .add-channel-modal, .add-channel-modal-content {
   background: #fff !important;
   color: #18181b !important;
+}
+
+.modal, #create-channel-modal, .create-channel-modal-content, #create-channel-modal * {
+  background: #fff !important;
+  background-image: none !important;
+  color: #18181b !important;
+  box-shadow: none;
+}
+#create-channel-modal .divider {
+  background: #eee !important;
 }
