@@ -528,17 +528,6 @@ async function openServerChannel(serverId, channelId) {
     .eq('channel_id', channelId)
     .order('created_at', { ascending: true });
   if (chat) chat.innerHTML = '';
-  // Ensure triangle background is present
-  if (chat && channel && channel.type === 'text') {
-    if (!chat.querySelector('.triangle-bg-wrap')) {
-      const triBg = document.createElement('div');
-      triBg.className = 'triangle-bg-wrap';
-      chat.prepend(triBg);
-      if (window.createTriangleBackground) {
-        window.createTriangleBackground('.triangle-bg-wrap');
-      }
-    }
-  }
   if (error || !messages) {
     if (chat) chat.innerHTML = '<div class="server-error">Failed to load messages.</div>';
     return;
