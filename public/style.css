@@ -4557,7 +4557,6 @@ input:checked + .toggle-slider:before {
   animation-delay: 0.25s;
 }
 /* Remove old create channel modal styles if present */
-.create-channel-btn, .add-channel-modal, .add-channel-modal-content, .add-channel-form, .add-channel-modal-close, .add-channel-modal-header, .add-channel-modal-footer, .add-channel-modal-actions { display: none !important; }
 
 /* --- Spice Loader Overlay --- */
 .site-loader-overlay {
