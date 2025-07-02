@@ -13,12 +13,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body>
-  <div class="site-loader-overlay" id="site-loader">
-    <div class="grid-loader">
-      <canvas id="grid-loader-canvas" width="220" height="220"></canvas>
-      <div class="loading-centerpiece"></div>
+  <div class="site-loader-overlay" id="site-loader" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:#0f0f0f;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:30px;">
+    <div class="bg-pattern"></div>
+    <div class="particles" id="particles"></div>
+    <div class="grid-boxes" id="gridBoxes"></div>
+    <div class="content">
+      <div class="loader"></div>
+      <div class="loading-text">Spice is syncing</div>
     </div>
-    <div class="loading-text">Spice is syncing...</div>
   </div>
   <!-- Header -->
   <header class="header">
@@ -332,10 +334,10 @@
           <div class="private-channel-text">Private Channel</div>
         </div>
         <label class="toggle-switch">
-          <input type="checkbox" id="private-channel-toggle" disabled />
+              <input type="checkbox" id="private-channel-toggle" disabled />
           <span class="toggle-slider"></span>
-        </label>
-      </div>
+            </label>
+          </div>
       <div class="modal-footer">
         <button class="modal-btn cancel-btn" id="cancel-create-channel">Cancel</button>
         <button class="modal-btn create-btn" id="submit-create-channel">Create Channel</button>
@@ -481,5 +483,48 @@
   <script src="app.js" type="module"></script>
   <script src="voice_webrtc.js"></script>
   <script src="servers_handler.js"></script>
+  <script>
+    // Create floating particles
+    const particlesContainer = document.getElementById('particles');
+    const particleCount = 30;
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      // Random size between 1px and 4px
+      const size = Math.random() * 3 + 1;
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      // Random position
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.bottom = `-10px`;
+      // Random animation duration between 10s and 20s
+      const duration = Math.random() * 10 + 10;
+      particle.style.animationDuration = `${duration}s`;
+      // Random delay
+      particle.style.animationDelay = `${Math.random() * 10}s`;
+      particlesContainer.appendChild(particle);
+    }
+    // Create moving grid boxes
+    const gridBoxesContainer = document.getElementById('gridBoxes');
+    const gridBoxCount = 15;
+    const gridSize = 120; // Matches the background grid size
+    for (let i = 0; i < gridBoxCount; i++) {
+      const box = document.createElement('div');
+      box.classList.add('grid-box');
+      // Random grid line position (based on 120px grid)
+      const gridLinesVertical = Math.floor(window.innerHeight / gridSize);
+      const randomLine = Math.floor(Math.random() * gridLinesVertical);
+      const topPosition = randomLine * gridSize + (gridSize/2 - 10); // Center on grid line
+      box.style.top = `${topPosition}px`;
+      // Random animation duration between 20s and 40s
+      const duration = Math.random() * 20 + 20;
+      box.style.animationDuration = `${duration}s`;
+      // Random delay
+      box.style.animationDelay = `${Math.random() * -20}s`; // Negative for variety
+      // Random opacity
+      box.style.opacity = Math.random() * 0.1 + 0.05;
+      gridBoxesContainer.appendChild(box);
+    }
+  </script>
 </body>
 </html> 
