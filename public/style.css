@@ -4698,3 +4698,17 @@ input:checked + .toggle-slider:before {
 @keyframes float {
   to { transform: translateY(-100vh); }
 }
+
+.site-loader-overlay.fade-out {
+  animation: loaderFadeOut 0.7s cubic-bezier(.4,2,.6,1) forwards;
+}
+@keyframes loaderFadeOut {
+  0% {
+    opacity: 1;
+    pointer-events: all;
+  }
+  100% {
+    opacity: 0;
+    pointer-events: none;
+  }
+}

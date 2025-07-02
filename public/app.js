@@ -572,16 +572,32 @@ window.addEventListener('DOMContentLoaded', function() {
   const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
   const user = JSON.parse(localStorage.getItem('spice_user'));
   const loader = document.getElementById('site-loader');
+  const MIN_LOADER_TIME = 2000;
+  const loaderStart = Date.now();
+  function hideLoader() {
+    if (loader) {
+      loader.classList.add('fade-out');
+      loader.addEventListener('animationend', () => {
+        loader.style.display = 'none';
+      }, { once: true });
+      document.body.classList.remove('pre-auth');
+    }
+  }
+  function finishAuth() {
+    const elapsed = Date.now() - loaderStart;
+    if (elapsed < MIN_LOADER_TIME) {
+      setTimeout(hideLoader, MIN_LOADER_TIME - elapsed);
+    } else {
+      hideLoader();
+    }
+  }
   if (user && user.username && user.user_id) {
     showMainApp(user);
     renderSidebarUserProfile(user);
     updateProfilePreview(user);
-    if (loader) loader.style.display = 'none';
-    document.body.classList.remove('pre-auth');
+    finishAuth();
   } else {
-    // Not logged in: hide loader after authentication check
-    if (loader) loader.style.display = 'none';
-    document.body.classList.remove('pre-auth');
+    finishAuth();
   }
 
   // Footer animation
