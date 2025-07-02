@@ -2439,26 +2439,22 @@ body {
   text-transform: uppercase;
 }
 .channel-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.7em;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 1.02rem;
+  color: #fff;
   background: none;
   border: none;
-  outline: none;
-  color: var(--white);
-  font-size: 1.04rem;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
-  padding: 0.38em 0.9em 0.38em 0.9em;
-  border-radius: 0.7em;
-  cursor: pointer;
-  transition: background 0.16s, color 0.16s;
+  padding: 0.18em 0.5em;
+  border-radius: 0.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
   width: 100%;
   text-align: left;
   min-height: 36px;
-  font-weight: 300 !important;
-  padding: 0.18em 0.5em 0.18em 0.5em !important;
-  gap: 0.4em !important;
+  cursor: pointer;
+  transition: background 0.16s, color 0.16s;
 }
 .channel-btn:hover, .channel-btn:focus {
   background: var(--primary-blue-dark);
@@ -2467,8 +2463,7 @@ body {
 .channel-btn.active {
   background: var(--primary-blue);
   color: var(--white);
-  font-weight: 700;
-  font-weight: 300 !important;
+  font-weight: 400;
 }
 .channel-btn .channel-icon {
   font-size: 1.1em;
@@ -4732,4 +4727,59 @@ input:checked + .toggle-slider:before {
 
 .channels-list {
   gap: 0.08rem !important;
+}
+
+/* --- Servers Sidebar Button --- */
+.server-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--off-black);
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #2563eb;
+  box-shadow: 0 2px 8px 0 rgba(37, 99, 235, 0.04);
+  transition: border 0.18s, background 0.18s, box-shadow 0.18s, transform 0.13s;
+  outline: none;
+}
+.server-btn:hover, .server-btn:focus {
+  border: 2px solid var(--primary-blue);
+  background: var(--primary-blue-dark);
+  color: var(--white);
+  transform: scale(1.06);
+}
+.server-btn.active {
+  border: 2.5px solid var(--accent);
+  background: var(--primary-blue);
+  color: var(--white);
+  box-shadow: 0 4px 16px 0 rgba(96,165,250,0.18);
+}
+
+/* --- Users/Friends Sidebar Button --- */
+.user-btn {
+  font-family: 'Arial', sans-serif;
+  font-weight: 400;
+  font-size: 0.98rem;
+  color: #43b581;
+  background: #10131a;
+  border: none;
+  border-radius: 0.7em;
+  padding: 0.3rem 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.user-btn:hover, .user-btn:focus {
+  background: #181c25;
+  color: #fff;
 }
