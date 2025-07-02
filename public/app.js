@@ -755,6 +755,8 @@ window.addEventListener('DOMContentLoaded', function() {
     }
   }
   createTriangleBackground('.triangle-bg-wrap');
+
+  window.createTriangleBackground = createTriangleBackground;
 });
 
 // Optional: Prevent form submission (for now)
