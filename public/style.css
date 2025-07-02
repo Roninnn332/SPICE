@@ -4712,3 +4712,8 @@ input:checked + .toggle-slider:before {
     pointer-events: none;
   }
 }
+
+.add-channel-modal, .add-channel-modal-content {
+  background: #fff !important;
+  color: #18181b !important;
+}
