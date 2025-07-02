@@ -13,8 +13,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body>
-  <div class="site-loader-overlay" id="site-loader" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:#0f0f0f;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:30px;">
-    <div class="loader"></div>
+  <div class="site-loader-overlay" id="site-loader">
+    <div class="grid-loader">
+      <canvas id="grid-loader-canvas" width="220" height="220"></canvas>
+      <div class="loading-centerpiece"></div>
+    </div>
     <div class="loading-text">Spice is syncing...</div>
   </div>
   <!-- Header -->

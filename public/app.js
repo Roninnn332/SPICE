@@ -691,6 +691,97 @@ window.addEventListener('DOMContentLoaded', function() {
       }, 10);
     });
   }
+
+  // --- Grid Loader Animation ---
+  const canvas = document.getElementById('grid-loader-canvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const size = 220;
+    const gridCount = 5;
+    const spacing = size / (gridCount - 1);
+    const boxSize = 18;
+    // Define box paths (each is a list of grid points to follow)
+    const paths = [
+      // Horizontal
+      [ [0,0], [4,0], [4,4], [0,4], [0,0] ],
+      // Vertical
+      [ [2,0], [2,4], [2,0] ],
+      // Diagonal
+      [ [0,4], [4,0], [0,4] ],
+      // Square
+      [ [1,1], [3,1], [3,3], [1,3], [1,1] ]
+    ];
+    // Each box moves along its path
+    const boxes = paths.map((path, i) => ({
+      path,
+      t: Math.random(), // start offset
+      speed: 0.25 + 0.1 * i // different speed for each
+    }));
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function interpPath(path, t) {
+      // t in [0,1], interpolate along path
+      let total = 0, segs = [];
+      for (let i=0; i<path.length-1; ++i) {
+        const dx = path[i+1][0]-path[i][0], dy = path[i+1][1]-path[i][1];
+        const d = Math.sqrt(dx*dx+dy*dy);
+        segs.push(d); total += d;
+      }
+      let dist = t * total;
+      for (let i=0; i<segs.length; ++i) {
+        if (dist <= segs[i]) {
+          const f = dist/segs[i];
+          return [
+            lerp(path[i][0], path[i+1][0], f),
+            lerp(path[i][1], path[i+1][1], f)
+          ];
+        }
+        dist -= segs[i];
+      }
+      return path[path.length-1];
+    }
+    function drawGrid() {
+      ctx.clearRect(0,0,size,size);
+      ctx.save();
+      ctx.strokeStyle = '#233';
+      ctx.lineWidth = 1.5;
+      for (let i=0; i<gridCount; ++i) {
+        // Vertical
+        ctx.beginPath();
+        ctx.moveTo(i*spacing,0);
+        ctx.lineTo(i*spacing,size);
+        ctx.stroke();
+        // Horizontal
+        ctx.beginPath();
+        ctx.moveTo(0,i*spacing);
+        ctx.lineTo(size,i*spacing);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    function drawBoxes(time) {
+      boxes.forEach((box, i) => {
+        box.t = (box.t + box.speed * 0.008) % 1;
+        const [gx, gy] = interpPath(box.path, box.t);
+        const x = gx * spacing;
+        const y = gy * spacing;
+        ctx.save();
+        ctx.fillStyle = i===0 ? '#2563eb' : (i===1 ? '#8A2BE2' : (i===2 ? '#43e6b1' : '#fff'));
+        ctx.globalAlpha = 0.92;
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.rect(x-boxSize/2, y-boxSize/2, boxSize, boxSize);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+    function animate() {
+      drawGrid();
+      drawBoxes();
+      requestAnimationFrame(animate);
+    }
+    animate();
+  }
 });
 
 // Optional: Prevent form submission (for now)
