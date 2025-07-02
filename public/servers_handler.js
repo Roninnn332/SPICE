@@ -217,9 +217,9 @@ async function renderChannelsList(serverId) {
   channelsListDiv.innerHTML = '';
   // --- Add Create Channel Button ---
   const createBtn = document.createElement('button');
-  createBtn.className = 'modal-btn create-btn';
+  createBtn.className = 'create-channel-btn';
   createBtn.id = 'create-channel-btn';
-  createBtn.textContent = '+ Create Channel';
+  createBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Channel';
   createBtn.style.marginBottom = '18px';
   channelsListDiv.appendChild(createBtn);
   // Re-attach open modal logic
