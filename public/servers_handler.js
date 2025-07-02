@@ -212,57 +212,75 @@ async function renderChannelsList(serverId) {
   if (error || !channels) return;
   channelsList = channels;
   // Render
-  // --- New: Render into new containers ---
-  const textChannelsDiv = document.getElementById('spice-text-channels');
-  const voiceChannelsDiv = document.getElementById('spice-voice-channels');
-  if (textChannelsDiv) textChannelsDiv.innerHTML = '';
-  if (voiceChannelsDiv) voiceChannelsDiv.innerHTML = '';
-  // --- Add Create Channel Button logic ---
-  const createBtn = document.getElementById('create-channel-btn');
-  if (createBtn) {
-    createBtn.onclick = () => {
-      const overlay = document.getElementById('create-channel-modal-overlay');
-      if (overlay) {
-        overlay.style.display = 'flex';
-        setTimeout(() => overlay.classList.add('active'), 10);
-        // Reset modal state
-        const channelOptionText = document.getElementById('channel-option-text');
-        const channelOptionVoice = document.getElementById('channel-option-voice');
-        const channelOptions = [channelOptionText, channelOptionVoice];
-        channelOptions.forEach(opt => opt && opt.classList.remove('selected'));
-        if (channelOptionText) channelOptionText.classList.add('selected');
-        const channelNameInput = document.getElementById('new-channel-name');
-        if (channelNameInput) channelNameInput.value = '';
-      }
-    };
-  }
+  const channelsListDiv = channelsSidebar.querySelector('.channels-list');
+  if (!channelsListDiv) return;
+  channelsListDiv.innerHTML = '';
+  // --- Add Create Channel Button ---
+  const createBtn = document.createElement('button');
+  createBtn.className = 'modal-btn create-btn';
+  createBtn.id = 'create-channel-btn';
+  createBtn.textContent = '+ Create Channel';
+  createBtn.style.marginBottom = '18px';
+  channelsListDiv.appendChild(createBtn);
+  // Re-attach open modal logic
+  createBtn.onclick = () => {
+    const overlay = document.getElementById('create-channel-modal-overlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      setTimeout(() => overlay.classList.add('active'), 10);
+      // Reset modal state
+      const channelOptionText = document.getElementById('channel-option-text');
+      const channelOptionVoice = document.getElementById('channel-option-voice');
+      const channelOptions = [channelOptionText, channelOptionVoice];
+      channelOptions.forEach(opt => opt && opt.classList.remove('selected'));
+      if (channelOptionText) channelOptionText.classList.add('selected');
+      const channelNameInput = document.getElementById('new-channel-name');
+      if (channelNameInput) channelNameInput.value = '';
+    }
+  };
+  // --- End Create Channel Button ---
   // Split channels by type
   const textChannels = channels.filter(c => c.type === 'text');
   const voiceChannels = channels.filter(c => c.type === 'voice');
-  // Render text channels
-  textChannels.forEach(channel => {
-    const btn = document.createElement('button');
-    btn.className = 'spice-channel-item' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-    btn.innerHTML = `<span class='spice-channel-icon'>#</span> <span class='spice-channel-name'>${channel.name}</span>`;
-    btn.onclick = () => {
-      currentChannel = channel;
-      renderChannelsList(serverId); // re-render to update active
-      openServerChannel(serverId, channel.id);
-    };
-    if (textChannelsDiv) textChannelsDiv.appendChild(btn);
-  });
-  // Render voice channels
-  voiceChannels.forEach(channel => {
-    const btn = document.createElement('button');
-    btn.className = 'spice-channel-item' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
-    btn.innerHTML = `<span class='spice-channel-icon'>🔊</span> <span class='spice-channel-name'>${channel.name}</span>`;
-    btn.onclick = () => {
-      currentChannel = channel;
-      renderChannelsList(serverId); // re-render to update active
-      openServerChannel(serverId, channel.id);
-    };
-    if (voiceChannelsDiv) voiceChannelsDiv.appendChild(btn);
-  });
+  // Text Channels Section
+  if (textChannels.length) {
+    const textHeader = document.createElement('div');
+    textHeader.className = 'channel-section-header';
+    textHeader.textContent = 'Text Channels';
+    channelsListDiv.appendChild(textHeader);
+    textChannels.forEach(channel => {
+      const btn = document.createElement('button');
+      btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
+      btn.innerHTML = `<span class='channel-icon'>#</span> ${channel.name}`;
+      btn.onclick = () => {
+        currentChannel = channel;
+        renderChannelsList(serverId); // re-render to update active
+        openServerChannel(serverId, channel.id);
+      };
+      channelsListDiv.appendChild(btn);
+    });
+    const pad = document.createElement('div');
+    pad.className = 'channels-list-padding';
+    channelsListDiv.appendChild(pad);
+  }
+  // Voice Channels Section
+  if (voiceChannels.length) {
+    const voiceHeader = document.createElement('div');
+    voiceHeader.className = 'channel-section-header';
+    voiceHeader.textContent = 'Voice Channels';
+    channelsListDiv.appendChild(voiceHeader);
+    voiceChannels.forEach(channel => {
+      const btn = document.createElement('button');
+      btn.className = 'channel-btn' + (currentChannel && currentChannel.id === channel.id ? ' active' : '');
+      btn.innerHTML = `<span class='channel-icon'><i class='fa-solid fa-volume-high'></i></span> ${channel.name}`;
+      btn.onclick = () => {
+        currentChannel = channel;
+        renderChannelsList(serverId); // re-render to update active
+        openServerChannel(serverId, channel.id);
+      };
+      channelsListDiv.appendChild(btn);
+    });
+  }
 }
 
 // --- Socket.IO for Channel/Voice Presence ---

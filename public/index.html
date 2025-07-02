@@ -91,29 +91,12 @@
         <button class="server-btn"></button>
       </div>
     </aside>
-    <aside class="sidebar channels-sidebar spice-channels-sidebar">
-      <div class="channels-sidebar-inner">
-        <button id="create-channel-btn" class="create-channel-btn spice-create-channel-btn" type="button">
-          <span class="create-channel-plus">+</span> <span class="create-channel-label">Create Channel</span>
-        </button>
-        <div class="channels-section">
-          <div class="channels-section-title">TEXT CHANNELS</div>
-          <div class="channels-list spice-channels-list" id="spice-text-channels">
-            <!-- Text channels will be rendered here -->
-          </div>
-        </div>
-        <div class="channels-section">
-          <div class="channels-section-title">VOICE CHANNELS</div>
-          <div class="channels-list spice-channels-list" id="spice-voice-channels">
-            <!-- Voice channels will be rendered here -->
-          </div>
-        </div>
+    <aside class="sidebar channels-sidebar">
+      <div class="channels-list">
+        <!-- Channel list goes here -->
       </div>
-      <div class="spice-user-card">
-        <img class="spice-user-avatar" src="assets/logo.png" alt="User Avatar" />
-        <span class="spice-user-name">SPICE</span>
-        <span class="spice-status-dot"></span>
-      </div>
+      <button id="create-channel-btn" class="create-channel-btn" type="button"><i class="fa-solid fa-plus"></i> Create Channel</button>
+      <button id="sidebar-user-profile" class="sidebar-user-profile sidebar-user-profile-btn" type="button"></button>
     </aside>
     <main class="chat-section">
       <header class="chat-header">
