@@ -664,9 +664,11 @@ body {
 }
 .servers-sidebar {
   width: 56px;
-  border-right: 0.5px solid var(--primary-blue);
   align-items: center;
   padding: 0.5rem 0 0.5rem 0;
+  background-color: #373737;
+  margin: 7px;
+  border-radius: 18px;
 }
 .channels-sidebar {
   width: 180px;
@@ -677,9 +679,11 @@ body {
   justify-content: space-between;
 }
 .users-sidebar {
-  width: 180px;
-  border-left: 0.5px solid var(--primary-blue);
+  width: 220px;
   padding: 0.5rem 0.5rem;
+  margin: 7px;
+  border-radius: 18px;
+  background-color: #3d3d3d
 }
 .chat-section {
   flex: 1 1 0;
