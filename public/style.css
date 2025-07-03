@@ -831,11 +831,10 @@ body {
   margin-top: 0.5rem;
 }
 .server-btn {
-  width: 55px;
-  height: 55px;
+  width: 23px;
+  height: 32px;
   border-radius: 40%;
-  background: var(--off-black);
-  border: 2px solid transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -845,6 +844,7 @@ body {
   font-size: 1.2rem;
   color: var(--gray);
   box-shadow: 0 2px 8px 0 rgba(37, 99, 235, 0.04);
+  padding: 0;
 }
 .server-btn:hover, .server-btn:focus {
   border: 2px solid var(--primary-blue);
@@ -3248,11 +3248,11 @@ input:checked + .slider:before {
 
 /* Server sidebar avatar (server icon in sidebar) */
 .server-sidebar-avatar {
-  width: 55px !important;
-  height: 55px !important;
-  border-radius: 50% !important;
+  width: 51px !important;
+  height: 51px !important;
+  border-radius: 40% !important;
   object-fit: cover !important;
-  border: 2.5px solid var(--primary-blue);
+  border: 2.5px solid #ffffff;
   box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
   background: var(--off-black);
   display: block;
@@ -4940,3 +4940,60 @@ input:checked + .toggle-slider:before {
   color: var(--white);
   border-style: solid;
 }
+
+/* --- Layout Entrance Animations --- */
+@keyframes sidebarSlideIn {
+  0% { opacity: 0; transform: translateX(-60px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.sidebar-slide-in {
+  animation: sidebarSlideIn 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+
+@keyframes serverBtnWaveIn {
+  0% { opacity: 0; transform: scale(0.7) translateY(30px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.server-btn-animate {
+  animation: serverBtnWaveIn 0.5s cubic-bezier(.4,2,.6,1) both;
+}
+
+@keyframes channelsSlideIn {
+  0% { opacity: 0; transform: translateX(-40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.channels-slide-in {
+  animation: channelsSlideIn 0.6s cubic-bezier(.4,2,.6,1) both;
+}
+
+@keyframes chatSlideIn {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.chat-slide-in {
+  animation: chatSlideIn 0.6s cubic-bezier(.4,2,.6,1) both;
+}
+
+@keyframes usersSlideIn {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.users-slide-in {
+  animation: usersSlideIn 0.6s cubic-bezier(.4,2,.6,1) both;
+}
+
+/* Staggered animation for children */
+.animate-stagger > * {
+  opacity: 0;
+  animation: serverBtnWaveIn 0.5s cubic-bezier(.4,2,.6,1) both;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0.08s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.16s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.24s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.32s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.40s; }
+.animate-stagger > *:nth-child(6) { animation-delay: 0.48s; }
+.animate-stagger > *:nth-child(7) { animation-delay: 0.56s; }
+.animate-stagger > *:nth-child(8) { animation-delay: 0.64s; }
+.animate-stagger > *:nth-child(9) { animation-delay: 0.72s; }
+.animate-stagger > *:nth-child(10) { animation-delay: 0.80s; }
