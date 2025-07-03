@@ -683,7 +683,7 @@ body {
   padding: 0.5rem 0.5rem;
   margin: 7px;
   border-radius: 18px;
-  background-color: #3d3d3d
+  background-color: #111;
 }
 .chat-section {
   flex: 1 1 0;
@@ -1806,6 +1806,8 @@ body {
   border-radius: 0.7rem;
   transition: background 0.18s;
   cursor: pointer;
+  background-color: #282727;
+
 }
 .friend-list-item:hover {
   background: #181c25;
@@ -1815,7 +1817,7 @@ body {
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #2563eb;
+  border: 2px solid #ffffff;
   background: #222;
   flex-shrink: 0;
 }
@@ -2435,15 +2437,15 @@ body {
 }
 .channel-section-header {
   font-size: 0.98rem;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  color: var(--primary-blue);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  color: #5d5d5d;
   margin: 0.7rem 0 0.2rem 0.5rem;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 .channel-btn {
-  font-family: 'Montserrat', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   font-weight: 300;
   font-size: 1.02rem;
   color: #fff;
@@ -2461,8 +2463,8 @@ body {
   transition: background 0.16s, color 0.16s;
 }
 .channel-btn:hover, .channel-btn:focus {
-  background: var(--primary-blue-dark);
-  color: var(--accent);
+  background: #434242;
+  color: #ffffff;
 }
 .channel-btn.active {
   background: var(--primary-blue);
@@ -4193,7 +4195,7 @@ input:checked + .slider:before {
   top: 12px;
   right: 12px;
   z-index: 10;
-  background: rgba(37,99,235,0.85);
+  background: rgba(0, 0, 0, 0.85);
   color: #fff;
   border: none;
   border-radius: 50%;
@@ -4203,16 +4205,16 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
-  box-shadow: 0 2px 12px 0 #2563eb44;
+  box-shadow: 0 2px 12px 0 #00000044;
   cursor: pointer;
   transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.13s;
   outline: none;
   animation: scaleIn 0.7s cubic-bezier(.4,2,.6,1) both;
 }
 .hide-users-sidebar-btn:hover, .hide-users-sidebar-btn:focus {
-  background: #2563eb;
+  background: #393939;
   color: #fff;
-  box-shadow: 0 0 1.2rem #2563ebcc;
+  box-shadow: 0 0 1.2rem #000000cc;
   transform: scale(1.08);
 }
 
