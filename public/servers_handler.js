@@ -150,35 +150,6 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     };
   }
-
-  // Animate servers sidebar
-  serversSidebar = document.querySelector('.servers-sidebar');  if (serversSidebar) {
-    serversSidebar.classList.add('sidebar-slide-in');
-    setTimeout(() => {
-      // Animate server buttons with stagger
-      const serverBtns = serversSidebar.querySelectorAll('.server-btn');
-      serverBtns.forEach((btn, i) => {
-        setTimeout(() => {
-          btn.classList.add('server-btn-animate');
-        }, i * 90);
-      });
-      // After all server buttons, animate channels sidebar
-      setTimeout(() => {
-        const channelsSidebar = document.querySelector('.channels-sidebar');
-        if (channelsSidebar) channelsSidebar.classList.add('channels-slide-in');
-        // After channels, animate chat section
-        setTimeout(() => {
-          const chatSection = document.querySelector('.chat-section');
-          if (chatSection) chatSection.classList.add('chat-slide-in');
-          // After chat, animate users/friends sidebar
-          setTimeout(() => {
-            const usersSidebar = document.querySelector('.users-sidebar, .friends-panel');
-            if (usersSidebar) usersSidebar.classList.add('users-slide-in');
-          }, 350);
-        }, 350);
-      }, serverBtns.length * 90 + 200);
-    }, 400);
-  }
 });
 
 // --- Server List UI ---

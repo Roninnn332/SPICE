@@ -514,7 +514,6 @@ function showMainApp(user) {
   setTimeout(() => {
     if (loader) loader.style.display = 'none';
     document.body.classList.remove('pre-auth');
-    animateMainLayout();
   }, 4000);
 }
 
@@ -1325,36 +1324,4 @@ if (joinServerForm) {
       setupJoinRequestRealtime(serverId, user.user_id);
     }
   };
-}
-
-function animateMainLayout() {
-  // Animate servers sidebar
-  let serversSidebar = document.querySelector('.servers-sidebar');
-  if (serversSidebar) {
-    serversSidebar.classList.add('sidebar-slide-in');
-    setTimeout(() => {
-      // Animate server buttons with stagger
-      const serverBtns = serversSidebar.querySelectorAll('.server-btn');
-      serverBtns.forEach((btn, i) => {
-        setTimeout(() => {
-          btn.classList.add('server-btn-animate');
-        }, i * 90);
-      });
-      // After all server buttons, animate channels sidebar
-      setTimeout(() => {
-        const channelsSidebar = document.querySelector('.channels-sidebar');
-        if (channelsSidebar) channelsSidebar.classList.add('channels-slide-in');
-        // After channels, animate chat section
-        setTimeout(() => {
-          const chatSection = document.querySelector('.chat-section');
-          if (chatSection) chatSection.classList.add('chat-slide-in');
-          // After chat, animate users/friends sidebar
-          setTimeout(() => {
-            const usersSidebar = document.querySelector('.users-sidebar, .friends-panel');
-            if (usersSidebar) usersSidebar.classList.add('users-slide-in');
-          }, 350);
-        }, serverBtns.length * 90 + 200);
-      }, 400);
-    }, 400);
-  }
 } 
