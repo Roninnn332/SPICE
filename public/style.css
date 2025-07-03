@@ -3261,8 +3261,8 @@ input:checked + .slider:before {
 
 /* Server sidebar avatar (server icon in sidebar) */
 .server-sidebar-avatar {
-  width: 32px;
-  height: 32px;
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
   object-fit: cover;
   border: 2.5px solid var(--primary-blue);
