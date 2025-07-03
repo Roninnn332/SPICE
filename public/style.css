@@ -663,7 +663,7 @@ body {
   min-height: 0;
 }
 .servers-sidebar {
-  width: 72px;
+  width: 56px;
   align-items: center;
   padding: 0.5rem 0 0.5rem 0;
   background-color: #373737;
@@ -1780,21 +1780,18 @@ body {
 /* Friends list in users-sidebar */
 .friends-list-section {
   margin-top: 1.2rem;
-  background: linear-gradient(135deg, #fff 60%, #f6f7fa 100%);
-  border-radius: 1.4rem;
-  box-shadow: 0 4px 32px 0 rgba(37,99,235,0.10);
-  padding: 1.5rem 1.1rem 1.1rem 1.1rem;
-  border: 1.5px solid #e6e8ef;
+  background: #10131a;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+  padding: 0.7rem 0.5rem 0.5rem 0.5rem;
 }
 .friends-list-heading {
-  color: #23272f;
-  font-size: 1.18rem;
-  font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-  font-weight: 700;
-  margin-bottom: 1.1rem;
+  color: var(--primary-blue);
+  font-size: 1.08rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
   margin-left: 0.2rem;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 0 #fff, 0 0.5px 1.5px #e6e8ef;
 }
 .friends-list {
   display: flex;
@@ -1804,75 +1801,32 @@ body {
 .friend-list-item {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.55rem 0.7rem 0.55rem 0.5rem;
-  border-radius: 1.1rem;
-  background: linear-gradient(90deg, #fff 80%, #f6f7fa 100%);
-  box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-  border: 1.2px solid #ececf0;
+  gap: 0.7rem;
+  padding: 0.3rem 0.2rem;
+  border-radius: 0.7rem;
+  transition: background 0.18s;
   cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.13s;
-  position: relative;
 }
 .friend-list-item:hover {
-  background: linear-gradient(90deg, #f6f7fa 70%, #e9eaf0 100%);
-  box-shadow: 0 4px 18px 0 rgba(37,99,235,0.13);
-  border: 1.5px solid #bfc7d1;
-  transform: translateY(-2px) scale(1.025);
+  background: #181c25;
 }
 .friend-list-avatar {
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2.5px solid #23272f;
-  background: #f6f7fa;
+  border: 2px solid #2563eb;
+  background: #222;
   flex-shrink: 0;
-  box-shadow: 0 1px 6px 0 rgba(37,99,235,0.10);
 }
 .friend-list-username {
-  font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-  font-weight: 500;
-  color: #23272f;
-  font-size: 1.08rem;
+  font-weight: 600;
+  color: #fff;
+  font-size: 1rem;
   letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.18s, font-weight 0.18s;
-}
-.friend-list-item:hover .friend-list-username {
-  color: #2563eb;
-  font-weight: 700;
-}
-/* Add a subtle divider between friends */
-.friend-list-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 60px;
-  right: 0.7rem;
-  bottom: -0.25rem;
-  height: 1px;
-  background: linear-gradient(90deg, #ececf0 60%, #fff0 100%);
-  opacity: 0.7;
-}
-/* Responsive tweaks */
-@media (max-width: 700px) {
-  .friends-list-section {
-    padding: 1rem 0.3rem 0.7rem 0.3rem;
-    border-radius: 1rem;
-  }
-  .friend-list-item {
-    padding: 0.38rem 0.3rem 0.38rem 0.2rem;
-    border-radius: 0.8rem;
-  }
-  .friend-list-avatar {
-    width: 30px;
-    height: 30px;
-  }
-  .friend-list-username {
-    font-size: 0.98rem;
-  }
 }
 
 /* DM Chat UI in users-sidebar */
@@ -1880,31 +1834,32 @@ body {
   width: 520px;
   min-width: 0;
   max-width: 100vw;
-  transition: width 0.45s cubic-bezier(.4,2,.6,1);
+  transition: width 0.35s cubic-bezier(.4,2,.6,1);
   z-index: 4000;
-  background: linear-gradient(135deg, #fff 70%, #f6f7fa 100%);
-  box-shadow: 0 8px 48px 0 rgba(37,99,235,0.13);
+  background: #10131a;
+  box-shadow: 0 8px 48px 0 rgba(37,99,235,0.18);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   padding: 0;
-  border-left: 1.5px solid #e6e8ef;
+}
+.users-sidebar {
+  transition: width 0.35s cubic-bezier(.4,2,.6,1);
 }
 .dm-chat-header {
   display: flex;
   align-items: center;
-  gap: 1.1rem;
-  background: linear-gradient(90deg, #fff 80%, #f6f7fa 100%);
-  padding: 1.2rem 1.5rem;
-  border-bottom: 2px solid #e6e8ef;
-  min-height: 68px;
+  gap: 1rem;
+  background: #181c25;
+  padding: 1rem 1.2rem;
+  border-bottom: 2px solid var(--primary-blue);
+  min-height: 64px;
   position: relative;
-  box-shadow: 0 2px 12px 0 rgba(37,99,235,0.04);
 }
 .dm-back-btn {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--primary-blue);
   font-size: 1.7rem;
   cursor: pointer;
   border-radius: 50%;
@@ -1913,52 +1868,43 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-  box-shadow: 0 1px 4px 0 rgba(37,99,235,0.08);
+  transition: background 0.18s, color 0.18s;
 }
 .dm-back-btn:hover, .dm-back-btn:focus {
-  background: #e6e8ef;
-  color: #181c25;
-  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.13);
+  background: var(--primary-blue-dark);
+  color: var(--white);
 }
 .dm-chat-avatar {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2.5px solid #2563eb;
-  background: #f6f7fa;
-  box-shadow: 0 1px 8px 0 rgba(37,99,235,0.10);
+  border: 2px solid #2563eb;
+  background: #222;
 }
 .dm-chat-username {
   font-weight: 700;
-  color: #23272f;
-  font-size: 1.18rem;
+  color: #fff;
+  font-size: 1.2rem;
   letter-spacing: 0.01em;
-  font-family: 'Inter', 'Montserrat', Arial, sans-serif;
 }
 .dm-chat-messages {
   flex: 1 1 0;
   overflow-y: auto;
-  padding: 1.5rem 1.5rem 1.1rem 1.5rem;
-  background: linear-gradient(135deg, #fff 80%, #f6f7fa 100%);
+  padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+  background: #10131a;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.7rem;
   min-height: 0;
   max-height: calc(100vh - 120px);
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: #dbeafe #f6f7fa;
-  animation: slipIn 0.7s cubic-bezier(.4,2,.6,1);
-}
-@keyframes slipIn {
-  0% { opacity: 0; transform: translateY(40px) scale(0.98); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  scrollbar-color: var(--primary-blue) #181c25;
 }
 .dm-chat-messages::-webkit-scrollbar {
-  width: 7px;
-  background: #f6f7fa;
+  width: 6px;
+  background: #181c25;
   transition: opacity 0.25s;
   opacity: 0;
 }
@@ -1966,64 +1912,45 @@ body {
   opacity: 1;
 }
 .dm-chat-messages::-webkit-scrollbar-thumb {
-  background: #dbeafe;
+  background: var(--primary-blue);
   border-radius: 6px;
   min-height: 24px;
   transition: background 0.2s;
 }
 .dm-chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #2563eb33;
+  background: var(--accent);
 }
 .dm-chat-messages::-webkit-scrollbar-track {
-  background: #f6f7fa;
+  background: #181c25;
   border-radius: 6px;
 }
 .dm-message {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.13rem;
-  animation: slipMessage 0.6s cubic-bezier(.4,2,.6,1);
+  gap: 0.1rem;
 }
 .dm-message.me {
   align-items: flex-end;
 }
-@keyframes slipMessage {
-  0% { opacity: 0; transform: translateY(30px) scale(0.97); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
 .dm-message-bubble {
-  background: linear-gradient(90deg, #f6f7fa 60%, #fff 100%);
-  color: #23272f;
-  border-radius: 1.3rem 1.3rem 1.3rem 0.5rem;
-  padding: 0.85em 1.3em;
-  font-size: 1.09rem;
-  font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-  box-shadow: 0 2px 16px 0 rgba(37,99,235,0.08);
+  background: #23272f;
+  color: #fff;
+  border-radius: 1.2rem;
+  padding: 0.7em 1.2em;
+  font-size: 1.08rem;
+  font-family: 'Roboto', sans-serif;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.08);
   max-width: 80vw;
   min-width: 40px;
   word-break: break-word;
   position: relative;
-  transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
-  border: 1.2px solid #e6e8ef;
-  will-change: transform, box-shadow;
+  transition: background 0.18s;
 }
 .dm-message.me .dm-message-bubble {
-  background: linear-gradient(90deg, #e6e8ef 60%, #fff 100%);
-  color: #2563eb;
+  background: var(--primary-blue);
+  color: #fff;
   align-self: flex-end;
-  border-radius: 1.3rem 1.3rem 0.5rem 1.3rem;
-  border: 1.2px solid #dbeafe;
-  box-shadow: 0 4px 18px 0 rgba(37,99,235,0.13);
-}
-.dm-message-bubble:hover {
-  box-shadow: 0 6px 24px 0 rgba(37,99,235,0.16);
-  transform: translateY(-2px) scale(1.03);
-  background: linear-gradient(90deg, #f6f7fa 40%, #e6e8ef 100%);
-}
-.dm-message.me .dm-message-bubble:hover {
-  background: linear-gradient(90deg, #dbeafe 60%, #fff 100%);
-  color: #1741a6;
 }
 .dm-message-text {
   display: block;
@@ -2031,40 +1958,38 @@ body {
 .dm-message-time {
   display: block;
   font-size: 0.85rem;
-  color: #bfc7d1;
+  color: var(--gray);
   margin-top: 0.2em;
   text-align: right;
 }
 .dm-chat-input-area {
   display: flex;
   align-items: center;
-  padding: 0.8rem 1.5rem;
-  background: linear-gradient(90deg, #fff 80%, #f6f7fa 100%);
-  border-top: 2px solid #e6e8ef;
-  min-height: 68px;
+  padding: 0.7rem 1.2rem;
+  background: #181c25;
+  border-top: 2px solid var(--primary-blue);
+  min-height: 64px;
   gap: 0.7rem;
-  box-shadow: 0 -2px 12px 0 rgba(37,99,235,0.04);
 }
 .dm-chat-input {
   flex: 1 1 0;
   border: none;
   border-radius: 1.2rem;
-  padding: 0.9em 1.3em;
-  font-size: 1.09rem;
-  background: #f6f7fa;
-  color: #23272f;
-  font-family: 'Inter', 'Montserrat', Arial, sans-serif;
+  padding: 0.8em 1.2em;
+  font-size: 1.08rem;
+  background: #23272f;
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
   outline: none;
   transition: background 0.18s, box-shadow 0.18s;
-  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.06);
-  border: 1.2px solid #e6e8ef;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.08);
 }
 .dm-chat-input:focus {
-  background: #fff;
-  box-shadow: 0 0 0 2px #dbeafe;
+  background: #23272f;
+  box-shadow: 0 0 0 2px var(--primary-blue-dark);
 }
 .dm-chat-send-btn {
-  background: #2563eb;
+  background: var(--primary-blue);
   color: #fff;
   border: none;
   border-radius: 50%;
@@ -2075,14 +2000,11 @@ body {
   justify-content: center;
   font-size: 1.3rem;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.13s;
-  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+  transition: background 0.18s, color 0.18s;
 }
 .dm-chat-send-btn:hover, .dm-chat-send-btn:focus {
-  background: #1741a6;
-  color: #fff;
-  box-shadow: 0 4px 16px 0 rgba(37,99,235,0.18);
-  transform: scale(1.08);
+  background: var(--accent);
+  color: var(--pure-black);
 }
 @media (max-width: 700px) {
   .users-sidebar.dm-active {
@@ -2096,15 +2018,14 @@ body {
     padding: 0.7rem 0.7rem;
   }
   .dm-chat-avatar {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
   .dm-chat-username {
     font-size: 1rem;
   }
   .dm-chat-messages {
     padding: 0.7rem 0.7rem 0.3rem 0.7rem;
-    gap: 0.6rem;
   }
   .dm-chat-input-area {
     min-height: 54px;
@@ -2115,7 +2036,7 @@ body {
     height: 2.2rem;
     font-size: 1.1rem;
   }
-}
+} 
 
 /* DM chat loading and error states */
 .dm-loading {
@@ -4865,4 +4786,91 @@ input:checked + .toggle-slider:before {
 .user-btn:hover, .user-btn:focus {
   background: #181c25;
   color: #fff;
+}
+
+.friends-panel {
+  width: 280px;
+  background: #111;
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.05);
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+  color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 100vw;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.add-friend-btn {
+  width: 100%;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 0;
+  margin-bottom: 22px;
+  cursor: pointer;
+  transition: background 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.add-friend-btn:hover {
+  background: #e5e5e5;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 18px;
+  margin-top: 0;
+  letter-spacing: 0.01em;
+}
+
+.friends-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.friend {
+  display: flex;
+  align-items: center;
+  background: #1a1a1a;
+  border-radius: 14px;
+  padding: 10px;
+  margin-bottom: 10px;
+  animation: fadeIn 0.5s cubic-bezier(.4,0,.2,1);
+  transition: background 0.15s;
+}
+.friend:hover {
+  background: #2a2a2a;
+}
+
+.friend img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #333;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.friend span {
+  font-size: 15px;
+  color: #f0f0f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px);}
+  to   { opacity: 1; transform: translateY(0);}
 }
