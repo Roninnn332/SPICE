@@ -2396,19 +2396,6 @@ body {
   }
 }
 
-/* ... existing code ... */
-.server-btn img,
-.server-btn .user-avatar-initial {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  aspect-ratio: 1 / 1;
-  display: block;
-}
-/* ... existing code ... */
-
-/* ... existing code ... */
 .fade-in-up {
   opacity: 0;
   transform: translateY(24px);
