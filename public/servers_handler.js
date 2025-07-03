@@ -152,8 +152,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Animate servers sidebar
-  const serversSidebar = document.querySelector('.servers-sidebar');
-  if (serversSidebar) {
+  serversSidebar = document.querySelector('.servers-sidebar');  if (serversSidebar) {
     serversSidebar.classList.add('sidebar-slide-in');
     setTimeout(() => {
       // Animate server buttons with stagger
