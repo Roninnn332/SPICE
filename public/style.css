@@ -663,7 +663,7 @@ body {
   min-height: 0;
 }
 .servers-sidebar {
-  width: 56px;
+  width: 72px;
   align-items: center;
   padding: 0.5rem 0 0.5rem 0;
   background-color: #373737;
@@ -2483,26 +2483,25 @@ body {
 
 .create-channel-btn {
   width: 100%;
-  background: var(--primary-blue);
-  color: var(--white);
-  font-family: 'Montserrat', sans-serif;
+  background-color: #111;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   font-weight: 700;
   font-size: 1.05rem;
   border: none;
-  border-radius: 0.8em;
-  padding: 0.6em 0;
+  border-radius: em;
   margin-bottom: 0.7rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.6em;
+  padding: 9px;
+  border-radius: 7px;
   transition: background 0.18s, color 0.18s, transform 0.13s;
 }
 .create-channel-btn:hover, .create-channel-btn:focus {
-  background: var(--accent);
-  color: var(--pure-black);
-  transform: scale(1.04);
+background-color: rgb(66, 64, 64);
 }
 .create-channel-modal-content {
   min-width: 340px;
