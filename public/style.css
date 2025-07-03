@@ -662,165 +662,29 @@ body {
   min-width: 0;
   min-height: 0;
 }
-.sidebar-container {
-  position: relative;
-  width: 90px;
-  min-width: 90px;
-  z-index: 2;
-}
-
 .servers-sidebar {
-  width: 90px;
-  min-width: 90px;
-  height: 100vh;
-  background: linear-gradient(to bottom, #111, #1a1a1a);
+  width: 72px;
+  align-items: center;
+  padding: 0.5rem 0 0.5rem 0;
+  background-color: #373737;
+  margin: 7px;
+  border-radius: 18px;
+}
+.channels-sidebar {
+  width: 180px;
+  border-right: 0.5px solid var(--primary-blue);
+  padding: 0.5rem 0.5rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 20px 0;
-  gap: 22px;
-  border-radius: 0 24px 24px 0;
-  box-shadow: 3px 0 20px rgba(255, 255, 255, 0.04);
+  justify-content: space-between;
 }
-
-.servers-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  width: 100%;
-  margin-top: 0;
+.users-sidebar {
+  width: 220px;
+  padding: 0.5rem 0.5rem;
+  margin: 7px;
+  border-radius: 18px;
+  background-color: #111;
 }
-
-.server-btn, .server-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #1e1e1e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-  backdrop-filter: blur(4px);
-  border: none;
-  outline: none;
-  font-family: 'Inter', sans-serif;
-  font-size: 22px;
-  color: #fff;
-  font-weight: bold;
-  box-shadow: none;
-}
-
-.server-btn img,
-.server-btn span,
-.server-icon img,
-.server-icon span {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  font-size: 22px;
-  text-align: center;
-  line-height: 60px;
-  color: #fff;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.server-btn:hover, .server-btn:focus, .server-icon:hover, .server-icon:focus {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.12);
-  z-index: 2;
-}
-
-.server-btn.active, .server-icon.active {
-  box-shadow: 0 0 15px rgba(255,255,255,0.18), 0 0 0 2px #fff;
-  background: #232323;
-  color: #fff;
-}
-
-/* Add Server Button */
-.add-server-btn, .server-icon.add {
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
-  font-size: 28px;
-  font-weight: bold;
-  border: 2px dashed #aaa;
-  animation: sidebar-pulse 2.5s infinite;
-  transition: background 0.3s, box-shadow 0.3s;
-}
-.add-server-btn:hover, .server-icon.add:hover {
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 20px rgba(255,255,255,0.18);
-}
-
-@keyframes sidebar-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.08); }
-  70% { box-shadow: 0 0 0 12px rgba(255, 255, 255, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-
-/* Tooltip for server buttons */
-.server-btn[data-tooltip]:hover::after, .server-icon[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 70px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  color: #000;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 8px;
-  white-space: nowrap;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
-  z-index: 10;
-}
-
-/* Floating glowing indicator */
-.sidebar-indicator {
-  position: absolute;
-  left: 0;
-  width: 6px;
-  height: 40px;
-  background: white;
-  border-radius: 4px;
-  transition: top 0.3s ease, opacity 0.3s ease;
-  opacity: 0;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
-  z-index: 1;
-}
-.sidebar-indicator.visible {
-  opacity: 1;
-}
-
-/* Responsive adjustments */
-@media (max-width: 700px) {
-  .sidebar-container, .servers-sidebar {
-    width: 60px;
-    min-width: 60px;
-  }
-  .server-btn, .server-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-  .sidebar-indicator {
-    height: 28px;
-  }
-}
-
-/* Remove old server sidebar/button styles */
-.servers-sidebar, .servers-list, .server-btn, .add-server-btn, .server-sidebar-avatar, .user-avatar-initial {
-  /* All old styles for these classes are replaced above. */
-}
-
 .chat-section {
   flex: 1 1 0;
   display: flex;
@@ -954,6 +818,69 @@ body {
   .user-name {
     max-width: 40px;
     font-size: 0.9rem;
+  }
+}
+
+/* Servers Sidebar */
+.servers-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.server-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--off-black);
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border 0.18s, background 0.18s, box-shadow 0.18s, transform 0.13s;
+  outline: none;
+  font-size: 1.2rem;
+  color: var(--gray);
+  box-shadow: 0 2px 8px 0 rgba(37, 99, 235, 0.04);
+}
+.server-btn:hover, .server-btn:focus {
+  border: 2px solid var(--primary-blue);
+  background: var(--primary-blue-dark);
+  color: var(--white);
+  transform: scale(1.06);
+}
+.server-btn.active {
+  border: 2.5px solid var(--accent);
+  background: var(--primary-blue);
+  color: var(--white);
+  box-shadow: 0 4px 16px 0 rgba(96,165,250,0.18);
+}
+.add-server-btn {
+  background: var(--pure-black);
+  color: var(--primary-blue);
+  border: 2px dashed var(--primary-blue);
+  font-size: 1.1rem;
+}
+.add-server-btn:hover, .add-server-btn:focus {
+  background: var(--primary-blue);
+  color: var(--white);
+  border-style: solid;
+}
+
+@media (max-width: 700px) {
+  .servers-list {
+    flex-direction: row;
+    gap: 0.4rem;
+    margin-top: 0;
+    width: auto;
+  }
+  .server-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
   }
 }
 
