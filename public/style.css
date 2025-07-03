@@ -1780,7 +1780,7 @@ body {
 /* Friends list in users-sidebar */
 .friends-list-section {
   margin-top: 1.2rem;
-  background: #10131a;
+  background: #111;
   border-radius: 1rem;
   box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
   padding: 0.7rem 0.5rem 0.5rem 0.5rem;
@@ -2467,7 +2467,7 @@ body {
   color: #ffffff;
 }
 .channel-btn.active {
-  background: var(--primary-blue);
+  background: rgb(36, 36, 36);
   color: var(--white);
   font-weight: 400;
 }
