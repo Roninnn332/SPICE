@@ -1780,65 +1780,99 @@ body {
 /* Friends list in users-sidebar */
 .friends-list-section {
   margin-top: 1.2rem;
-  background: #181c25;
-  border-radius: 1.2rem;
-  box-shadow: 0 4px 24px 0 rgba(37,99,235,0.10);
-  padding: 1.1rem 0.7rem 0.7rem 0.7rem;
+  background: linear-gradient(135deg, #fff 60%, #f6f7fa 100%);
+  border-radius: 1.4rem;
+  box-shadow: 0 4px 32px 0 rgba(37,99,235,0.10);
+  padding: 1.5rem 1.1rem 1.1rem 1.1rem;
+  border: 1.5px solid #e6e8ef;
 }
 .friends-list-heading {
-  color: #43b581;
-  font-size: 1.13rem;
+  color: #23272f;
+  font-size: 1.18rem;
   font-family: 'Inter', 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  margin-bottom: 0.7rem;
+  margin-bottom: 1.1rem;
   margin-left: 0.2rem;
   letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 #fff, 0 0.5px 1.5px #e6e8ef;
 }
 .friends-list {
   display: flex;
   flex-direction: column;
-  gap: 0.32rem;
+  gap: 0.5rem;
 }
 .friend-list-item {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.22rem 0.18rem 0.22rem 0.18rem;
-  border-radius: 0.8rem;
-  background: transparent;
-  transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+  gap: 0.85rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.5rem;
+  border-radius: 1.1rem;
+  background: linear-gradient(90deg, #fff 80%, #f6f7fa 100%);
+  box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
+  border: 1.2px solid #ececf0;
   cursor: pointer;
-  box-shadow: none;
+  transition: background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.13s;
+  position: relative;
 }
 .friend-list-item:hover {
-  background: #23283a;
-  box-shadow: 0 2px 8px 0 rgba(67,181,129,0.08);
-  transform: translateY(-1px) scale(1.03);
+  background: linear-gradient(90deg, #f6f7fa 70%, #e9eaf0 100%);
+  box-shadow: 0 4px 18px 0 rgba(37,99,235,0.13);
+  border: 1.5px solid #bfc7d1;
+  transform: translateY(-2px) scale(1.025);
 }
 .friend-list-avatar {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #43b581;
-  background: #23283a;
+  border: 2.5px solid #23272f;
+  background: #f6f7fa;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px 0 rgba(67,181,129,0.10);
+  box-shadow: 0 1px 6px 0 rgba(37,99,235,0.10);
 }
 .friend-list-username {
   font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-  font-weight: 400;
-  color: #e6f9f0;
-  font-size: 1.01rem;
+  font-weight: 500;
+  color: #23272f;
+  font-size: 1.08rem;
   letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.18s;
+  transition: color 0.18s, font-weight 0.18s;
 }
 .friend-list-item:hover .friend-list-username {
-  color: #43b581;
-  font-weight: 500;
+  color: #2563eb;
+  font-weight: 700;
+}
+/* Add a subtle divider between friends */
+.friend-list-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 60px;
+  right: 0.7rem;
+  bottom: -0.25rem;
+  height: 1px;
+  background: linear-gradient(90deg, #ececf0 60%, #fff0 100%);
+  opacity: 0.7;
+}
+/* Responsive tweaks */
+@media (max-width: 700px) {
+  .friends-list-section {
+    padding: 1rem 0.3rem 0.7rem 0.3rem;
+    border-radius: 1rem;
+  }
+  .friend-list-item {
+    padding: 0.38rem 0.3rem 0.38rem 0.2rem;
+    border-radius: 0.8rem;
+  }
+  .friend-list-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .friend-list-username {
+    font-size: 0.98rem;
+  }
 }
 
 /* DM Chat UI in users-sidebar */
