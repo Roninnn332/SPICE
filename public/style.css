@@ -3248,10 +3248,10 @@ input:checked + .slider:before {
 
 /* Server sidebar avatar (server icon in sidebar) */
 .server-sidebar-avatar {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 55px !important;
+  height: 55px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
   border: 2.5px solid var(--primary-blue);
   box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
   background: var(--off-black);
@@ -4861,4 +4861,82 @@ input:checked + .toggle-slider:before {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px);}
   to   { opacity: 1; transform: translateY(0);}
+}
+
+/* Server sidebar fallback initial avatar */
+.user-avatar-initial {
+  width: 55px !important;
+  height: 55px !important;
+  border-radius: 50% !important;
+  background: var(--primary-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  border: 2.5px solid var(--primary-blue);
+  text-transform: uppercase;
+  object-fit: cover !important;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+/* Space out each server button in the sidebar */
+.servers-list > * {
+  margin-bottom: 18px;
+}
+
+/* Dedicated server button style (not shared) */
+.server-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 40%;
+  background: var(--off-black);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border 0.18s, background 0.18s, box-shadow 0.18s, transform 0.13s;
+  outline: none;
+  font-size: 1.2rem;
+  color: var(--gray);
+  box-shadow: 0 2px 8px 0 rgba(37, 99, 235, 0.04);
+  padding: 0;
+}
+.server-btn.active {
+  border: 2.5px solid var(--accent);
+  background: var(--primary-blue);
+  color: var(--white);
+  box-shadow: 0 4px 16px 0 rgba(96,165,250,0.18);
+}
+.server-btn:hover, .server-btn:focus {
+  border: 2px solid var(--primary-blue);
+  background: var(--primary-blue-dark);
+  color: var(--white);
+  transform: scale(1.06);
+}
+
+/* Dedicated add server button style */
+.add-server-btn {
+  background: var(--pure-black);
+  color: var(--primary-blue);
+  border: 2px dashed var(--primary-blue);
+  font-size: 1.7rem;
+  width: 72px;
+  height: 72px;
+  border-radius: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.add-server-btn:hover, .add-server-btn:focus {
+  background: var(--primary-blue);
+  color: var(--white);
+  border-style: solid;
 }
