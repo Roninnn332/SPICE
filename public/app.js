@@ -579,14 +579,14 @@ window.addEventListener('DOMContentLoaded', function() {
       loader.classList.add('fade-out');
       loader.addEventListener('animationend', () => {
         loader.style.display = 'none';
-        // --- Animate servers sidebar in with 3D flip ---
+        // --- Animate servers sidebar in with slide-in-up ---
         const serversSidebar = document.querySelector('.servers-sidebar');
         if (serversSidebar) {
           serversSidebar.classList.remove('layout-animate-in-left'); // Remove old animation if present
-          serversSidebar.classList.add('flip-in');
-          // After flip animation, trigger staggered content animation
+          serversSidebar.classList.add('slide-in-up');
+          // After slide-in-up animation, trigger staggered content animation
           serversSidebar.addEventListener('animationend', function handler() {
-            serversSidebar.classList.remove('flip-in');
+            serversSidebar.classList.remove('slide-in-up');
             serversSidebar.classList.add('stagger-in');
             serversSidebar.removeEventListener('animationend', handler);
           });

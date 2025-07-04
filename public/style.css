@@ -669,7 +669,31 @@ body {
   background-color: #373737;
   margin: 7px;
   border-radius: 18px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: none;
 }
+
+.servers-sidebar.slide-in-up {
+  animation: serversSlideInUp 0.7s cubic-bezier(.4,2,.6,1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes serversSlideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .channels-sidebar {
   width: 180px;
   border-right: 0.5px solid var(--primary-blue);
