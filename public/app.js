@@ -590,8 +590,10 @@ window.addEventListener('DOMContentLoaded', function() {
     renderSidebarUserProfile(user);
     updateProfilePreview(user);
     finishAuth();
+    if (mainApp) mainApp.style.display = 'flex';
   } else {
     finishAuth();
+    if (mainApp) mainApp.style.display = 'none';
   }
 
   // Footer animation
