@@ -4964,3 +4964,68 @@ input:checked + .toggle-slider:before {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+
+/* --- Force Animation Initial State and Transitions --- */
+.sidebar,
+.layout-section {
+  opacity: 0 !important;
+  transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1) !important;
+}
+.sidebar {
+  transform: translateX(-60px) !important;
+}
+.layout-section {
+  transform: translateY(40px) scale(0.98) !important;
+}
+.sidebar.visible {
+  opacity: 1 !important;
+  transform: translateX(0) !important;
+}
+.layout-section.visible {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+/* --- 3D Rotate + Slide-in + Fade Animations --- */
+.sidebar,
+.layout-section {
+  opacity: 0 !important;
+  transition:
+    opacity 0.8s cubic-bezier(.4,0,.2,1),
+    transform 0.8s cubic-bezier(.4,0,.2,1) !important;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  perspective: 800px;
+}
+
+/* Sidebars: slide in from left, rotateY */
+.sidebar {
+  transform: translateX(-60px) rotateY(25deg) !important;
+}
+.sidebar.visible {
+  opacity: 1 !important;
+  transform: translateX(0) rotateY(0deg) !important;
+}
+
+/* Main content: slide up, rotateX */
+.layout-section {
+  transform: translateY(40px) scale(0.98) rotateX(18deg) !important;
+}
+.layout-section.visible {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) rotateX(0deg) !important;
+}
+
+/* Staggered list items: subtle rotateZ for extra flair */
+.staggered-list > * {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95) rotateZ(-8deg);
+  transition:
+    opacity 0.5s cubic-bezier(.4,0,.2,1),
+    transform 0.5s cubic-bezier(.4,0,.2,1);
+  will-change: opacity, transform;
+}
+.staggered-list.visible > * {
+  opacity: 1;
+  transform: translateY(0) scale(1) rotateZ(0deg);
+}
