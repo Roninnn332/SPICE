@@ -579,6 +579,18 @@ window.addEventListener('DOMContentLoaded', function() {
       loader.classList.add('fade-out');
       loader.addEventListener('animationend', () => {
         loader.style.display = 'none';
+        // --- Animate servers sidebar in with 3D flip ---
+        const serversSidebar = document.querySelector('.servers-sidebar');
+        if (serversSidebar) {
+          serversSidebar.classList.remove('layout-animate-in-left'); // Remove old animation if present
+          serversSidebar.classList.add('flip-in');
+          // After flip animation, trigger staggered content animation
+          serversSidebar.addEventListener('animationend', function handler() {
+            serversSidebar.classList.remove('flip-in');
+            serversSidebar.classList.add('stagger-in');
+            serversSidebar.removeEventListener('animationend', handler);
+          });
+        }
       }, { once: true });
       document.body.classList.remove('pre-auth');
     }
