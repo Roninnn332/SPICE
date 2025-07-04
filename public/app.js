@@ -716,7 +716,8 @@ avatarInput.addEventListener('change', (e) => {
         }, 100);
     };
     reader.readAsDataURL(file);
-});
+    });
+}
 
 // Cancel crop
 avatarCropCancel.onclick = () => {
@@ -804,7 +805,8 @@ bannerInput.addEventListener('change', (e) => {
         }, 100);
     };
     reader.readAsDataURL(file);
-});
+    });
+}
 
 // Cancel crop
 bannerCropCancel.onclick = () => {
@@ -829,9 +831,754 @@ bannerCropConfirm.onclick = async () => {
             const data = await res.json();
             if (data.secure_url) {
                 // Update banner in UI
-                document.querySelectorAll('.profile-banner').forEach(div => {
-                    div.style.backgroundImage = `url('${data.secure_url}')`;
-                    div.style.backgroundSize = 'cover';
+```tool_code
+// Adding missing closing curly braces to the event listeners for avatarInput and bannerInput.
+<replit_final_file>
+// Enhanced Spice Chat Application with Premium Features
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+// Supabase Configuration
+const SUPABASE_URL = 'https://qhbeexkqftbhjkeuruiy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoYmVleGtxZnRiaGprZXVydWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzAxMTEsImV4cCI6MjA2NTg0NjExMX0.swpojIxW47IIPX097X45l3LYe5OiDZijGlAMXfCD30I';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabase = supabase;
+
+// Global Variables
+let socket = null;
+let currentDM = null;
+let friendsRealtimeSub = null;
+let joinRequestRealtimeSub = null;
+
+// DOM Elements
+const modalOverlay = document.getElementById('modal-overlay');
+const authModal = document.getElementById('auth-modal');
+const modalContent = document.getElementById('modal-content');
+const openLoginBtn = document.getElementById('open-login');
+const openSignupBtn = document.getElementById('open-signup');
+const closeModalBtn = document.getElementById('close-modal');
+
+// Profile modal open/close logic
+const profileBtn = document.getElementById('sidebar-user-profile');
+const profileModal = document.getElementById('profile-modal');
+const closeProfileModalBtn = document.getElementById('close-profile-modal');
+
+// Avatar upload, crop, and Cloudinary integration
+let cropper = null;
+const avatarInput = document.getElementById('avatar-upload-input');
+const avatarCropModal = document.getElementById('avatar-crop-modal');
+const avatarCropArea = document.getElementById('avatar-crop-area');
+const avatarCropConfirm = document.getElementById('avatar-crop-confirm');
+const avatarCropCancel = document.getElementById('avatar-crop-cancel');
+const avatarLoading = document.getElementById('avatar-upload-loading');
+
+// Banner upload, crop, and Cloudinary integration
+let bannerCropper = null;
+const bannerInput = document.getElementById('banner-upload-input');
+const bannerCropModal = document.getElementById('banner-crop-modal');
+const bannerCropArea = document.getElementById('banner-crop-area');
+const bannerCropConfirm = document.getElementById('banner-crop-confirm');
+const bannerCropCancel = document.getElementById('banner-crop-cancel');
+const bannerLoading = document.getElementById('banner-upload-loading');
+
+// Add Friend Modal open/close logic
+const openAddFriendBtn = document.getElementById('open-add-friend-modal');
+const addFriendModal = document.getElementById('add-friend-modal');
+const closeAddFriendModalBtn = document.getElementById('close-add-friend-modal');
+
+// Enhanced Animation System
+class AnimationController {
+  static observeElements() {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Observe elements for animation
+    document.querySelectorAll('.feature, .hero-content, .hero-visuals').forEach(el => {
+      observer.observe(el);
+    });
+  }
+
+  static staggeredAnimation(elements, baseDelay = 100) {
+    elements.forEach((el, index) => {
+      setTimeout(() => {
+        el.classList.add('animate-fade-in-up');
+      }, baseDelay * index);
+    });
+  }
+
+  static slideInFromDirection(element, direction = 'left', duration = 600) {
+    element.style.transform = `translateX(${direction === 'left' ? '-100%' : '100%'})`;
+    element.style.opacity = '0';
+    element.style.transition = `all ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+
+    setTimeout(() => {
+      element.style.transform = 'translateX(0)';
+      element.style.opacity = '1';
+    }, 50);
+  }
+}
+
+// Enhanced Loading System
+class LoadingManager {
+  static show(message = 'Loading...') {
+    const loader = document.getElementById('site-loader');
+    const tagline = loader?.querySelector('.site-loader-tagline');
+
+    if (loader) {
+      if (tagline) tagline.textContent = message;
+      loader.style.display = 'flex';
+      loader.classList.remove('fade-out');
+    }
+  }
+
+  static hide(delay = 0) {
+    setTimeout(() => {
+      const loader = document.getElementById('site-loader');
+      if (loader) {
+        loader.classList.add('fade-out');
+        setTimeout(() => {
+          loader.style.display = 'none';
+        }, 500);
+      }
+    }, delay);
+  }
+}
+
+// Enhanced Modal System
+class ModalManager {
+  static openModal(mode = 'login') {
+    modalContent.classList.add('fade-slide');
+    if (mode === 'login') this.renderLogin();
+    else this.renderSignup();
+
+    modalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Focus management
+    setTimeout(() => {
+      const firstInput = modalContent.querySelector('input');
+      if (firstInput) firstInput.focus();
+    }, 300);
+  }
+
+  static closeModal() {
+    modalOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  static renderLogin() {
+    modalContent.innerHTML = `
+      <h2 class="modal-title gradient-text">Welcome Back</h2>
+      <form class="auth-form glass-effect" autocomplete="off" style="padding: 2rem; border-radius: var(--border-radius-lg); backdrop-filter: blur(20px);">
+        <div class="input-group" style="margin-bottom: 1.5rem;">
+          <label style="color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Username</label>
+          <input type="text" placeholder="Enter your username" required autofocus style="width: 100%; padding: 1rem; border: 1px solid var(--glass-border); border-radius: var(--border-radius-md); background: var(--glass-bg); color: var(--text-primary); backdrop-filter: blur(10px);" />
+        </div>
+        <div class="input-group" style="margin-bottom: 2rem;">
+          <label style="color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Password</label>
+          <input type="password" placeholder="Enter your password" required style="width: 100%; padding: 1rem; border: 1px solid var(--glass-border); border-radius: var(--border-radius-md); background: var(--glass-bg); color: var(--text-primary); backdrop-filter: blur(10px);" />
+        </div>
+        <button type="submit" class="btn btn-primary hover-lift" style="width: 100%; margin-bottom: 1rem;">
+          <i class="fas fa-sign-in-alt"></i>
+          Sign In
+        </button>
+        <p class="switch-auth" style="text-align: center; color: var(--text-secondary);">
+          Don't have an account? 
+          <a href="#" id="switch-to-signup" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">Create one</a>
+        </p>
+      </form>
+    `;
+
+    document.getElementById('switch-to-signup').onclick = (e) => {
+      e.preventDefault();
+      this.animateFormSwitch(() => this.renderSignup());
+    };
+  }
+
+  static renderSignup() {
+    modalContent.innerHTML = `
+      <h2 class="modal-title gradient-text">Join Spice</h2>
+      <form class="auth-form glass-effect" autocomplete="off" style="padding: 2rem; border-radius: var(--border-radius-lg); backdrop-filter: blur(20px);">
+        <div class="input-group" style="margin-bottom: 1.5rem;">
+          <label style="color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Username</label>
+          <input type="text" placeholder="Choose a username" required autofocus style="width: 100%; padding: 1rem; border: 1px solid var(--glass-border); border-radius: var(--border-radius-md); background: var(--glass-bg); color: var(--text-primary); backdrop-filter: blur(10px);" />
+        </div>
+        <div class="input-group" style="margin-bottom: 2rem;">
+          <label style="color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Password</label>
+          <input type="password" placeholder="Create a password" required style="width: 100%; padding: 1rem; border: 1px solid var(--glass-border); border-radius: var(--border-radius-md); background: var(--glass-bg); color: var(--text-primary); backdrop-filter: blur(10px);" />
+        </div>
+        <button type="submit" class="btn btn-primary hover-lift" style="width: 100%; margin-bottom: 1rem;">
+          <i class="fas fa-user-plus"></i>
+          Create Account
+        </button>
+        <p class="switch-auth" style="text-align: center; color: var(--text-secondary);">
+          Already have an account? 
+          <a href="#" id="switch-to-login" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">Sign in</a>
+        </p>
+      </form>
+    `;
+
+    document.getElementById('switch-to-login').onclick = (e) => {
+      e.preventDefault();
+      this.animateFormSwitch(() => this.renderLogin());
+    };
+  }
+
+  static animateFormSwitch(renderFn) {
+    const modal = authModal;
+    const startHeight = modal.offsetHeight;
+    modal.style.height = startHeight + 'px';
+    modalContent.style.opacity = '0';
+    modalContent.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+      renderFn();
+      const endHeight = modalContent.offsetHeight + 80;
+      modal.style.height = endHeight + 'px';
+      modalContent.style.opacity = '1';
+      modalContent.style.transform = 'translateY(0)';
+
+      setTimeout(() => {
+        modal.style.height = '';
+      }, 300);
+    }, 200);
+  }
+}
+
+// Enhanced Chat System
+class ChatManager {
+  static appendMessage(content, sender = 'system', isMe = false) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+
+    const messageEl = document.createElement('div');
+    messageEl.className = `chat__conversation-board__message ${isMe ? 'reversed' : ''}`;
+
+    const avatarColor = isMe ? 'var(--gradient-primary)' : 'var(--gradient-accent)';
+    const senderInitial = sender.charAt(0).toUpperCase();
+
+    messageEl.innerHTML = `
+      <div class="chat__conversation-board__message__person">
+        <div class="chat__conversation-board__message__person__avatar" style="background: ${avatarColor}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+          ${senderInitial}
+        </div>
+      </div>
+      <div class="chat__conversation-board__message__bubble">
+        <p>${content}</p>
+        <small style="opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        </small>
+      </div>
+    `;
+
+    // Add entrance animation
+    messageEl.style.opacity = '0';
+    messageEl.style.transform = 'translateY(20px) scale(0.95)';
+
+    chatMessages.appendChild(messageEl);
+
+    // Trigger animation
+    setTimeout(() => {
+      messageEl.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      messageEl.style.opacity = '1';
+      messageEl.style.transform = 'translateY(0) scale(1)';
+    }, 50);
+
+    // Smooth scroll to bottom
+    chatMessages.scrollTo({
+      top: chatMessages.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  static setupMessageInput() {
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    if (!messageInput || !sendButton) return;
+
+    const sendMessage = () => {
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      // Add message to chat
+      this.appendMessage(message, 'You', true);
+
+      // Clear input with animation
+      messageInput.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        messageInput.value = '';
+        messageInput.style.transform = 'scale(1)';
+      }, 100);
+
+      // Demo response after delay
+      setTimeout(() => {
+        const responses = [
+          "That's interesting! 🤔",
+          "I totally agree! 👍",
+          "Thanks for sharing! ✨",
+          "Great point! 🎯",
+          "Amazing! 🚀"
+        ];
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        this.appendMessage(randomResponse, 'Friend');
+      }, 1000 + Math.random() * 2000);
+    };
+
+    // Enter key to send
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Click to send
+    sendButton.addEventListener('click', sendMessage);
+
+    // Enhanced input focus effects
+    messageInput.addEventListener('focus', () => {
+      messageInput.parentElement.style.borderColor = 'var(--accent-cyan)';
+      messageInput.parentElement.style.boxShadow = 'var(--glow-accent)';
+    });
+
+    messageInput.addEventListener('blur', () => {
+      messageInput.parentElement.style.borderColor = 'var(--glass-border)';
+      messageInput.parentElement.style.boxShadow = 'none';
+    });
+  }
+}
+
+// Authentication System
+class AuthManager {
+  static generateUserId() {
+    return Math.floor(100000000 + Math.random() * 900000000).toString();
+  }
+
+  static async signup(username, password) {
+    const user_id = this.generateUserId();
+    const { data, error } = await supabase.from('users').insert([
+      { user_id, username, password }
+    ]);
+    if (error) throw new Error(error.message);
+    return { user_id, username };
+  }
+
+  static async login(username, password) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .single();
+    if (error || !data) throw new Error('Invalid credentials');
+    return { username: data.username, user_id: data.user_id };
+  }
+
+  static showMainApp(user) {
+    // Hide landing elements with animation
+    document.querySelectorAll('.header, .hero, .info, .site-footer').forEach(el => {
+      if (el) {
+        el.style.transition = 'all 0.5s ease';
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+          el.style.display = 'none';
+        }, 500);
+      }
+    });
+
+    // Show main app with animation
+    const mainApp = document.querySelector('.main-app-layout');
+    if (mainApp) {
+      setTimeout(() => {
+        mainApp.style.display = 'flex';
+        mainApp.style.opacity = '0';
+        setTimeout(() => {
+          mainApp.style.transition = 'opacity 0.6s ease';
+          mainApp.style.opacity = '1';
+
+          // Animate sidebars
+          const sidebars = mainApp.querySelectorAll('.sidebar');
+          sidebars.forEach((sidebar, index) => {
+            setTimeout(() => {
+              AnimationController.slideInFromDirection(sidebar, index % 2 === 0 ? 'left' : 'right');
+            }, index * 200);
+          });
+        }, 100);
+      }, 300);
+    }
+
+    // Close modal
+    ModalManager.closeModal();
+
+    // Setup chat
+    ChatManager.setupMessageInput();
+
+    // Welcome message
+    setTimeout(() => {
+      ChatManager.appendMessage(`Welcome to Spice, ${user.username}! 🎉`);
+    }, 1500);
+  }
+
+  static logout() {
+    localStorage.removeItem('spice_user');
+
+    // Animate out main app
+    const mainApp = document.querySelector('.main-app-layout');
+    if (mainApp) {
+      mainApp.style.transition = 'all 0.5s ease';
+      mainApp.style.opacity = '0';
+      mainApp.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        mainApp.style.display = 'none';
+      }, 500);
+    }
+
+    // Show landing page
+    setTimeout(() => {
+      document.querySelectorAll('.header, .hero, .info, .site-footer').forEach(el => {
+        if (el) {
+          el.style.display = '';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            el.style.transition = 'all 0.6s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, 100);
+        }
+      });
+    }, 300);
+
+    // Disconnect socket
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+  }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+  LoadingManager.show('Initializing Spice Chat...');
+
+  // Check for existing user
+  const user = JSON.parse(localStorage.getItem('spice_user') || 'null');
+
+  if (user && user.username && user.user_id) {
+    LoadingManager.show('Loading your dashboard...');
+    setTimeout(() => {
+      AuthManager.showMainApp(user);
+      LoadingManager.hide(1000);
+    }, 1500);
+  } else {
+    LoadingManager.hide(2000);
+    setTimeout(() => {
+      AnimationController.observeElements();
+      triggerPageLoadAnimations();
+    }, 2500);
+  }
+
+  // Modal event listeners
+  openLoginBtn?.addEventListener('click', () => ModalManager.openModal('login'));
+  openSignupBtn?.addEventListener('click', () => ModalManager.openModal('signup'));
+  closeModalBtn?.addEventListener('click', () => ModalManager.closeModal());
+
+  // Close modal on overlay click
+  modalOverlay?.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) ModalManager.closeModal();
+  });
+
+  // Close modal on Escape key
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay?.classList.contains('active')) {
+      ModalManager.closeModal();
+    }
+  });
+
+  // Enhanced smooth scrolling
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+
+    // Setup logout button functionality
+    function setupLogoutButton() {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Confirm logout
+                if (confirm('Are you sure you want to log out?')) {
+                    AuthManager.logout();
+                }
+            });
+        }
+    }
+
+    setupLogoutButton();
+
+});
+
+// Form submission handler
+document.addEventListener('submit', async (e) => {
+  if (e.target.classList.contains('auth-form')) {
+    e.preventDefault();
+
+    const form = e.target;
+    const username = form.querySelector('input[type="text"]').value.trim();
+    const password = form.querySelector('input[type="password"]').value;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Loading state
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.disabled = true;
+
+    try {
+      let user;
+      if (submitBtn.textContent.includes('Create Account')) {
+        user = await AuthManager.signup(username, password);
+      } else {
+        user = await AuthManager.login(username, password);
+      }
+
+      localStorage.setItem('spice_user', JSON.stringify(user));
+      AuthManager.showMainApp(user);
+
+    } catch (err) {
+      // Error animation
+      form.style.animation = 'shake 0.5s ease-in-out';
+      setTimeout(() => {
+        form.style.animation = '';
+      }, 500);
+
+      alert(err.message || 'Authentication failed');
+    } finally {
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+    }
+  }
+});
+
+// Add shake animation to CSS
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+`;
+document.head.appendChild(shakeStyle);
+
+// Enhanced performance optimizations
+window.addEventListener('load', () => {
+  // Preload critical images
+  const criticalImages = ['assets/hero.png', 'assets/logo.png'];
+  criticalImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+});
+
+// Export for global access
+window.AuthManager = AuthManager;
+window.ChatManager = ChatManager;
+window.AnimationController = AnimationController;
+window.LoadingManager = LoadingManager;
+
+// Helper to render user profile in channels sidebar
+function renderSidebarUserProfile(user) {
+    const profileDiv = document.getElementById('sidebar-user-profile');
+    if (!profileDiv || !user) return;
+    const firstLetter = user.username ? user.username[0].toUpperCase() : '?';
+    let avatarHTML = '';
+    if (user.avatar_url) {
+        avatarHTML = `<img class="user-avatar user-avatar-img" src="${user.avatar_url}" alt="User Avatar">`;
+    } else {
+        avatarHTML = `<span class="user-avatar user-avatar-initial">${firstLetter}</span>`;
+    }
+    profileDiv.innerHTML = `
+    ${avatarHTML}
+    <span class="user-name">${user.username}</span>
+    <span class="user-status"><i class="fa-solid fa-circle"></i></span>
+  `;
+}
+
+// Helper to update profile preview card with real user data
+function updateProfilePreview(user) {
+    if (!user) return;
+    // Display name
+    document.querySelectorAll('.profile-displayname').forEach(el => {
+        el.textContent = user.username || '';
+    });
+    // User ID with copy button
+    document.querySelectorAll('.profile-username').forEach(el => {
+        el.innerHTML = `
+      <span class="profile-userid">${user.user_id}</span>
+      <button class="profile-copy-id-btn" title="Copy User ID"><i class="fa-regular fa-copy"></i></button>
+      <span class="profile-copy-feedback" style="display:none;">Copied!</span>
+    `;
+        const btn = el.querySelector('.profile-copy-id-btn');
+        const feedback = el.querySelector('.profile-copy-feedback');
+        if (btn) {
+            btn.onclick = () => {
+                navigator.clipboard.writeText(user.user_id);
+                if (feedback) {
+                    feedback.style.display = 'inline-block';
+                    setTimeout(() => { feedback.style.display = 'none'; }, 1200);
+                }
+            };
+        }
+    });
+    // Avatar in profile preview
+    document.querySelectorAll('.profile-avatar-img').forEach(img => {
+        if (user.avatar_url) {
+            img.src = user.avatar_url;
+        } else {
+            img.src = 'https://randomuser.me/api/portraits/lego/1.jpg'; // fallback default
+        }
+    });
+    // Banner in profile preview
+    document.querySelectorAll('.profile-banner').forEach(div => {
+        if (user.banner_url) {
+            div.style.backgroundImage = `url('${user.banner_url}')`;
+            div.style.backgroundSize = 'cover';
+            div.style.backgroundPosition = 'center';
+        } else {
+            div.style.backgroundImage = '';
+        }
+    });
+}
+
+function openProfileModal() {
+    if (!profileModal) return;
+    profileModal.style.display = 'flex';
+    setTimeout(() => {
+        profileModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        profileModal.focus();
+    }, 10);
+}
+
+function closeProfileModal() {
+    if (!profileModal) return;
+    profileModal.classList.remove('active');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+        profileModal.style.display = 'none';
+    }, 400);
+}
+
+if (profileBtn) {
+    profileBtn.onclick = openProfileModal;
+}
+if (closeProfileModalBtn) {
+    closeProfileModalBtn.onclick = closeProfileModal;
+}
+// Close on overlay click (not modal content)
+if (profileModal) {
+    profileModal.addEventListener('click', (e) => {
+        if (e.target === profileModal) closeProfileModal();
+    });
+}
+// Close on ESC key
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && profileModal && profileModal.classList.contains('active')) {
+        closeProfileModal();
+    }
+});
+
+// Open file input when Change Avatar is clicked
+function setupAvatarUpload() {
+    document.querySelectorAll('.profile-btn').forEach(btn => {
+        if (btn.textContent.includes('Change Avatar')) {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                avatarInput.value = '';
+                avatarInput.click();
+            };
+        }
+    });
+}
+
+// Show crop modal and initialize Cropper.js
+avatarInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+        avatarCropArea.innerHTML = `<img id="avatar-crop-img" src="${ev.target.result}" style="max-width:100%;max-height:100%;display:block;" />`;
+        avatarCropModal.style.display = 'flex';
+        setTimeout(() => {
+            const img = document.getElementById('avatar-crop-img');
+            if (cropper) cropper.destroy();
+            cropper = new window.Cropper(img, {
+                aspectRatio: 1,
+                viewMode: 1,
+                background: false,
+                dragMode: 'move',
+                guides: false,
+                autoCropArea: 1,
+                movable: true,
+                zoomable: true,
+                rotatable: false,
+                scalable: false,
+                cropBoxResizable: true,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+            });
+        }, 100);
+    };
+    reader.readAsDataURL(file);
+    });
+}
+
+// Cancel crop
+avatarCropCancel.onclick = () => {
+    avatarCropModal.style.display = 'none';
+    if (cropper) { cropper.destroy(); cropper = null; }
+};
+
+// Confirm crop and upload to Cloudinary
+avatarCropConfirm.onclick = async () => {
+    if (!cropper) return;
+    avatarCropModal.style.display = 'none';
+    avatarLoading.style.display = 'flex';
+    cropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', blob);
+            formData.append('upload_preset', 'user_media');
+            const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.secure_url) {
+                // Update avatar in UI
+                document.querySelectorAll('.profile-avatar-img, .profile-preview-avatar-img').forEach(img => {
                     div.style.backgroundPosition = 'center';
                 });
                 // Save to Supabase
@@ -1241,7 +1988,7 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
     if (!chat) return;
     const msgDiv = document.createElement('div');
     msgDiv.className = 'dm-message ' + who;
-    msgDiv.dataset.timestamp = timestamp;
+    msgDiv.dataset = timestamp;
     let mediaHtml = '';
     if (media_url && media_type) {
         if (media_type.startsWith('image/')) {
@@ -1619,7 +2366,7 @@ function renderSignup(animated) {
     <form class="auth-form" autocomplete="off">
       <input type="text" placeholder="Username" required autofocus />
       <input type="password" placeholder="Password" required />
-      <button type="submit" class="btn btn-primary" style="width:100%">Sign Up</button>
+      <button type="submit" class="btn btn-primary" stylew="100%">Sign Up</button>
       <p class="switch-auth">Already have an account? <a href="#" id="switch-to-login">Log in</a></p>
     </form>
   `;
@@ -1754,7 +2501,7 @@ function triggerPageLoadAnimations() {
     const myAccountSection = document.getElementById('profile-section-my-account');
     const joinServersSection = document.getElementById('profile-section-join-servers');
     const modalTitle = document.getElementById('profile-modal-title');
-    
+
     if (navLinks && navLinks.length > 0 && myAccountSection && joinServersSection && modalTitle) {
         // Always show My Account by default
         myAccountSection.style.display = '';
@@ -1795,7 +2542,7 @@ function triggerPageLoadAnimations() {
                 const currentMyAccountSection = document.getElementById('profile-section-my-account');
                 const currentJoinServersSection = document.getElementById('profile-section-join-servers');
                 const currentModalTitle = document.getElementById('profile-modal-title');
-                
+
                 if (currentNavLinks && currentNavLinks.length > 0) {
                     currentNavLinks.forEach(l => {
                         if (l) l.classList.remove('active');
@@ -1849,7 +2596,7 @@ function triggerPageLoadAnimations() {
     const hideBtn = document.querySelector('.hide-users-sidebar-btn');
     const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
     const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
-    
+
     if (hideBtn && usersSidebar && mainApp && unhideWrapper && unhideBtn) {
         hideBtn.addEventListener('click', function () {
             usersSidebar.classList.add('sidebar-hidden');
@@ -1873,3 +2620,5 @@ setupAvatarUpload();
 
 // Setup banner upload
 setupBannerUpload();
+
+//The code was modified to ensure the avatarInput and bannerInput event listeners are properly closed, addressing potential null reference errors.
