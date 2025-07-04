@@ -3444,6 +3444,37 @@ input:checked + .slider:before {
   animation-delay: 0.5s;
 }
 
+/* Enhanced Individual Message Entrance Animations */
+@keyframes messageSlideIn {
+  0% { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.95) rotateX(10deg); 
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-3px) scale(1.02) rotateX(-2deg);
+    filter: blur(0.5px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotateX(0deg); 
+    filter: blur(0px);
+  }
+}
+
+.chat__conversation-board__message {
+  animation: messageSlideIn 0.6s cubic-bezier(.4,2,.6,1) both;
+}
+
+/* Staggered Message Animation */
+.chat__conversation-board__message:nth-last-child(1) { animation-delay: 0s; }
+.chat__conversation-board__message:nth-last-child(2) { animation-delay: 0.1s; }
+.chat__conversation-board__message:nth-last-child(3) { animation-delay: 0.2s; }
+.chat__conversation-board__message:nth-last-child(4) { animation-delay: 0.3s; }
+.chat__conversation-board__message:nth-last-child(5) { animation-delay: 0.4s; }
+.chat__conversation-board__message:nth-last-child(n+6) { animation-delay: 0.5s; }
+
 /* Enhanced Friends List Animation */
 @keyframes friendsListReveal {
   0% { 
@@ -3459,6 +3490,56 @@ input:checked + .slider:before {
 .friends-list-section {
   animation: friendsListReveal 0.7s cubic-bezier(.4,2,.6,1) both;
   animation-delay: 0.6s;
+}
+
+/* Enhanced Chat Input Area Animation */
+@keyframes chatInputReveal {
+  0% { 
+    opacity: 0; 
+    transform: translateY(40px) scale(0.9) rotateX(15deg); 
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1.03) rotateX(-3deg);
+    filter: blur(1px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotateX(0deg); 
+    filter: blur(0px);
+  }
+}
+
+.chat-input-area,
+.input-bar-wrapper,
+.server-chat-input-form {
+  animation: chatInputReveal 0.9s cubic-bezier(.4,2,.6,1) both;
+  animation-delay: 0.7s;
+}
+
+/* Enhanced Add Friend Button Animation */
+@keyframes addFriendBtnReveal {
+  0% { 
+    opacity: 0; 
+    transform: translateY(25px) scale(0.85) rotate(-3deg); 
+    filter: blur(3px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.1) rotate(1deg);
+    filter: blur(1px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotate(0deg); 
+    filter: blur(0px);
+  }
+}
+
+.add-friend-btn {
+  animation: addFriendBtnReveal 0.8s cubic-bezier(.4,2,.6,1) both;
+  animation-delay: 0.4s;
 }
 
 /* Channel List Items Staggered Animation */
@@ -3528,6 +3609,54 @@ input:checked + .slider:before {
   animation-delay: 0.8s;
 }
 
+/* Enhanced Create Channel Button Animation */
+@keyframes createChannelBtnReveal {
+  0% { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.8) rotate(-5deg); 
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-8px) scale(1.1) rotate(2deg);
+    filter: blur(1px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotate(0deg); 
+    filter: blur(0px);
+  }
+}
+
+.create-channel-btn {
+  animation: createChannelBtnReveal 0.7s cubic-bezier(.4,2,.6,1) both;
+  animation-delay: 0.5s;
+}
+
+/* Enhanced Chat Header Animation */
+@keyframes chatHeaderReveal {
+  0% { 
+    opacity: 0; 
+    transform: translateY(-25px) scale(0.95) skewX(3deg); 
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(3px) scale(1.02) skewX(-1deg);
+    filter: blur(0.5px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) skewX(0deg); 
+    filter: blur(0px);
+  }
+}
+
+.chat-header {
+  animation: chatHeaderReveal 0.6s cubic-bezier(.4,2,.6,1) both;
+  animation-delay: 0.3s;
+}
+
 /* Friend Items Staggered Animation */
 @keyframes friendItemReveal {
   0% { 
@@ -3550,6 +3679,75 @@ input:checked + .slider:before {
 .friend-list-item:nth-child(4) { animation-delay: 0.25s; }
 .friend-list-item:nth-child(5) { animation-delay: 0.3s; }
 .friend-list-item:nth-child(n+6) { animation-delay: 0.35s; }
+
+/* Enhanced Main App Layout Initial Load Animation */
+@keyframes mainAppReveal {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.95) rotateY(-5deg); 
+    filter: blur(5px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02) rotateY(1deg);
+    filter: blur(2px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1) rotateY(0deg); 
+    filter: blur(0px);
+  }
+}
+
+.main-app-layout {
+  animation: mainAppReveal 1.2s cubic-bezier(.4,2,.6,1) both;
+}
+
+/* Enhanced Overall Section Animations */
+@keyframes sectionRevealDelayed {
+  0% { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.9) rotateX(8deg); 
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1.03) rotateX(-2deg);
+    filter: blur(1px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotateX(0deg); 
+    filter: blur(0px);
+  }
+}
+
+/* Apply to key sections with timing */
+.channels-list {
+  animation: sectionRevealDelayed 0.8s cubic-bezier(.4,2,.6,1) both;
+  animation-delay: 0.2s;
+}
+
+.friends-panel {
+  animation: sectionRevealDelayed 0.7s cubic-bezier(.4,2,.6,1) both;
+  animation-delay: 0.6s;
+}
+
+/* Enhanced Floating/Hover Animations */
+@keyframes floatGently {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(0.5deg); }
+}
+
+.server-btn,
+.channel-btn,
+.add-friend-btn {
+  animation: floatGently 3s ease-in-out infinite;
+}
+
+.server-btn { animation-delay: 0s; }
+.channel-btn { animation-delay: 0.5s; }
+.add-friend-btn { animation-delay: 1s; }
 
 /* Server sidebar avatar (server icon in sidebar) */
 .server-sidebar-avatar {

@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-    // Setup logout button functionality
+    // Setup logout functionality
     function setupLogoutButton() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
@@ -499,8 +499,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Setup logout functionality
     setupLogoutButton();
 
+    // Trigger main app layout animations
+    triggerMainAppAnimations();
+
+    // On page load, load Socket.IO client
+    if (!window.io) {
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+        script.onload = () => {
+            const user = JSON.parse(localStorage.getItem('spice_user'));
+            if (user) setupSocketIO(user.user_id);
+        };
+        document.head.appendChild(script);
+    }
 });
 
 // Form submission handler
@@ -1515,7 +1530,8 @@ window.openDMChat = async function (friend) {
                 fileErrorMsg.classList.add('show');
                 setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
             }
-        } catch (err) {
+        }```text
+        catch (err) {
             loading.style.display = 'none';
             fileErrorMsg.textContent = 'Upload error.';
             fileErrorMsg.style.display = 'block';
@@ -1660,6 +1676,60 @@ window.addEventListener('keydown', (e) => {
         closeModal();
     }
 });
+
+// Enhanced main app layout animations
+function triggerMainAppAnimations() {
+    // Add animation classes to main app sections
+    const mainAppLayout = document.querySelector('.main-app-layout');
+    const serversBarside = document.querySelector('.servers-sidebar');
+    const channelsSidebar = document.querySelector('.channels-sidebar');
+    const chatSection = document.querySelector('.chat-section');
+    const usersSidebar = document.querySelector('.users-sidebar');
+
+    if (mainAppLayout) {
+        mainAppLayout.classList.add('layout-animate-in-center');
+    }
+
+    if (serversBarside) {
+        serversBarside.classList.add('layout-animate-in-left');
+    }
+
+    if (channelsSidebar) {
+        channelsSidebar.classList.add('layout-animate-in-left');
+    }
+
+    if (chatSection) {
+        chatSection.classList.add('layout-animate-in-center');
+    }
+
+    if (usersSidebar) {
+        usersSidebar.classList.add('layout-animate-in-right');
+    }
+
+    // Animate individual elements with delays
+    setTimeout(() => {
+        const serverBtns = document.querySelectorAll('.server-btn');
+        serverBtns.forEach((btn, index) => {
+            setTimeout(() => {
+                btn.style.animation = `serverButtonReveal 0.6s cubic-bezier(.4,2,.6,1) both`;
+            }, index * 100);
+        });
+
+        const channelBtns = document.querySelectorAll('.channel-btn');
+        channelBtns.forEach((btn, index) => {
+            setTimeout(() => {
+                btn.style.animation = `channelItemReveal 0.5s cubic-bezier(.4,2,.6,1) both`;
+            }, index * 50);
+        });
+
+        const friendItems = document.querySelectorAll('.friend-list-item');
+        friendItems.forEach((item, index) => {
+            setTimeout(() => {
+                item.style.animation = `friendItemReveal 0.4s cubic-bezier(.4,2,.6,1) both`;
+            }, index * 100);
+        });
+    }, 300);
+}
 
 // Enhanced page load animations
 function triggerPageLoadAnimations() {
