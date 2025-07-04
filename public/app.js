@@ -450,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
     LoadingManager.hide(2000);
     setTimeout(() => {
       AnimationController.observeElements();
+      triggerPageLoadAnimations();
     }, 2500);
   }
 
@@ -484,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-    // Setup logout functionality
+    // Setup logout button functionality
     function setupLogoutButton() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
@@ -499,23 +500,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Setup logout functionality
     setupLogoutButton();
 
-    // Trigger main app layout animations
-    triggerMainAppAnimations();
-
-    // On page load, load Socket.IO client
-    if (!window.io) {
-
-        const script = document.createElement('script');
-        script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
-        script.onload = () => {
-            const user = JSON.parse(localStorage.getItem('spice_user'));
-            if (user) setupSocketIO(user.user_id);
-        };
-        document.head.appendChild(script);
-    }
 });
 
 // Form submission handler
@@ -1530,8 +1516,7 @@ window.openDMChat = async function (friend) {
                 fileErrorMsg.classList.add('show');
                 setTimeout(() => { fileErrorMsg.classList.remove('show'); fileErrorMsg.style.display = 'none'; }, 2000);
             }
-        }```text
-        catch (err) {
+        } catch (err) {
             loading.style.display = 'none';
             fileErrorMsg.textContent = 'Upload error.';
             fileErrorMsg.style.display = 'block';
@@ -1677,63 +1662,9 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// Enhanced main app layout animations
-function triggerMainAppAnimations() {
-    // Add animation classes to main app sections
-    const mainAppLayout = document.querySelector('.main-app-layout');
-    const serversBarside = document.querySelector('.servers-sidebar');
-    const channelsSidebar = document.querySelector('.channels-sidebar');
-    const chatSection = document.querySelector('.chat-section');
-    const usersSidebar = document.querySelector('.users-sidebar');
-
-    if (mainAppLayout) {
-        mainAppLayout.classList.add('layout-animate-in-center');
-    }
-
-    if (serversBarside) {
-        serversBarside.classList.add('layout-animate-in-left');
-    }
-
-    if (channelsSidebar) {
-        channelsSidebar.classList.add('layout-animate-in-left');
-    }
-
-    if (chatSection) {
-        chatSection.classList.add('layout-animate-in-center');
-    }
-
-    if (usersSidebar) {
-        usersSidebar.classList.add('layout-animate-in-right');
-    }
-
-    // Animate individual elements with delays
-    setTimeout(() => {
-        const serverBtns = document.querySelectorAll('.server-btn');
-        serverBtns.forEach((btn, index) => {
-            setTimeout(() => {
-                btn.style.animation = `serverButtonReveal 0.6s cubic-bezier(.4,2,.6,1) both`;
-            }, index * 100);
-        });
-
-        const channelBtns = document.querySelectorAll('.channel-btn');
-        channelBtns.forEach((btn, index) => {
-            setTimeout(() => {
-                btn.style.animation = `channelItemReveal 0.5s cubic-bezier(.4,2,.6,1) both`;
-            }, index * 50);
-        });
-
-        const friendItems = document.querySelectorAll('.friend-list-item');
-        friendItems.forEach((item, index) => {
-            setTimeout(() => {
-                item.style.animation = `friendItemReveal 0.4s cubic-bezier(.4,2,.6,1) both`;
-            }, index * 100);
-        });
-    }, 300);
-}
-
-// Enhanced page load animations
+// Unified landing page animations
 function triggerPageLoadAnimations() {
-    // Header animations with staggered timing
+    // Header animations
     const header = document.getElementById('main-header');
     if (header) {
         const logo = header.querySelector('.logo');
@@ -1741,12 +1672,12 @@ function triggerPageLoadAnimations() {
         const loginBtn = header.querySelector('.btn-login');
 
         if (logo) {
-            logo.classList.add('rotate-slide-in');
+            logo.classList.add('landing-rotate-slide-in');
             logo.style.animationDelay = '0.1s';
         }
         if (nav) nav.classList.add('animate-nav');
         if (loginBtn) {
-            loginBtn.classList.add('zoom-fade-in');
+            loginBtn.classList.add('landing-zoom-fade-in');
             loginBtn.style.animationDelay = '0.5s';
         }
     }
@@ -1759,12 +1690,12 @@ function triggerPageLoadAnimations() {
 
         if (heroContent) heroContent.classList.add('animate-hero-content');
         if (heroVisuals) {
-            heroVisuals.classList.add('scale-in');
+            heroVisuals.classList.add('landing-scale-in');
             heroVisuals.style.animationDelay = '0.8s';
         }
     }
 
-    // Info section with intersection observer for delayed trigger
+    // Info section with intersection observer
     const infoSection = document.getElementById('info-section');
     if (infoSection) {
         const observerOptions = {
@@ -1779,7 +1710,7 @@ function triggerPageLoadAnimations() {
                     const features = entry.target.querySelector('.info-features');
 
                     if (title) {
-                        title.classList.add('slide-up-bounce');
+                        title.classList.add('landing-slide-up-bounce');
                         title.style.animationDelay = '0.2s';
                     }
                     if (features) features.classList.add('animate-features');
@@ -1798,7 +1729,7 @@ function triggerPageLoadAnimations() {
         const footerObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('slide-in-from-bottom');
+                    entry.target.classList.add('landing-slide-in-from-bottom');
                     footerObserver.unobserve(entry.target);
                 }
             });
