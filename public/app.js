@@ -1754,25 +1754,30 @@ function triggerPageLoadAnimations() {
     const myAccountSection = document.getElementById('profile-section-my-account');
     const joinServersSection = document.getElementById('profile-section-join-servers');
     const modalTitle = document.getElementById('profile-modal-title');
-    if (navLinks.length && myAccountSection && joinServersSection && modalTitle) {
+    
+    if (navLinks && navLinks.length > 0 && myAccountSection && joinServersSection && modalTitle) {
         // Always show My Account by default
         myAccountSection.style.display = '';
         joinServersSection.style.display = 'none';
         modalTitle.textContent = 'My Account';
         navLinks.forEach(link => {
-            link.onclick = () => {
-                navLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                if (link.textContent.trim().toLowerCase().includes('join')) {
-                    myAccountSection.style.display = 'none';
-                    joinServersSection.style.display = '';
-                    modalTitle.textContent = 'Join Servers';
-                } else {
-                    myAccountSection.style.display = '';
-                    joinServersSection.style.display = 'none';
-                    modalTitle.textContent = 'My Account';
-                }
-            };
+            if (link) {
+                link.onclick = () => {
+                    navLinks.forEach(l => {
+                        if (l) l.classList.remove('active');
+                    });
+                    link.classList.add('active');
+                    if (link.textContent && link.textContent.trim().toLowerCase().includes('join')) {
+                        myAccountSection.style.display = 'none';
+                        joinServersSection.style.display = '';
+                        modalTitle.textContent = 'Join Servers';
+                    } else {
+                        myAccountSection.style.display = '';
+                        joinServersSection.style.display = 'none';
+                        modalTitle.textContent = 'My Account';
+                    }
+                };
+            }
         });
     }
     // When opening the modal, always reset to My Account
@@ -1786,11 +1791,20 @@ function triggerPageLoadAnimations() {
                 document.body.style.overflow = 'hidden';
                 profileModal.focus();
                 // Reset to My Account tab/section
-                navLinks.forEach(l => l.classList.remove('active'));
-                navLinks[0].classList.add('active');
-                myAccountSection.style.display = '';
-                joinServersSection.style.display = 'none';
-                modalTitle.textContent = 'My Account';
+                const currentNavLinks = document.querySelectorAll('#profile-modal .profile-settings-nav .nav-link');
+                const currentMyAccountSection = document.getElementById('profile-section-my-account');
+                const currentJoinServersSection = document.getElementById('profile-section-join-servers');
+                const currentModalTitle = document.getElementById('profile-modal-title');
+                
+                if (currentNavLinks && currentNavLinks.length > 0) {
+                    currentNavLinks.forEach(l => {
+                        if (l) l.classList.remove('active');
+                    });
+                    if (currentNavLinks[0]) currentNavLinks[0].classList.add('active');
+                }
+                if (currentMyAccountSection) currentMyAccountSection.style.display = '';
+                if (currentJoinServersSection) currentJoinServersSection.style.display = 'none';
+                if (currentModalTitle) currentModalTitle.textContent = 'My Account';
             }, 10);
         };
     }
@@ -1831,9 +1845,11 @@ function triggerPageLoadAnimations() {
     }, 800);
 
     // --- Hide/Unhide Users Sidebar Logic ---
+    const mainApp = document.querySelector('.main-app-layout');
     const hideBtn = document.querySelector('.hide-users-sidebar-btn');
     const unhideWrapper = document.querySelector('.unhide-users-sidebar-btn-wrapper');
     const unhideBtn = document.querySelector('.unhide-users-sidebar-btn');
+    
     if (hideBtn && usersSidebar && mainApp && unhideWrapper && unhideBtn) {
         hideBtn.addEventListener('click', function () {
             usersSidebar.classList.add('sidebar-hidden');
