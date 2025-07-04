@@ -579,6 +579,7 @@ window.addEventListener('DOMContentLoaded', function() {
       loader.classList.add('fade-out');
       loader.addEventListener('animationend', () => {
         loader.style.display = 'none';
+        triggerEntranceAnimations();
       }, { once: true });
       document.body.classList.remove('pre-auth');
     }
@@ -1324,4 +1325,20 @@ if (joinServerForm) {
       setupJoinRequestRealtime(serverId, user.user_id);
     }
   };
+}
+
+function triggerEntranceAnimations() {
+  // Animate layout sections
+  document.querySelectorAll('.sidebar, .layout-section').forEach(el => {
+    el.classList.add('visible');
+  });
+  // Animate staggered lists
+  document.querySelectorAll('.staggered-list').forEach(list => {
+    setTimeout(() => {
+      list.classList.add('visible');
+      list.querySelectorAll(':scope > *').forEach((item, i) => {
+        item.style.transitionDelay = (i * 80) + 'ms';
+      });
+    }, 400); // Delay to let layout animate first
+  });
 } 
