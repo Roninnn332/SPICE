@@ -47,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const submitCreateChannelBtn = document.getElementById('submit-create-channel');
   const channelOptionText = document.getElementById('channel-option-text');
   const channelOptionVoice = document.getElementById('channel-option-voice');
-  const channelOptions = [channelOptionText, channelOptionVoice];
+  const channelOptions = [channelOptionText, channelOptionVoice].filter(Boolean);
   const channelNameInput = document.getElementById('new-channel-name');
 
   // Open modal
@@ -167,7 +167,7 @@ async function renderServersList() {
   const serversListDiv = serversSidebar.querySelector('.servers-list');
   if (!serversListDiv) return;
   serversListDiv.innerHTML = '';
-  
+
   // Remove existing animations to restart them
   serversListDiv.style.opacity = '0';
   setTimeout(() => {
@@ -221,7 +221,7 @@ async function renderChannelsList(serverId) {
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
   channelsListDiv.innerHTML = '';
-  
+
   // Add fade-in animation to channels list
   channelsListDiv.style.opacity = '0';
   channelsListDiv.style.transform = 'translateY(20px)';
@@ -246,7 +246,7 @@ async function renderChannelsList(serverId) {
       // Reset modal state
       const channelOptionText = document.getElementById('channel-option-text');
       const channelOptionVoice = document.getElementById('channel-option-voice');
-      const channelOptions = [channelOptionText, channelOptionVoice];
+      const channelOptions = [channelOptionText, channelOptionVoice].filter(Boolean);
       channelOptions.forEach(opt => opt && opt.classList.remove('selected'));
       if (channelOptionText) channelOptionText.classList.add('selected');
       const channelNameInput = document.getElementById('new-channel-name');
@@ -704,7 +704,7 @@ function updateCreateServerAvatarPreview() {
   }
 }
 
-if (createServerAvatarPreviewDiv && createServerAvatarInput) {
+if (createServerAvatarPreviewDiv && createServerAvatarInput){
   createServerAvatarPreviewDiv.onclick = () => {
     createServerAvatarInput.value = '';
     createServerAvatarInput.click();
@@ -1467,7 +1467,7 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
     serverSettingsNameText.style.display = '';
     serverSettingsEditNameBtn.style.display = '';
   };
-} 
+}
 
 function playVoiceSfx(type) {
   // type: 'join' | 'left'

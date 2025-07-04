@@ -1233,7 +1233,6 @@ if (joinServerForm) {
 }
 
 // --- DM Chat UI Logic ---
-let socket = null;
 let currentDM = null;
 
 // --- Define appendDMMessage globally ---
