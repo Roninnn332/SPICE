@@ -47,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const submitCreateChannelBtn = document.getElementById('submit-create-channel');
   const channelOptionText = document.getElementById('channel-option-text');
   const channelOptionVoice = document.getElementById('channel-option-voice');
-  const channelOptions = [channelOptionText, channelOptionVoice].filter(Boolean);
+  const channelOptions = [channelOptionText, channelOptionVoice];
   const channelNameInput = document.getElementById('new-channel-name');
 
   // Open modal
@@ -167,12 +167,6 @@ async function renderServersList() {
   const serversListDiv = serversSidebar.querySelector('.servers-list');
   if (!serversListDiv) return;
   serversListDiv.innerHTML = '';
-
-  // Remove existing animations to restart them
-  serversListDiv.style.opacity = '0';
-  setTimeout(() => {
-    serversListDiv.style.opacity = '1';
-  }, 50);
   // Add "+" button
   const addBtn = document.createElement('button');
   addBtn.className = 'server-btn add-server-btn';
@@ -221,15 +215,6 @@ async function renderChannelsList(serverId) {
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
   channelsListDiv.innerHTML = '';
-
-  // Add fade-in animation to channels list
-  channelsListDiv.style.opacity = '0';
-  channelsListDiv.style.transform = 'translateY(20px)';
-  setTimeout(() => {
-    channelsListDiv.style.transition = 'all 0.5s cubic-bezier(.4,2,.6,1)';
-    channelsListDiv.style.opacity = '1';
-    channelsListDiv.style.transform = 'translateY(0)';
-  }, 100);
   // --- Add Create Channel Button ---
   const createBtn = document.createElement('button');
   createBtn.className = 'create-channel-btn';
@@ -246,7 +231,7 @@ async function renderChannelsList(serverId) {
       // Reset modal state
       const channelOptionText = document.getElementById('channel-option-text');
       const channelOptionVoice = document.getElementById('channel-option-voice');
-      const channelOptions = [channelOptionText, channelOptionVoice].filter(Boolean);
+      const channelOptions = [channelOptionText, channelOptionVoice];
       channelOptions.forEach(opt => opt && opt.classList.remove('selected'));
       if (channelOptionText) channelOptionText.classList.add('selected');
       const channelNameInput = document.getElementById('new-channel-name');
@@ -704,7 +689,7 @@ function updateCreateServerAvatarPreview() {
   }
 }
 
-if (createServerAvatarPreviewDiv && createServerAvatarInput){
+if (createServerAvatarPreviewDiv && createServerAvatarInput) {
   createServerAvatarPreviewDiv.onclick = () => {
     createServerAvatarInput.value = '';
     createServerAvatarInput.click();
@@ -1467,7 +1452,7 @@ if (serverSettingsEditNameBtn && serverSettingsNameText && serverSettingsNameInp
     serverSettingsNameText.style.display = '';
     serverSettingsEditNameBtn.style.display = '';
   };
-}
+} 
 
 function playVoiceSfx(type) {
   // type: 'join' | 'left'
