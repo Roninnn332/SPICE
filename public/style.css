@@ -669,43 +669,7 @@ body {
   background-color: #373737;
   margin: 7px;
   border-radius: 18px;
-  display: none;
-  opacity: 0;
-  transform: translateY(40px);
-  pointer-events: none;
-  transition: none;
 }
-
-.servers-sidebar.slide-in-up {
-  animation: serversSlideInUp 0.7s cubic-bezier(.4,2,.6,1) both;
-  will-change: transform, opacity;
-}
-
-@keyframes serversSlideInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  80% {
-    opacity: 1;
-    transform: translateY(-6px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.servers-sidebar.animating {
-  display: flex;
-}
-.servers-sidebar.visible {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-  pointer-events: auto;
-  transition: opacity 0.2s, transform 0.2s;
-}
-
 .channels-sidebar {
   width: 180px;
   border-right: 0.5px solid var(--primary-blue);
@@ -868,12 +832,12 @@ body {
 }
 .server-btn,
 .create-server-btn {
-    width: 40px;
-    height: 40px;
+  width: 40px;
+  height: 40px;
     border-radius: 50%; /* perfect circle */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
     margin-bottom: 6px; /* tighter spacing */
     padding: 0;
     background: var(--off-black);
@@ -3651,7 +3615,7 @@ input:checked + .slider:before {
   object-fit: cover;
   border-radius: 50%;
   display: block;
-} 
+}
 
 .mention-autocomplete-item {
   padding: 0.4em 1em;
@@ -4966,61 +4930,4 @@ input:checked + .toggle-slider:before {
   padding: 0;
   background: var(--off-black);
   border: none;
-}
-
-@keyframes flipInY {
-  0% {
-    opacity: 0;
-    transform: perspective(600px) rotateY(90deg) scale(0.95);
-  }
-  60% {
-    opacity: 1;
-    transform: perspective(600px) rotateY(-10deg) scale(1.02);
-  }
-  80% {
-    transform: perspective(600px) rotateY(5deg) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: perspective(600px) rotateY(0deg) scale(1);
-  }
-}
-
-.servers-sidebar.flip-in {
-  animation: flipInY 0.7s cubic-bezier(.4,2,.6,1) both;
-  will-change: transform, opacity;
-}
-
-/* Staggered animation for server buttons/icons */
-.servers-sidebar.stagger-in .server-btn,
-.servers-sidebar.stagger-in .add-server-btn {
-  opacity: 0;
-  transform: translateY(24px) scale(0.98);
-  animation: servers-stagger-in 0.45s cubic-bezier(.4,2,.6,1) forwards;
-}
-.servers-sidebar.stagger-in .server-btn:nth-child(1),
-.servers-sidebar.stagger-in .add-server-btn:nth-child(1) { animation-delay: 0.08s; }
-.servers-sidebar.stagger-in .server-btn:nth-child(2),
-.servers-sidebar.stagger-in .add-server-btn:nth-child(2) { animation-delay: 0.18s; }
-.servers-sidebar.stagger-in .server-btn:nth-child(3),
-.servers-sidebar.stagger-in .add-server-btn:nth-child(3) { animation-delay: 0.28s; }
-.servers-sidebar.stagger-in .server-btn:nth-child(4),
-.servers-sidebar.stagger-in .add-server-btn:nth-child(4) { animation-delay: 0.38s; }
-.servers-sidebar.stagger-in .server-btn:nth-child(5),
-.servers-sidebar.stagger-in .add-server-btn:nth-child(5) { animation-delay: 0.48s; }
-/* Add more if you expect more servers */
-
-@keyframes servers-stagger-in {
-  0% {
-    opacity: 0;
-    transform: translateY(24px) scale(0.98);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(-4px) scale(1.03);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }

@@ -579,22 +579,6 @@ window.addEventListener('DOMContentLoaded', function() {
       loader.classList.add('fade-out');
       loader.addEventListener('animationend', () => {
         loader.style.display = 'none';
-        // --- Animate servers sidebar in with slide-in-up ---
-        const serversSidebar = document.querySelector('.servers-sidebar');
-        if (serversSidebar) {
-          serversSidebar.classList.remove('layout-animate-in-left'); // Remove old animation if present
-          serversSidebar.classList.add('animating'); // Show sidebar for animation
-          requestAnimationFrame(() => {
-            serversSidebar.classList.add('slide-in-up');
-          });
-          serversSidebar.addEventListener('animationend', function handler() {
-            serversSidebar.classList.remove('slide-in-up');
-            serversSidebar.classList.remove('animating');
-            serversSidebar.classList.add('visible');
-            serversSidebar.classList.add('stagger-in');
-            serversSidebar.removeEventListener('animationend', handler);
-          });
-        }
       }, { once: true });
       document.body.classList.remove('pre-auth');
     }
