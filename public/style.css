@@ -4900,13 +4900,13 @@ input:checked + .toggle-slider:before {
 
 /* Dedicated add server button style */
 .add-server-btn {
-  background: var(--pure-black);
-  color: var(--primary-blue);
-  border: 2px dashed var(--primary-blue);
+  background: rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
+  border: 2px dashed rgb(0, 0, 0);
   font-size: 1.7rem;
-  width: 72px;
-  height: 72px;
-  border-radius: 40%;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4930,102 +4930,4 @@ input:checked + .toggle-slider:before {
   padding: 0;
   background: var(--off-black);
   border: none;
-}
-
-/* --- Layout Animations --- */
-.layout-section {
-  opacity: 0;
-  transform: translateY(40px) scale(0.98);
-  transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
-}
-.layout-section.visible {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-/* Sidebar slides in from left */
-.sidebar {
-  opacity: 0;
-  transform: translateX(-60px);
-  transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
-}
-.sidebar.visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* --- Staggered Content Animations --- */
-.staggered-list > * {
-  opacity: 0;
-  transform: translateY(20px) scale(0.95);
-  transition: opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1);
-}
-.staggered-list.visible > * {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-/* --- Force Animation Initial State and Transitions --- */
-.sidebar,
-.layout-section {
-  opacity: 0 !important;
-  transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1) !important;
-}
-.sidebar {
-  transform: translateX(-60px) !important;
-}
-.layout-section {
-  transform: translateY(40px) scale(0.98) !important;
-}
-.sidebar.visible {
-  opacity: 1 !important;
-  transform: translateX(0) !important;
-}
-.layout-section.visible {
-  opacity: 1 !important;
-  transform: translateY(0) scale(1) !important;
-}
-
-/* --- 3D Rotate + Slide-in + Fade Animations --- */
-.sidebar,
-.layout-section {
-  opacity: 0 !important;
-  transition:
-    opacity 0.8s cubic-bezier(.4,0,.2,1),
-    transform 0.8s cubic-bezier(.4,0,.2,1) !important;
-  will-change: opacity, transform;
-  backface-visibility: hidden;
-  perspective: 800px;
-}
-
-/* Sidebars: slide in from left, rotateY */
-.sidebar {
-  transform: translateX(-60px) rotateY(25deg) !important;
-}
-.sidebar.visible {
-  opacity: 1 !important;
-  transform: translateX(0) rotateY(0deg) !important;
-}
-
-/* Main content: slide up, rotateX */
-.layout-section {
-  transform: translateY(40px) scale(0.98) rotateX(18deg) !important;
-}
-.layout-section.visible {
-  opacity: 1 !important;
-  transform: translateY(0) scale(1) rotateX(0deg) !important;
-}
-
-/* Staggered list items: subtle rotateZ for extra flair */
-.staggered-list > * {
-  opacity: 0;
-  transform: translateY(20px) scale(0.95) rotateZ(-8deg);
-  transition:
-    opacity 0.5s cubic-bezier(.4,0,.2,1),
-    transform 0.5s cubic-bezier(.4,0,.2,1);
-  will-change: opacity, transform;
-}
-.staggered-list.visible > * {
-  opacity: 1;
-  transform: translateY(0) scale(1) rotateZ(0deg);
 }

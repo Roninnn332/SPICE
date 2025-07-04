@@ -84,7 +84,7 @@
   <!-- Main App Layout (hidden by default, shown after login/signup) -->
   <div class="main-app-layout" id="main-app-layout" style="display:none;">
     <aside class="sidebar servers-sidebar">
-      <div class="servers-list staggered-list">
+      <div class="servers-list">
         <button class="server-btn add-server-btn" title="Add Server"><i class="fa-solid fa-plus"></i></button>
         <button class="server-btn"></button>
         <button class="server-btn"></button>
@@ -92,13 +92,13 @@
       </div>
     </aside>
     <aside class="sidebar channels-sidebar">
-      <div class="channels-list staggered-list">
+      <div class="channels-list">
         <!-- Channel list goes here -->
       </div>
       <button id="create-channel-btn" class="create-channel-btn" type="button"><i class="fa-solid fa-plus"></i> Create Channel</button>
       <button id="sidebar-user-profile" class="sidebar-user-profile sidebar-user-profile-btn" type="button"></button>
     </aside>
-    <main class="chat-section layout-section">
+    <main class="chat-section">
       <header class="chat-header">
         <!-- Channel name, topic, etc. -->
       </header>
@@ -109,7 +109,7 @@
         <!-- Message input and voice controls -->
       </footer>
     </main>
-    <aside class="sidebar users-sidebar layout-section">
+    <aside class="sidebar users-sidebar">
       <button class="hide-users-sidebar-btn" title="Hide Sidebar"><i class="fa-solid fa-chevron-right"></i></button>
       <button class="add-friend-btn" id="open-add-friend-modal">+ Add Friends</button>
       <!-- User list/profile -->
