@@ -511,6 +511,76 @@ function showMainApp(user) {
   if (typeof renderServersList === 'function') renderServersList();
 }
 
+// Helper to show landing page after logout
+function showLandingPage() {
+  // Hide main app layout
+  const mainApp = document.querySelector('.main-app-layout');
+  if (mainApp) mainApp.style.display = 'none';
+  
+  // Show all landing/hero/welcome content
+  document.body.querySelectorAll('.header, .hero, .info, .site-footer').forEach(el => {
+    if (el) el.style.display = '';
+  });
+  
+  // Close any open modals
+  if (profileModal) {
+    profileModal.classList.remove('active');
+    profileModal.style.display = 'none';
+  }
+  if (addFriendModal) {
+    addFriendModal.classList.remove('active');
+    addFriendModal.style.display = 'none';
+  }
+  
+  // Reset body overflow
+  document.body.style.overflow = '';
+  
+  // Disconnect socket if connected
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+  
+  // Clean up realtime subscriptions
+  if (friendsRealtimeSub) {
+    supabase.removeChannel(friendsRealtimeSub);
+    friendsRealtimeSub = null;
+  }
+  if (joinRequestRealtimeSub) {
+    supabase.removeChannel(joinRequestRealtimeSub);
+    joinRequestRealtimeSub = null;
+  }
+}
+
+// Logout function
+function logout() {
+  // Clear user data from localStorage
+  localStorage.removeItem('spice_user');
+  
+  // Show landing page
+  showLandingPage();
+  
+  // Optional: Show success message
+  setTimeout(() => {
+    alert('You have been logged out successfully!');
+  }, 300);
+}
+
+// Setup logout button functionality
+function setupLogoutButton() {
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Confirm logout
+      if (confirm('Are you sure you want to log out?')) {
+        logout();
+      }
+    });
+  }
+}
+
 // Enhanced page load animations
 function triggerPageLoadAnimations() {
   // Header animations with staggered timing
@@ -684,6 +754,9 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Setup banner upload
   setupBannerUpload();
+
+  // Setup logout functionality
+  setupLogoutButton();
 
   // On page load, load Socket.IO client
   if (!window.io) {
