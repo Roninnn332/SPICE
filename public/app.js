@@ -590,10 +590,8 @@ window.addEventListener('DOMContentLoaded', function() {
     renderSidebarUserProfile(user);
     updateProfilePreview(user);
     finishAuth();
-    if (mainApp) mainApp.style.display = 'flex';
   } else {
     finishAuth();
-    if (mainApp) mainApp.style.display = 'none';
   }
 
   // Footer animation
@@ -679,56 +677,10 @@ window.addEventListener('DOMContentLoaded', function() {
   const serversSidebar = document.querySelector('.servers-sidebar');
   const channelsSidebar = document.querySelector('.channels-sidebar');
   const chatSection = document.querySelector('.chat-section');
-  const chatHeader = document.querySelector('.chat-header');
-
   if (serversSidebar) serversSidebar.classList.add('layout-animate-in-left');
-  if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left', 'layout-delay-1');
-  if (chatHeader) chatHeader.classList.add('layout-animate-in-up', 'layout-delay-1');
-  if (chatSection) chatSection.classList.add('layout-animate-in-up', 'layout-delay-2');
-
-  // After layout entrance animations finish, trigger staggered content
-  setTimeout(() => {
-    // Servers Sidebar
-    const serversList = document.querySelector('.servers-list');
-    if (serversList) {
-      serversList.classList.add('staggered-animate');
-      const serverBtns = serversList.querySelectorAll('.server-btn, .create-server-btn');
-      serverBtns.forEach((el, i) => {
-        el.classList.add('staggered-item');
-        el.style.animationDelay = (i * 0.07) + 's';
-      });
-    }
-    // Channels Sidebar
-    const channelsList = document.querySelector('.channels-list');
-    if (channelsList) {
-      channelsList.classList.add('staggered-animate');
-      const channelBtns = channelsList.querySelectorAll('.channel-btn');
-      channelBtns.forEach((el, i) => {
-        el.classList.add('staggered-item');
-        el.style.animationDelay = (i * 0.07) + 's';
-      });
-    }
-    // Chat Messages
-    const chatMessages = document.querySelector('.chat-messages');
-    if (chatMessages) {
-      chatMessages.classList.add('staggered-animate');
-      const messages = chatMessages.querySelectorAll('.dm-message');
-      messages.forEach((el, i) => {
-        el.classList.add('staggered-item');
-        el.style.animationDelay = (i * 0.06) + 's';
-      });
-    }
-    // Friends Sidebar
-    const friendsList = document.querySelector('.friends-list');
-    if (friendsList) {
-      friendsList.classList.add('staggered-animate');
-      const friends = friendsList.querySelectorAll('.friend-list-item');
-      friends.forEach((el, i) => {
-        el.classList.add('staggered-item');
-        el.style.animationDelay = (i * 0.07) + 's';
-      });
-    }
-  }, 800); // Wait for layout entrance to finish
+  if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left');
+  if (chatSection) chatSection.classList.add('layout-animate-in-up');
+  if (usersSidebar) usersSidebar.classList.add('layout-animate-in-right');
 
   // --- Hide/Unhide Users Sidebar Logic ---
   if (hideBtn && usersSidebar && mainApp && unhideWrapper && unhideBtn) {
