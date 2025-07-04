@@ -814,14 +814,39 @@ window.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Animate main app layout sections on load
+  // Enhanced main app layout sections animations on load
   const serversSidebar = document.querySelector('.servers-sidebar');
   const channelsSidebar = document.querySelector('.channels-sidebar');
   const chatSection = document.querySelector('.chat-section');
-  if (serversSidebar) serversSidebar.classList.add('layout-animate-in-left');
-  if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left');
-  if (chatSection) chatSection.classList.add('layout-animate-in-up');
-  if (usersSidebar) usersSidebar.classList.add('layout-animate-in-right');
+  
+  // Trigger animations with staggered timing for better visual flow
+  setTimeout(() => {
+    if (serversSidebar) serversSidebar.classList.add('layout-animate-in-left');
+  }, 100);
+  
+  setTimeout(() => {
+    if (channelsSidebar) channelsSidebar.classList.add('layout-animate-in-left');
+  }, 200);
+  
+  setTimeout(() => {
+    if (chatSection) chatSection.classList.add('layout-animate-in-up');
+  }, 300);
+  
+  setTimeout(() => {
+    if (usersSidebar) usersSidebar.classList.add('layout-animate-in-right');
+  }, 400);
+  
+  // Animate chat messages area when it's visible
+  setTimeout(() => {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages) chatMessages.classList.add('chat-messages-animate');
+  }, 600);
+  
+  // Animate sidebar elements
+  setTimeout(() => {
+    const sidebarProfile = document.querySelector('.sidebar-user-profile');
+    if (sidebarProfile) sidebarProfile.classList.add('sidebar-profile-animate');
+  }, 800);
 
   // --- Hide/Unhide Users Sidebar Logic ---
   if (hideBtn && usersSidebar && mainApp && unhideWrapper && unhideBtn) {
@@ -1293,7 +1318,11 @@ async function renderFriendsSidebar() {
   if (!sidebar) return;
   // Remove old friends list if exists
   const old = sidebar.querySelector('.friends-list-section');
-  if (old) old.remove();
+  if (old) {
+    old.style.transform = 'translateX(20px)';
+    old.style.opacity = '0';
+    setTimeout(() => old.remove(), 200);
+  }
   // Fetch accepted friends
   const { data, error } = await supabase
     .from('friends')
@@ -1309,7 +1338,7 @@ async function renderFriendsSidebar() {
     .select('user_id,username,avatar_url')
     .in('user_id', friendIds);
   // Build friends list HTML
-  let html = `<div class="friends-list-section"><h3 class="friends-list-heading">Friends</h3><div class="friends-list">`;
+  let html = `<div class="friends-list-section" style="opacity:0;transform:translateY(20px);transition:all 0.6s cubic-bezier(.4,2,.6,1);"><h3 class="friends-list-heading">Friends</h3><div class="friends-list">`;
   for (const friend of usersData) {
     html += `
       <div class="friend-list-item">
@@ -1321,7 +1350,17 @@ async function renderFriendsSidebar() {
   html += '</div></div>';
   // Insert after the +Add Friends button
   const addBtn = sidebar.querySelector('.add-friend-btn');
-  if (addBtn) addBtn.insertAdjacentHTML('afterend', html);
+  if (addBtn) {
+    addBtn.insertAdjacentHTML('afterend', html);
+    // Trigger entrance animation
+    setTimeout(() => {
+      const newFriendsList = sidebar.querySelector('.friends-list-section');
+      if (newFriendsList) {
+        newFriendsList.style.opacity = '1';
+        newFriendsList.style.transform = 'translateY(0)';
+      }
+    }, 100);
+  }
 
   setTimeout(() => {
     document.querySelectorAll('.friend-list-item').forEach(item => {

@@ -167,6 +167,12 @@ async function renderServersList() {
   const serversListDiv = serversSidebar.querySelector('.servers-list');
   if (!serversListDiv) return;
   serversListDiv.innerHTML = '';
+  
+  // Remove existing animations to restart them
+  serversListDiv.style.opacity = '0';
+  setTimeout(() => {
+    serversListDiv.style.opacity = '1';
+  }, 50);
   // Add "+" button
   const addBtn = document.createElement('button');
   addBtn.className = 'server-btn add-server-btn';
@@ -215,6 +221,15 @@ async function renderChannelsList(serverId) {
   const channelsListDiv = channelsSidebar.querySelector('.channels-list');
   if (!channelsListDiv) return;
   channelsListDiv.innerHTML = '';
+  
+  // Add fade-in animation to channels list
+  channelsListDiv.style.opacity = '0';
+  channelsListDiv.style.transform = 'translateY(20px)';
+  setTimeout(() => {
+    channelsListDiv.style.transition = 'all 0.5s cubic-bezier(.4,2,.6,1)';
+    channelsListDiv.style.opacity = '1';
+    channelsListDiv.style.transform = 'translateY(0)';
+  }, 100);
   // --- Add Create Channel Button ---
   const createBtn = document.createElement('button');
   createBtn.className = 'create-channel-btn';
