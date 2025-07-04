@@ -3245,8 +3245,8 @@ input:checked + .slider:before {
 
 /* Server sidebar avatar (server icon in sidebar) */
 .server-sidebar-avatar {
-  width: 36px !important;
-  height: 36px !important;
+  width: 45px !important;
+  height: 45px !important;
   border-radius: 50% !important; /* perfect circle */
   object-fit: cover !important;
   border: 2.5px solid #fff;
@@ -4881,8 +4881,8 @@ input:checked + .toggle-slider:before {
 
 /* Dedicated server button style (not shared) */
 .server-btn {
-  width: 72px;
-  height: 72px;
+  width: 29px;
+  height: 27px;
   border-radius: 40%;
   background: var(--off-black);
   border: none;
