@@ -4253,44 +4253,7 @@ input:checked + .slider:before {
   width: 100% !important;
 }
 
-/* --- New Loader Animation (no transparency, modern look) --- */
-.loader {
-  width: 65px;
-  aspect-ratio: 1;
-  position: relative;
-}
-.loader:before,
-.loader:after {
-  content: "";
-  position: absolute;
-  border-radius: 50px;
-  box-shadow: 0 0 0 3px inset #fff;
-  animation: l4 2.5s infinite;
-}
-.loader:after {
-  animation-delay: -1.25s;
-}
-@keyframes l4 {
-  0% { inset: 0 35px 35px 0; }
-  12.5% { inset: 0 35px 0 0; }
-  25% { inset: 35px 35px 0 0; }
-  37.5% { inset: 35px 0 0 0; }
-  50% { inset: 35px 0 0 35px; }
-  62.5% { inset: 0 0 0 35px; }
-  75% { inset: 0 0 35px 35px; }
-  87.5% { inset: 0 0 35px 0; }
-  100% { inset: 0 35px 35px 0; }
-}
-.loading-text {
-  font-size: 1.4rem;
-  color: #ffffffcc;
-  letter-spacing: 1px;
-  animation: pulse 2s infinite ease-in-out;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
+
 /* Remove old loader spinner/tagline styles if present */
 .site-loader-spinner, .site-loader-tagline { display: none !important; }
 
@@ -4931,3 +4894,22 @@ input:checked + .toggle-slider:before {
   background: var(--off-black);
   border: none;
 }
+
+/* --- Staggered Content Animation --- */
+@keyframes staggerFadeInUp {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.staggered-animate .staggered-item {
+  opacity: 0;
+  animation: staggerFadeInUp 0.5s cubic-bezier(.4,2,.6,1) forwards;
+}
+
+/* Slight stagger for main layout entrance */
+.layout-animate-in-left { animation: layoutFadeInLeft 0.7s cubic-bezier(.4,2,.6,1) both; }
+.layout-animate-in-left.layout-delay-1 { animation-delay: 0.08s; }
+.layout-animate-in-left.layout-delay-2 { animation-delay: 0.16s; }
+.layout-animate-in-up { animation: layoutFadeInUp 0.7s cubic-bezier(.4,2,.6,1) both; }
+.layout-animate-in-up.layout-delay-1 { animation-delay: 0.12s; }
+.layout-animate-in-right { animation: layoutFadeInRight 0.7s cubic-bezier(.4,2,.6,1) both; }
+.layout-animate-in-right.layout-delay-1 { animation-delay: 0.18s; }
