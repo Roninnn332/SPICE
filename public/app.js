@@ -1233,7 +1233,7 @@ if (joinServerForm) {
 }
 
 // --- DM Chat UI Logic ---
-let currentDM = null;
+// currentDM already declared at top of file
 
 // --- Define appendDMMessage globally ---
 window.appendDMMessage = function(who, message, timestamp, media_url = null, media_type = null, file_name = null, reply = null) {
