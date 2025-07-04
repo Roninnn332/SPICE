@@ -583,10 +583,14 @@ window.addEventListener('DOMContentLoaded', function() {
         const serversSidebar = document.querySelector('.servers-sidebar');
         if (serversSidebar) {
           serversSidebar.classList.remove('layout-animate-in-left'); // Remove old animation if present
-          serversSidebar.classList.add('slide-in-up');
-          // After slide-in-up animation, trigger staggered content animation
+          serversSidebar.classList.add('animating'); // Show sidebar for animation
+          requestAnimationFrame(() => {
+            serversSidebar.classList.add('slide-in-up');
+          });
           serversSidebar.addEventListener('animationend', function handler() {
             serversSidebar.classList.remove('slide-in-up');
+            serversSidebar.classList.remove('animating');
+            serversSidebar.classList.add('visible');
             serversSidebar.classList.add('stagger-in');
             serversSidebar.removeEventListener('animationend', handler);
           });
