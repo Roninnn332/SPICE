@@ -1193,18 +1193,13 @@ async function renderFriendsSidebar() {
     .from('users')
     .select('user_id,username,avatar_url')
     .in('user_id', friendIds);
-  // Build friends list HTML (modern, premium, card/tile style)
-  let html = `<div class="friends-list-section premium-dm-sidebar"><div class="premium-dm-sidebar-header"><span>Direct Messages</span></div><div class="premium-dm-friends-list">`;
+  // Build friends list HTML
+  let html = `<div class="friends-list-section"><h3 class="friends-list-heading">Friends</h3><div class="friends-list">`;
   for (const friend of usersData) {
     html += `
-      <div class="premium-dm-friend-card" tabindex="0">
-        <div class="premium-dm-friend-avatar-wrapper">
-          <img class="premium-dm-friend-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" data-user-id="${friend.user_id}">
-          <span class="premium-dm-friend-status online"></span>
-        </div>
-        <div class="premium-dm-friend-info">
-          <span class="premium-dm-friend-username">${friend.username}</span>
-        </div>
+      <div class="friend-list-item">
+        <img class="friend-list-avatar" src="${friend.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" data-user-id="${friend.user_id}">
+        <span class="friend-list-username">${friend.username}</span>
       </div>
     `;
   }
@@ -1214,9 +1209,9 @@ async function renderFriendsSidebar() {
   if (addBtn) addBtn.insertAdjacentHTML('afterend', html);
 
   setTimeout(() => {
-    document.querySelectorAll('.premium-dm-friend-card').forEach(item => {
+    document.querySelectorAll('.friend-list-item').forEach(item => {
       item.onclick = async () => {
-        const userId = item.querySelector('.premium-dm-friend-avatar').getAttribute('data-user-id');
+        const userId = item.querySelector('.friend-list-avatar').getAttribute('data-user-id');
         const { data: friendData } = await supabase.from('users').select('user_id,username,avatar_url').eq('user_id', userId).single();
         if (friendData) {
           window.openDMChat(friendData);
