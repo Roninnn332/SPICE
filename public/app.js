@@ -53,46 +53,72 @@ window.appendDMMessage = function(who, message, timestamp, media_url = null, med
   const chat = document.querySelector('.dm-chat-messages');
   if (!chat) return;
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'dm-message ' + who;
+  msgDiv.className = 'chat__conversation-board__message' + (who === 'me' ? ' reversed' : '');
   msgDiv.dataset.timestamp = timestamp;
+
+  // Get user info for avatar/username
+  let user = JSON.parse(localStorage.getItem('spice_user'));
+  let friend = window.currentDM;
+  let avatar_url = who === 'me' ? (user?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg') : (friend?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg');
+  let username = who === 'me' ? (user?.username || 'You') : (friend?.username || 'Friend');
+
+  // Media
   let mediaHtml = '';
   if (media_url && media_type) {
     if (media_type.startsWith('image/')) {
-      mediaHtml = `<img class=\"dm-message-media-img\" src=\"${media_url}\" alt=\"Image\" loading=\"lazy\" />`;
+      mediaHtml = `<img class="dm-message-media-img" src="${media_url}" alt="Image" loading="lazy" />`;
     } else if (media_type.startsWith('video/')) {
-      mediaHtml = `<video class=\"dm-message-media-video\" src=\"${media_url}\" controls preload=\"metadata\"></video>`;
+      mediaHtml = `<video class="dm-message-media-video" src="${media_url}" controls preload="metadata"></video>`;
     } else {
       const name = file_name ? file_name : 'Download File';
-      mediaHtml = `<a class=\"dm-message-media-file\" href=\"${media_url}\" download target=\"_blank\"><i class=\"fa-solid fa-file-arrow-down\"></i> ${name}</a>`;
+      mediaHtml = `<a class="dm-message-media-file" href="${media_url}" download target="_blank"><i class="fa-solid fa-file-arrow-down"></i> ${name}</a>`;
     }
   }
+  // Reply
   let replyHtml = '';
   if (reply && (reply.message || reply.media_url)) {
     replyHtml = `<div class='dm-reply-bubble'><span class='dm-reply-label'>Replying to:</span> <span class='dm-reply-msg'>${reply.message ? reply.message : '[media]'}</span></div>`;
   }
-  // --- Mention highlighting logic ---
+  // Mention highlighting
   let highlightedMessage = message;
   try {
-    const user = JSON.parse(localStorage.getItem('spice_user'));
-    const friend = window.currentDM;
     const mentionUsernames = [];
     if (user && user.username) mentionUsernames.push(user.username);
     if (friend && friend.username && friend.username !== user.username) mentionUsernames.push(friend.username);
-    // Sort by length descending to avoid partial matches
     mentionUsernames.sort((a, b) => b.length - a.length);
     mentionUsernames.forEach(username => {
-      const regex = new RegExp(`(^|\\s)@${username.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}(?=\\b)`, 'g');
-      highlightedMessage = highlightedMessage.replace(regex, `$1<span class=\"mention\">@${username}</span>`);
+      const regex = new RegExp(`(^|\s)@${username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\b)`, 'g');
+      highlightedMessage = highlightedMessage.replace(regex, `$1<span class="mention">@${username}</span>`);
     });
   } catch (e) {}
+
+  // --- NEW: Slim, premium, modern DM bubble ---
   msgDiv.innerHTML = `
-    <div class=\"dm-message-bubble\">\n      ${replyHtml}
-      ${mediaHtml}\n      ${highlightedMessage ? `<span class=\"dm-message-text\">${highlightedMessage}</span>` : ''}\n      <span class=\"dm-message-time\">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>\n    </div>\n  `;
+    <div class="chat__conversation-board__message__person">
+      <img class="chat__conversation-board__message__person__avatar" src="${avatar_url}" alt="Avatar" width="32" height="32" />
+    </div>
+    <div class="chat__conversation-board__message__context">
+      <div class="chat__conversation-board__message__bubble">
+        ${replyHtml}
+        ${mediaHtml}
+        ${highlightedMessage ? `<span class="dm-message-text">${highlightedMessage}</span>` : ''}
+      </div>
+      <div class="chat__conversation-board__message__meta" style="display:flex;align-items:center;gap:0.7em;margin-top:0.18em;">
+        <span class="chat__conversation-board__message__person__nickname" style="color:#8fa6d6;font-size:0.98em;font-weight:600;">${username}</span>
+        <span class="dm-message-time" style="font-size:0.93em;color:#7a869a;">${new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+      </div>
+    </div>
+  `;
+  // Dropdown menu (unchanged)
   const dropdown = document.createElement('div');
   dropdown.className = 'dm-message-dropdown';
   dropdown.style.display = 'none';
   dropdown.innerHTML = `
-    <button class=\"dm-msg-action\" data-action=\"reply\">Reply</button>\n    <button class=\"dm-msg-action\" data-action=\"copy\">Copy</button>\n    <button class=\"dm-msg-action\" data-action=\"delete\">Delete</button>\n    <button class=\"dm-msg-action\" data-action=\"pin\">Pin</button>\n  `;
+    <button class="dm-msg-action" data-action="reply">Reply</button>
+    <button class="dm-msg-action" data-action="copy">Copy</button>
+    <button class="dm-msg-action" data-action="delete">Delete</button>
+    <button class="dm-msg-action" data-action="pin">Pin</button>
+  `;
   msgDiv.appendChild(dropdown);
   msgDiv.addEventListener('dblclick', (e) => {
     document.querySelectorAll('.dm-message-dropdown').forEach(el => {
