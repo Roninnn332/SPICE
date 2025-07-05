@@ -2381,3 +2381,11 @@ if (window.channelSocket && !window._editChannelMsgListener) {
   });
   window._editChannelMsgListener = true;
 }
+// --- Add real-time listener for new channel messages ---
+if (window.channelSocket) {
+  window.channelSocket.on('channel_message', (msg) => {
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const who = String(msg.user_id) === String(user.user_id) ? 'me' : 'other';
+    appendChannelMessage(msg, who);
+  });
+}
