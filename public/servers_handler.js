@@ -782,6 +782,16 @@ async function openServerChannel(serverId, channelId) {
         const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
         input.value = '';
+        // --- Handle reply ---
+        let reply = null;
+        if (window.currentReplyTo) {
+          reply = {
+            userId: window.currentReplyTo.userId,
+            username: window.currentReplyTo.username,
+            content: window.currentReplyTo.content,
+            timestamp: window.currentReplyTo.timestamp
+          };
+        }
         // --- Optimistically render the message for sender ---
         const now = Date.now();
         appendChannelMessage({
@@ -789,7 +799,8 @@ async function openServerChannel(serverId, channelId) {
           username: user.username,
           avatar_url: user.avatar_url,
           content,
-          timestamp: now
+          timestamp: now,
+          reply
         }, 'me');
         // --- THEN emit to server as before ---
         channelSocket.emit('channel_message', {
@@ -799,8 +810,13 @@ async function openServerChannel(serverId, channelId) {
           username: user.username,
           avatar_url: user.avatar_url,
           content,
-          timestamp: now
+          timestamp: now,
+          reply
         });
+        // Clear reply bar and state
+        const replyBox = document.getElementById('reply-to-bar');
+        if (replyBox) replyBox.remove();
+        window.currentReplyTo = null;
       };
       // ENTER key always sends unless mention dropdown is open
       input.addEventListener('keydown', function(e) {
@@ -2091,6 +2107,16 @@ async function openVoiceChannel(serverId, channelId) {
       const content = input.value.trim();
       if (!user || !user.user_id || !content) return;
       input.value = '';
+      // --- Handle reply ---
+      let reply = null;
+      if (window.currentReplyTo) {
+        reply = {
+          userId: window.currentReplyTo.userId,
+          username: window.currentReplyTo.username,
+          content: window.currentReplyTo.content,
+          timestamp: window.currentReplyTo.timestamp
+        };
+      }
       // --- Optimistically render the message for sender ---
       const now = Date.now();
       appendChannelMessage({
@@ -2098,7 +2124,8 @@ async function openVoiceChannel(serverId, channelId) {
         username: user.username,
         avatar_url: user.avatar_url,
         content,
-        timestamp: now
+        timestamp: now,
+        reply
       }, 'me');
       // --- THEN emit to server as before ---
       channelSocket.emit('channel_message', {
@@ -2108,8 +2135,13 @@ async function openVoiceChannel(serverId, channelId) {
         username: user.username,
         avatar_url: user.avatar_url,
         content,
-        timestamp: now
+        timestamp: now,
+        reply
       });
+      // Clear reply bar and state
+      const replyBox = document.getElementById('reply-to-bar');
+      if (replyBox) replyBox.remove();
+      window.currentReplyTo = null;
     };
     // ENTER key always sends unless mention dropdown is open
     input.addEventListener('keydown', function(e) {
