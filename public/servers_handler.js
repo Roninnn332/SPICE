@@ -310,10 +310,10 @@ function highlightMentions(text, members) {
 async function appendChannelMessage(msg, who) {
   const chat = document.querySelector('.chat-messages');
   if (!chat) return;
-  if (chat.querySelector(`.chat__conversation-board__message[data-id="${msg.id}"]`)) return;
-  const msgDiv = document.createElement('div');
-  msgDiv.className = `chat__conversation-board__message${who === 'me' ? ' reversed' : ''}`;
-  msgDiv.setAttribute('data-id', msg.id);
+  // --- Deduplication: skip if message with same timestamp and userId exists ---
+  if (chat.querySelector(`.chat__conversation-board__message[data-timestamp="${msg.timestamp}"][data-userid="${msg.userId || msg.user_id}"]`)) {
+    return;
+  }
   // Get user info for avatar/username
   let username = msg.username || msg.userId || '';
   let avatar_url = msg.avatar_url || '';
@@ -343,6 +343,11 @@ async function appendChannelMessage(msg, who) {
   }
   // Alignment
   const reversed = who === 'me' ? 'reversed' : '';
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `chat__conversation-board__message ${reversed}`;
+  msgDiv.setAttribute('data-timestamp', msg.timestamp);
+  msgDiv.setAttribute('data-userid', msg.userId || msg.user_id);
+  msgDiv.setAttribute('tabindex', '0');
   msgDiv.innerHTML = `
     <div class="chat__conversation-board__message__person">
       <img class="chat__conversation-board__message__person__avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" width="35" height="35" />
@@ -781,18 +786,35 @@ async function openServerChannel(serverId, channelId) {
         const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
         input.value = '';
+        // --- Handle reply ---
         let reply = null;
         if (window.currentReplyTo) {
-          reply = { ...window.currentReplyTo };
+          reply = {
+            userId: window.currentReplyTo.userId,
+            username: window.currentReplyTo.username,
+            content: window.currentReplyTo.content,
+            timestamp: window.currentReplyTo.timestamp
+          };
         }
-        // Send to server (do NOT render optimistically)
-        channelSocket.emit('channel_message', {
-          serverId,
-          channelId,
-          userId: user.user_id,
+        // --- Optimistically render the message for sender ---
+        const now = Date.now();
+        appendChannelMessage({
+          userId: Number(user.user_id),
           username: user.username,
           avatar_url: user.avatar_url,
           content,
+          timestamp: now,
+          reply
+        }, 'me');
+        // --- THEN emit to server as before ---
+        channelSocket.emit('channel_message', {
+          serverId,
+          channelId,
+          userId: Number(user.user_id),
+          username: user.username,
+          avatar_url: user.avatar_url,
+          content,
+          timestamp: now,
           reply
         });
         // Clear reply bar and state
@@ -2089,18 +2111,35 @@ async function openVoiceChannel(serverId, channelId) {
       const content = input.value.trim();
       if (!user || !user.user_id || !content) return;
       input.value = '';
+      // --- Handle reply ---
       let reply = null;
       if (window.currentReplyTo) {
-        reply = { ...window.currentReplyTo };
+        reply = {
+          userId: window.currentReplyTo.userId,
+          username: window.currentReplyTo.username,
+          content: window.currentReplyTo.content,
+          timestamp: window.currentReplyTo.timestamp
+        };
       }
-      // Send to server (do NOT render optimistically)
-      channelSocket.emit('channel_message', {
-        serverId,
-        channelId,
-        userId: user.user_id,
+      // --- Optimistically render the message for sender ---
+      const now = Date.now();
+      appendChannelMessage({
+        userId: Number(user.user_id),
         username: user.username,
         avatar_url: user.avatar_url,
         content,
+        timestamp: now,
+        reply
+      }, 'me');
+      // --- THEN emit to server as before ---
+      channelSocket.emit('channel_message', {
+        serverId,
+        channelId,
+        userId: Number(user.user_id),
+        username: user.username,
+        avatar_url: user.avatar_url,
+        content,
+        timestamp: now,
         reply
       });
       // Clear reply bar and state
@@ -2136,8 +2175,8 @@ function setupChannelSocketIO(serverId, channelId, user) {
   window.channelSocket.off('channel_message');
   // Listen for new messages for this channel
   window.channelSocket.on('channel_message', (msg) => {
-    const user = JSON.parse(localStorage.getItem('spice_user'));
-    const isMe = String(msg.user_id) === String(user.user_id);
+    if (!msg || msg.channelId !== channelId) return;
+    const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
   });
 }
@@ -2365,27 +2404,19 @@ document.addEventListener('focusin', function(e) {
 });
 // Listen for delete_channel_message event:
 if (window.channelSocket && !window._deleteChannelMsgListener) {
-  window.channelSocket.on('delete_channel_message', ({ message_id }) => {
-    const msg = document.querySelector(`.chat__conversation-board__message[data-id="${message_id}"]`);
-    if (msg) msg.remove();
+  window.channelSocket.on('delete_channel_message', ({ timestamp }) => {
+    const el = document.querySelector(`.chat__conversation-board__message[data-timestamp="${timestamp}"]`);
+    if (el) el.remove();
   });
   window._deleteChannelMsgListener = true;
 }
 // Listen for edit_channel_message event:
 if (window.channelSocket && !window._editChannelMsgListener) {
-  window.channelSocket.on('edit_channel_message', ({ message_id, newContent }) => {
-    const msg = document.querySelector(`.chat__conversation-board__message[data-id="${message_id}"] .chat__conversation-board__message__bubble`);
-    if (msg) {
-      msg.innerHTML = `<span>${highlightMentions(newContent, window.currentServerMembers || [])} <span class='edited-tag'>(edited)</span></span>`;
+  window.channelSocket.on('edit_channel_message', ({ timestamp, newContent }) => {
+    const el = document.querySelector(`.chat__conversation-board__message[data-timestamp="${timestamp}"] .chat__conversation-board__message__bubble`);
+    if (el) {
+      el.innerHTML = `<span>${highlightMentions(newContent, window.currentServerMembers || [])} <span class='edited-tag'>(edited)</span></span>`;
     }
   });
   window._editChannelMsgListener = true;
-}
-// --- Add real-time listener for new channel messages ---
-if (window.channelSocket) {
-  window.channelSocket.on('channel_message', (msg) => {
-    const user = JSON.parse(localStorage.getItem('spice_user'));
-    const who = String(msg.user_id) === String(user.user_id) ? 'me' : 'other';
-    appendChannelMessage(msg, who);
-  });
 }

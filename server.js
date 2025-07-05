@@ -58,31 +58,21 @@ io.on('connection', (socket) => {
   });
 
   // Handle sending a channel message
-  socket.on('channel_message', async ({ serverId, channelId, userId, username, avatar_url, content, reply }) => {
-    // Insert and get the new message (including id)
-    const { data, error } = await supabase
-      .from('channel_messages')
-      .insert([{
+  socket.on('channel_message', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp }) => {
+    // Save to Supabase
+    const { error } = await supabase.from('channel_messages').insert([
+      {
         channel_id: channelId,
         user_id: userId,
-        username,
-        avatar_url,
         content,
-        reply: reply ? JSON.stringify(reply) : null,
         created_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-    if (error || !data) {
-      console.error('Supabase insert error (channel_message):', error);
-      return;
-    }
-    // Broadcast to all in the channel room with full message object
+      }
+    ]);
+    if (error) console.error('Supabase insert error (channel_message):', error);
+    // Broadcast to all in the channel room
     const room = `server-${serverId}-channel-${channelId}`;
     io.to(room).emit('channel_message', {
-      ...data,
-      serverId,
-      channelId
+      serverId, channelId, userId, username, avatar_url, content, timestamp
     });
   });
 
