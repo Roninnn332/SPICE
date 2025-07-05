@@ -359,6 +359,121 @@ async function appendChannelMessage(msg, who) {
       </div>
     </div>
   `;
+  // --- Add right-click context menu ---
+  msgDiv.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    // Remove any existing modals
+    document.querySelectorAll('.custom-msg-modal').forEach(el => el.remove());
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'custom-msg-modal animate-in';
+    // Modal options
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const isOwn = String(msg.userId || msg.user_id) === String(user.user_id);
+    modal.innerHTML = `
+      <button class="msg-modal-action" data-action="copy">Copy</button>
+      ${isOwn ? '<button class="msg-modal-action" data-action="edit">Edit</button>' : ''}
+      <button class="msg-modal-action" data-action="delete">Delete</button>
+      <button class="msg-modal-action" data-action="reply">Reply</button>
+    `;
+    // Position modal
+    modal.style.position = 'fixed';
+    modal.style.left = e.clientX + 'px';
+    modal.style.top = e.clientY + 'px';
+    modal.style.zIndex = 9999;
+    document.body.appendChild(modal);
+    // Animate in
+    setTimeout(() => modal.classList.add('active'), 10);
+    // Close on click outside or Escape
+    function closeModal() {
+      modal.classList.remove('active');
+      setTimeout(() => modal.remove(), 200);
+      document.removeEventListener('click', onDocClick, true);
+      document.removeEventListener('keydown', onEsc, true);
+    }
+    function onDocClick(ev) {
+      if (!modal.contains(ev.target)) closeModal();
+    }
+    function onEsc(ev) {
+      if (ev.key === 'Escape') closeModal();
+    }
+    document.addEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onEsc, true);
+    // Option handlers
+    modal.addEventListener('click', async (ev) => {
+      if (!ev.target.classList.contains('msg-modal-action')) return;
+      const action = ev.target.getAttribute('data-action');
+      if (action === 'copy') {
+        navigator.clipboard.writeText(msg.content || '').then(() => {
+          ev.target.textContent = 'Copied!';
+          setTimeout(() => { ev.target.textContent = 'Copy'; }, 1200);
+        });
+      } else if (action === 'edit' && isOwn) {
+        // Replace bubble with input for editing
+        const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
+        if (bubble) {
+          const old = bubble.innerHTML;
+          bubble.innerHTML = `<input class='edit-msg-input' value="${msg.content.replace(/"/g, '&quot;')}" style="width:90%;font-size:1.05em;padding:0.3em 0.7em;border-radius:0.7em;border:none;background:#23272f;color:#fff;outline:none;" /> <button class='save-edit-btn'>Save</button> <button class='cancel-edit-btn'>Cancel</button>`;
+          const input = bubble.querySelector('.edit-msg-input');
+          input.focus();
+          bubble.querySelector('.save-edit-btn').onclick = async () => {
+            const newContent = input.value.trim();
+            if (newContent && newContent !== msg.content) {
+              // Update in DB and UI (optimistic)
+              bubble.innerHTML = `<span>${highlightMentions(newContent, members)}</span>`;
+              // Emit to server (implement server-side update if needed)
+              if (window.channelSocket) {
+                window.channelSocket.emit('edit_channel_message', {
+                  serverId: msg.serverId,
+                  channelId: msg.channelId,
+                  userId: user.user_id,
+                  timestamp: msg.timestamp,
+                  newContent
+                });
+              }
+            } else {
+              bubble.innerHTML = old;
+            }
+          };
+          bubble.querySelector('.cancel-edit-btn').onclick = () => {
+            bubble.innerHTML = old;
+          };
+        }
+      } else if (action === 'delete') {
+        // Emit to server (implement server-side delete if needed)
+        if (window.channelSocket) {
+          window.channelSocket.emit('delete_channel_message', {
+            serverId: msg.serverId,
+            channelId: msg.channelId,
+            userId: user.user_id,
+            timestamp: msg.timestamp
+          });
+        }
+        msgDiv.remove();
+      } else if (action === 'reply') {
+        // Show reply UI above input (like WhatsApp/Discord)
+        const inputBar = document.querySelector('.chat-input-area, .messageBox');
+        if (inputBar) {
+          let replyBox = document.getElementById('reply-to-bar');
+          if (replyBox) replyBox.remove();
+          replyBox = document.createElement('div');
+          replyBox.id = 'reply-to-bar';
+          replyBox.className = 'reply-to-bar';
+          replyBox.innerHTML = `<span>Replying to <b>${username}</b>: ${msg.content.length > 60 ? msg.content.slice(0,60)+'…' : msg.content}</span> <button class='cancel-reply-btn' style='margin-left:1em;'>Cancel</button>`;
+          inputBar.parentNode.insertBefore(replyBox, inputBar);
+          replyBox.querySelector('.cancel-reply-btn').onclick = () => replyBox.remove();
+          // Store reply info globally for sending
+          window.currentReplyTo = {
+            userId: msg.userId || msg.user_id,
+            username,
+            content: msg.content,
+            timestamp: msg.timestamp
+          };
+        }
+      }
+      closeModal();
+    });
+  });
   // No JS for showing/hiding .more-button; CSS handles it now
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
