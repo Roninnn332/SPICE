@@ -223,29 +223,23 @@ io.on('connection', (socket) => {
   });
 
   // --- Edit Channel Message ---
-  socket.on('edit_channel_message', async ({ serverId, channelId, userId, timestamp, newContent }) => {
-    // Update in Supabase
+  socket.on('edit_channel_message', async ({ serverId, channelId, userId, message_id, newContent }) => {
     await supabase
       .from('channel_messages')
       .update({ content: newContent, edited: true })
-      .eq('channel_id', channelId)
-      .eq('created_at', new Date(Number(timestamp)).toISOString());
-    // Broadcast to all in the channel
+      .eq('id', message_id);
     const room = `server-${serverId}-channel-${channelId}`;
-    io.to(room).emit('edit_channel_message', { timestamp, newContent });
+    io.to(room).emit('edit_channel_message', { message_id, newContent });
   });
 
   // --- Delete Channel Message ---
-  socket.on('delete_channel_message', async ({ serverId, channelId, userId, timestamp }) => {
-    // Delete from Supabase
+  socket.on('delete_channel_message', async ({ serverId, channelId, userId, message_id }) => {
     await supabase
       .from('channel_messages')
       .delete()
-      .eq('channel_id', channelId)
-      .eq('created_at', new Date(Number(timestamp)).toISOString());
-    // Broadcast to all in the channel
+      .eq('id', message_id);
     const room = `server-${serverId}-channel-${channelId}`;
-    io.to(room).emit('delete_channel_message', { timestamp });
+    io.to(room).emit('delete_channel_message', { message_id });
   });
 });
 

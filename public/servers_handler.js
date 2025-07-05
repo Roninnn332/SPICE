@@ -425,7 +425,7 @@ async function appendChannelMessage(msg, who) {
                   serverId: msg.serverId,
                   channelId: msg.channelId,
                   userId: user.user_id,
-                  timestamp: msg.timestamp,
+                  message_id: msg.id,
                   newContent
                 });
               }
@@ -449,7 +449,7 @@ async function appendChannelMessage(msg, who) {
               serverId: msg.serverId,
               channelId: msg.channelId,
               userId: user.user_id,
-              timestamp: msg.timestamp
+              message_id: msg.id
             });
           }
           msgDiv.remove();
