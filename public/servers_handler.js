@@ -384,13 +384,108 @@ async function openServerChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
+    // --- NEW: If already in this voice channel, render active voice UI ---
+    if (
+      isInVoiceChannel &&
+      currentVoiceServerId === serverId &&
+      currentVoiceChannelId === channelId
+    ) {
+      // Render the active voice UI (user tiles and controls)
+      if (chat) {
+        chat.innerHTML = '<div class="voice-user-tiles"></div>';
+        // Request current users from server (or rely on socket event)
+        // Optionally, you could emit a request for the current user list here
+        // For now, just call updateVoiceUserCards with your own user as fallback
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        updateVoiceUserCards([
+          JSON.stringify({
+            user_id: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            micOn: myMicOn,
+            deafenOn: myDeafenOn
+          })
+        ]);
+      }
+      if (footer) {
+        footer.innerHTML = `
+          <div class="voice-controls animate-stagger">
+            <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
+            <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
+            <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
+          </div>
+        `;
+        // Mic toggle
+        const micBtn = footer.querySelector('.mic-btn');
+        if (micBtn) {
+          micBtn.onclick = function() {
+            myMicOn = !myMicOn;
+            micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+            micBtn.classList.toggle('off', !myMicOn);
+            if (window.channelSocket) {
+              window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+            }
+            if (window.voiceWebRTC) {
+              window.voiceWebRTC.setMute(!myMicOn);
+            }
+          };
+        }
+        // Deafen toggle
+        const deafenBtn = footer.querySelector('.deafen-btn');
+        if (deafenBtn) {
+          const icon = deafenBtn.querySelector('i');
+          deafenBtn.onclick = function() {
+            myDeafenOn = !myDeafenOn;
+            if (icon) {
+              icon.className = 'fa-solid fa-headphones';
+            }
+            let slash = deafenBtn.querySelector('.deafen-slash-fallback');
+            if (myDeafenOn) {
+              if (!slash) {
+                slash = document.createElement('span');
+                slash.className = 'deafen-slash-fallback';
+                deafenBtn.appendChild(slash);
+              }
+            } else {
+              if (slash) slash.remove();
+            }
+            deafenBtn.classList.toggle('off', myDeafenOn);
+            if (window.channelSocket) {
+              window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+            }
+            if (window.voiceWebRTC) {
+              window.voiceWebRTC.setDeafen(myDeafenOn);
+            }
+          };
+        }
+        // Leave button
+        const leaveBtn = footer.querySelector('.leave-btn');
+        if (leaveBtn) {
+          leaveBtn.onclick = function() {
+            if (window.channelSocket) {
+              window.channelSocket.emit('voice_leave');
+            }
+            if (window.voiceWebRTC) {
+              window.voiceWebRTC.leaveVoiceChannel(window.channelSocket);
+            }
+            isInVoiceChannel = false;
+            currentVoiceServerId = null;
+            currentVoiceChannelId = null;
+            myMicOn = true;
+            myDeafenOn = false;
+            openVoiceChannel(serverId, channelId);
+          };
+        }
+      }
+      return;
+    }
+    // --- END NEW ---
     // Do NOT join voice yet! Only show the welcome UI and set up the Join Voice button.
-    // Remove any previous voice state
     isInVoiceChannel = false;
     currentVoiceServerId = null;
     currentVoiceChannelId = null;
-    let myMicOn = true;
-    let myDeafenOn = false;
+    myMicOn = true;
+    myDeafenOn = false;
     // Render the voice channel welcome UI
     if (chat) chat.innerHTML = `
       <div class="voice-channel-welcome">
@@ -1624,8 +1719,103 @@ async function openVoiceChannel(serverId, channelId) {
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
+    // --- NEW: If already in this voice channel, render active voice UI ---
+    if (
+      isInVoiceChannel &&
+      currentVoiceServerId === serverId &&
+      currentVoiceChannelId === channelId
+    ) {
+      // Render the active voice UI (user tiles and controls)
+      if (chat) {
+        chat.innerHTML = '<div class="voice-user-tiles"></div>';
+        // Request current users from server (or rely on socket event)
+        // Optionally, you could emit a request for the current user list here
+        // For now, just call updateVoiceUserCards with your own user as fallback
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        updateVoiceUserCards([
+          JSON.stringify({
+            user_id: user.user_id,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            micOn: myMicOn,
+            deafenOn: myDeafenOn
+          })
+        ]);
+      }
+      if (footer) {
+        footer.innerHTML = `
+          <div class="voice-controls animate-stagger">
+            <button class="voice-control-btn mic-btn" title="Toggle Mic"><i class="fa-solid fa-microphone"></i></button>
+            <button class="voice-control-btn deafen-btn" title="Toggle Deafen"><i class="fa-solid fa-headphones"></i></button>
+            <button class="voice-control-btn leave-btn" title="Leave Voice"><i class="fa-solid fa-phone-slash"></i></button>
+          </div>
+        `;
+        // Mic toggle
+        const micBtn = footer.querySelector('.mic-btn');
+        if (micBtn) {
+          micBtn.onclick = function() {
+            myMicOn = !myMicOn;
+            micBtn.innerHTML = myMicOn ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+            micBtn.classList.toggle('off', !myMicOn);
+            if (window.channelSocket) {
+              window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+            }
+            if (window.voiceWebRTC) {
+              window.voiceWebRTC.setMute(!myMicOn);
+            }
+          };
+        }
+        // Deafen toggle
+        const deafenBtn = footer.querySelector('.deafen-btn');
+        if (deafenBtn) {
+          const icon = deafenBtn.querySelector('i');
+          deafenBtn.onclick = function() {
+            myDeafenOn = !myDeafenOn;
+            if (icon) {
+              icon.className = 'fa-solid fa-headphones';
+            }
+            let slash = deafenBtn.querySelector('.deafen-slash-fallback');
+            if (myDeafenOn) {
+              if (!slash) {
+                slash = document.createElement('span');
+                slash.className = 'deafen-slash-fallback';
+                deafenBtn.appendChild(slash);
+              }
+            } else {
+              if (slash) slash.remove();
+            }
+            deafenBtn.classList.toggle('off', myDeafenOn);
+            if (window.channelSocket) {
+              window.channelSocket.emit('voice_state_update', { micOn: myMicOn, deafenOn: myDeafenOn });
+            }
+            if (window.voiceWebRTC) {
+              window.voiceWebRTC.setDeafen(myDeafenOn);
+            }
+          };
+        }
+        // Leave button
+        const leaveBtn = footer.querySelector('.leave-btn');
+        if (leaveBtn) {
+          leaveBtn.onclick = function() {
+            if (window.channelSocket) {
+              window.channelSocket.emit('voice_leave');
+            }
+            if (window.voiceWebRTC) {
+              window.voiceWebRTC.leaveVoiceChannel(window.channelSocket);
+            }
+            isInVoiceChannel = false;
+            currentVoiceServerId = null;
+            currentVoiceChannelId = null;
+            myMicOn = true;
+            myDeafenOn = false;
+            openVoiceChannel(serverId, channelId);
+          };
+        }
+      }
+      return;
+    }
+    // --- END NEW ---
     // Do NOT join voice yet! Only show the welcome UI and set up the Join Voice button.
-    // Remove any previous voice state
     isInVoiceChannel = false;
     currentVoiceServerId = null;
     currentVoiceChannelId = null;
