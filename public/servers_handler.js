@@ -419,9 +419,7 @@ async function appendChannelMessage(msg, who) {
           bubble.querySelector('.save-edit-btn').onclick = async () => {
             const newContent = input.value.trim();
             if (newContent && newContent !== msg.content) {
-              // Update in DB and UI (optimistic)
-              bubble.innerHTML = `<span>${highlightMentions(newContent, members)}</span>`;
-              // Emit to server (implement server-side update if needed)
+              bubble.innerHTML = `<span>${highlightMentions(newContent, members)} <span class='edited-tag'>(edited)</span></span>`;
               if (window.channelSocket) {
                 window.channelSocket.emit('edit_channel_message', {
                   serverId: msg.serverId,
@@ -440,16 +438,22 @@ async function appendChannelMessage(msg, who) {
           };
         }
       } else if (action === 'delete') {
-        // Emit to server (implement server-side delete if needed)
-        if (window.channelSocket) {
-          window.channelSocket.emit('delete_channel_message', {
-            serverId: msg.serverId,
-            channelId: msg.channelId,
-            userId: user.user_id,
-            timestamp: msg.timestamp
-          });
+        // Only allow delete for own messages, unless user is server owner
+        let canDelete = isOwn;
+        if (!isOwn && window.currentServer && String(window.currentServer.owner_id) === String(user.user_id)) {
+          canDelete = true;
         }
-        msgDiv.remove();
+        if (canDelete) {
+          if (window.channelSocket) {
+            window.channelSocket.emit('delete_channel_message', {
+              serverId: msg.serverId,
+              channelId: msg.channelId,
+              userId: user.user_id,
+              timestamp: msg.timestamp
+            });
+          }
+          msgDiv.remove();
+        }
       } else if (action === 'reply') {
         // Show reply UI above input (like WhatsApp/Discord)
         const inputBar = document.querySelector('.chat-input-area, .messageBox');
@@ -2398,3 +2402,21 @@ document.addEventListener('focusin', function(e) {
     }
   }
 });
+// Listen for delete_channel_message event:
+if (window.channelSocket && !window._deleteChannelMsgListener) {
+  window.channelSocket.on('delete_channel_message', ({ timestamp }) => {
+    const el = document.querySelector(`.chat__conversation-board__message[data-timestamp="${timestamp}"]`);
+    if (el) el.remove();
+  });
+  window._deleteChannelMsgListener = true;
+}
+// Listen for edit_channel_message event:
+if (window.channelSocket && !window._editChannelMsgListener) {
+  window.channelSocket.on('edit_channel_message', ({ timestamp, newContent }) => {
+    const el = document.querySelector(`.chat__conversation-board__message[data-timestamp="${timestamp}"] .chat__conversation-board__message__bubble`);
+    if (el) {
+      el.innerHTML = `<span>${highlightMentions(newContent, window.currentServerMembers || [])} <span class='edited-tag'>(edited)</span></span>`;
+    }
+  });
+  window._editChannelMsgListener = true;
+}

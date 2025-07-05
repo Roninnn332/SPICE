@@ -4992,3 +4992,54 @@ input:checked + .toggle-slider:before {
 .reply-msg {
   color: #b3c6f7;
 }
+
+/* Edit Save/Cancel buttons */
+.save-edit-btn, .cancel-edit-btn {
+  background: #23272f;
+  color: #00bfff;
+  border: none;
+  border-radius: 0.5em;
+  font-size: 1.01rem;
+  font-weight: 600;
+  padding: 0.2em 0.9em;
+  margin-left: 0.3em;
+  cursor: pointer;
+  transition: background 0.16s, color 0.16s;
+}
+.save-edit-btn:hover, .save-edit-btn:focus {
+  background: #00bfff;
+  color: #fff;
+}
+.cancel-edit-btn {
+  color: #ed4245;
+}
+.cancel-edit-btn:hover, .cancel-edit-btn:focus {
+  background: #ed4245;
+  color: #fff;
+}
+/* Reply bubble lighter color */
+.reply-bubble.light-reply {
+  background: #eaf6ff;
+  color: #2563eb;
+  border-left: 3px solid #00bfff;
+  border-radius: 0.6em 0.6em 0 0;
+  padding: 0.3em 0.9em;
+  font-size: 0.97em;
+  margin-bottom: 0.2em;
+  font-family: 'Montserrat', 'Roboto', sans-serif;
+  opacity: 0.97;
+}
+.reply-bubble.light-reply .reply-label {
+  color: #2563eb;
+}
+.reply-bubble.light-reply .reply-msg {
+  color: #2563eb;
+}
+/* Edited tag */
+.edited-tag {
+  color: #b3c6f7;
+  font-size: 0.93em;
+  margin-left: 0.4em;
+  font-style: italic;
+  opacity: 0.7;
+}
