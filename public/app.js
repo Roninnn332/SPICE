@@ -511,6 +511,83 @@ function showMainApp(user) {
   if (typeof renderServersList === 'function') renderServersList();
 }
 
+// Enhanced page load animations
+function triggerPageLoadAnimations() {
+  // Header animations with staggered timing
+  const header = document.getElementById('main-header');
+  if (header) {
+    const logo = header.querySelector('.logo');
+    const nav = header.querySelector('.main-nav');
+    const loginBtn = header.querySelector('.btn-login');
+    
+    if (logo) {
+      logo.classList.add('rotate-slide-in');
+      logo.style.animationDelay = '0.1s';
+    }
+    if (nav) nav.classList.add('animate-nav');
+    if (loginBtn) {
+      loginBtn.classList.add('zoom-fade-in');
+      loginBtn.style.animationDelay = '0.5s';
+    }
+  }
+
+  // Hero section animations
+  const heroSection = document.getElementById('hero-section');
+  if (heroSection) {
+    const heroContent = heroSection.querySelector('.hero-content');
+    const heroVisuals = heroSection.querySelector('.hero-visuals');
+    
+    if (heroContent) heroContent.classList.add('animate-hero-content');
+    if (heroVisuals) {
+      heroVisuals.classList.add('scale-in');
+      heroVisuals.style.animationDelay = '0.8s';
+    }
+  }
+
+  // Info section with intersection observer for delayed trigger
+  const infoSection = document.getElementById('info-section');
+  if (infoSection) {
+    const observerOptions = {
+      threshold: 0.3,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const infoObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const title = entry.target.querySelector('h2');
+          const features = entry.target.querySelector('.info-features');
+          
+          if (title) {
+            title.classList.add('slide-up-bounce');
+            title.style.animationDelay = '0.2s';
+          }
+          if (features) features.classList.add('animate-features');
+          
+          infoObserver.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    infoObserver.observe(infoSection);
+  }
+
+  // Footer animation with intersection observer
+  const footer = document.getElementById('site-footer');
+  if (footer) {
+    const footerObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('slide-in-from-bottom');
+          footerObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    footerObserver.observe(footer);
+  }
+}
+
 // Helper to update profile preview card with real user data
 function updateProfilePreview(user) {
   if (!user) return;
@@ -580,9 +657,15 @@ window.addEventListener('DOMContentLoaded', function() {
   function finishAuth() {
     const elapsed = Date.now() - loaderStart;
     if (elapsed < MIN_LOADER_TIME) {
-      setTimeout(hideLoader, MIN_LOADER_TIME - elapsed);
+      setTimeout(() => {
+        hideLoader();
+        // Trigger page load animations after loader is hidden
+        setTimeout(triggerPageLoadAnimations, 100);
+      }, MIN_LOADER_TIME - elapsed);
     } else {
       hideLoader();
+      // Trigger page load animations after loader is hidden
+      setTimeout(triggerPageLoadAnimations, 100);
     }
   }
   if (user && user.username && user.user_id) {
@@ -594,22 +677,7 @@ window.addEventListener('DOMContentLoaded', function() {
     finishAuth();
   }
 
-  // Footer animation
-  const footer = document.getElementById('site-footer');
-  if (footer) {
-    const observer = new window.IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            footer.classList.add('visible');
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-    observer.observe(footer);
-  }
+  // Footer animation is now handled in triggerPageLoadAnimations function
 
   // Setup avatar upload
   setupAvatarUpload();
