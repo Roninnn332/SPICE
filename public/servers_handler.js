@@ -443,7 +443,14 @@ async function appendChannelMessage(msg, who) {
   // --- Reply bubble ---
   let replyHtml = '';
   if (msg.reply && msg.reply.content) {
-    replyHtml = `<div class='reply-bubble' style='color:#22d3a7;font-size:0.97em;margin-bottom:0.18em;opacity:0.85;'>↪️ ${msg.reply.content.slice(0, 60)}</div>`;
+    // If you have the original sender's name, use it; otherwise fallback to 'Someone'
+    const replyAuthor = msg.reply.username || 'Someone';
+    replyHtml = `
+      <div class='reply-preview' style="background:#232323;border-radius:8px 8px 0 0;padding:0.5em 1em 0.3em 1em;margin-bottom:0.3em;border-left:3px solid #00bcd4;">
+        <span class='reply-author' style="color:#00bcd4;font-weight:bold;display:block;">${replyAuthor}</span>
+        <span class='reply-text' style="color:#bbb;font-size:0.98em;display:block;margin-top:2px;">${msg.reply.content}</span>
+      </div>
+    `;
   }
   // --- Edited tag ---
   let editedHtml = '';
