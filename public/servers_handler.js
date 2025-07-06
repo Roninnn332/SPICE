@@ -159,16 +159,17 @@ window.addEventListener('DOMContentLoaded', () => {
     if (modal && modalOverlay) {
       // Copy
       modal.querySelector('.msg-opt-copy').onclick = async function() {
+        closeMsgOptModal();
         const ts = modalOverlay.dataset.msgTimestamp;
         const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
         if (msgDiv) {
           const text = msgDiv.querySelector('.chat__conversation-board__message__bubble span')?.innerText || '';
           await navigator.clipboard.writeText(text);
         }
-        closeMsgOptModal();
       };
       // Edit
       modal.querySelector('.msg-opt-edit').onclick = function() {
+        closeMsgOptModal();
         const ts = modalOverlay.dataset.msgTimestamp;
         const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
         if (msgDiv) {
@@ -227,6 +228,7 @@ window.addEventListener('DOMContentLoaded', () => {
       };
       // Delete
       modal.querySelector('.msg-opt-delete').onclick = function() {
+        closeMsgOptModal();
         if (!confirm('Delete this message for everyone?')) return;
         const ts = modalOverlay.dataset.msgTimestamp;
         const user = JSON.parse(localStorage.getItem('spice_user'));
@@ -236,10 +238,10 @@ window.addEventListener('DOMContentLoaded', () => {
           timestamp: ts,
           userId: user.user_id
         });
-        closeMsgOptModal();
       };
       // Reply
       modal.querySelector('.msg-opt-reply').onclick = function() {
+        closeMsgOptModal();
         const ts = modalOverlay.dataset.msgTimestamp;
         const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
         if (msgDiv) {
@@ -253,7 +255,6 @@ window.addEventListener('DOMContentLoaded', () => {
             input.placeholder = `Replying: ${replyText.slice(0, 40)}...`;
           }
         }
-        closeMsgOptModal();
       };
       function closeMsgOptModal() {
         modalOverlay.classList.remove('active');
@@ -467,7 +468,7 @@ async function appendChannelMessage(msg, who) {
   // --- Edited tag ---
   let editedHtml = '';
   if (msg.edited) {
-    editedHtml = " <span class='edited-tag edited-tag-premium'>(edited)</span>";
+    editedHtml = " <span class='edited-tag edited-tag-premium'>edited</span>";
   }
   msgDiv.innerHTML = `
     <div class="chat__conversation-board__message__person">
@@ -2239,7 +2240,7 @@ function setupChannelSocketIO(serverId, channelId, user) {
         let replyHtml = '';
         const replyDiv = bubble.querySelector('.reply-bubble');
         if (replyDiv) replyHtml = replyDiv.outerHTML;
-        bubble.innerHTML = `${replyHtml}<span>${msg.newContent}</span> <span class='edited-tag edited-tag-premium'>(edited)</span>`;
+        bubble.innerHTML = `${replyHtml}<span>${msg.newContent}</span> <span class='edited-tag edited-tag-premium'>edited</span>`;
       }
     }
   });

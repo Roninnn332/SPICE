@@ -65,7 +65,7 @@ io.on('connection', (socket) => {
         channel_id: channelId,
         user_id: userId,
         content,
-        created_at: new Date().toISOString()
+        created_at: new Date(Number(timestamp)).toISOString()
       }
     ]);
     if (error) console.error('Supabase insert error (channel_message):', error);
@@ -265,7 +265,7 @@ io.on('connection', (socket) => {
         channel_id: channelId,
         user_id: userId,
         content,
-        created_at: new Date().toISOString(),
+        created_at: new Date(Number(timestamp)).toISOString(),
         reply_to: reply?.timestamp || null,
         reply_content: reply?.content || null
       }
