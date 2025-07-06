@@ -776,7 +776,8 @@ async function openServerChannel(serverId, channelId) {
       username: msg.username,
       avatar_url: msg.avatar_url,
       content: msg.content,
-      timestamp: msg.created_at
+      timestamp: msg.created_at,
+      ...(msg.reply_to && msg.reply_content ? { reply: { timestamp: msg.reply_to, content: msg.reply_content } } : {})
     }, isMe ? 'me' : 'them');
   }
   // Setup Socket.IO for real-time
@@ -2192,6 +2193,13 @@ function setupChannelSocketIO(serverId, channelId, user) {
   window.channelSocket.off('channel_message');
   // Listen for new messages for this channel
   window.channelSocket.on('channel_message', (msg) => {
+    if (!msg || msg.channelId !== channelId) return;
+    const isMe = String(msg.userId) === String(user.user_id);
+    appendChannelMessage(msg, isMe ? 'me' : 'them');
+  });
+
+  // Listen for reply messages for this channel
+  window.channelSocket.on('channel_message_reply', (msg) => {
     if (!msg || msg.channelId !== channelId) return;
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
