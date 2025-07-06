@@ -467,7 +467,7 @@ async function appendChannelMessage(msg, who) {
   // --- Edited tag ---
   let editedHtml = '';
   if (msg.edited) {
-    editedHtml = " <span class='edited-tag' style='color:#aaa;font-size:0.85em;margin-left:0.5em;'>(edited)</span>";
+    editedHtml = " <span class='edited-tag edited-tag-premium'>(edited)</span>";
   }
   msgDiv.innerHTML = `
     <div class="chat__conversation-board__message__person">
@@ -796,6 +796,7 @@ async function openServerChannel(serverId, channelId) {
       avatar_url: msg.avatar_url,
       content: msg.content,
       timestamp: msg.created_at,
+      edited: msg.edited, // <-- Ensure edited status is passed
       ...(msg.reply_to && msg.reply_content ? { reply: { timestamp: msg.reply_to, content: msg.reply_content } } : {})
     }, isMe ? 'me' : 'them');
   }
@@ -2238,7 +2239,7 @@ function setupChannelSocketIO(serverId, channelId, user) {
         let replyHtml = '';
         const replyDiv = bubble.querySelector('.reply-bubble');
         if (replyDiv) replyHtml = replyDiv.outerHTML;
-        bubble.innerHTML = `${replyHtml}<span>${msg.newContent}</span> <span class='edited-tag' style='color:#aaa;font-size:0.85em;margin-left:0.5em;'>(edited)</span>`;
+        bubble.innerHTML = `${replyHtml}<span>${msg.newContent}</span> <span class='edited-tag edited-tag-premium'>(edited)</span>`;
       }
     }
   });
