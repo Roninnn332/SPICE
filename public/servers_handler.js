@@ -806,7 +806,21 @@ async function openServerChannel(serverId, channelId) {
         e.preventDefault();
         const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
+        const replyTo = input.dataset.replyTo;
+        let reply = null;
+        if (replyTo) {
+          // Look up the original message content from the DOM
+          const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${replyTo}"]`);
+          let replyContent = '';
+          if (msgDiv) {
+            const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble span');
+            replyContent = bubble?.innerText || '';
+          }
+          reply = { timestamp: replyTo, content: replyContent };
+        }
         input.value = '';
+        input.placeholder = `Message #${channel ? channel.name : ''}`;
+        delete input.dataset.replyTo;
         // --- Optimistically render the message for sender ---
         const now = Date.now();
         appendChannelMessage({
@@ -814,18 +828,32 @@ async function openServerChannel(serverId, channelId) {
           username: user.username,
           avatar_url: user.avatar_url,
           content,
-          timestamp: now
+          timestamp: now,
+          ...(reply ? { reply } : {})
         }, 'me');
         // --- THEN emit to server as before ---
-        channelSocket.emit('channel_message', {
-          serverId,
-          channelId,
-          userId: Number(user.user_id),
-          username: user.username,
-          avatar_url: user.avatar_url,
-          content,
-          timestamp: now
-        });
+        if (reply) {
+          channelSocket.emit('channel_message_reply', {
+            serverId,
+            channelId,
+            userId: Number(user.user_id),
+            username: user.username,
+            avatar_url: user.avatar_url,
+            content,
+            timestamp: now,
+            reply
+          });
+        } else {
+          channelSocket.emit('channel_message', {
+            serverId,
+            channelId,
+            userId: Number(user.user_id),
+            username: user.username,
+            avatar_url: user.avatar_url,
+            content,
+            timestamp: now
+          });
+        }
       };
       // ENTER key always sends unless mention dropdown is open
       input.addEventListener('keydown', function(e) {
