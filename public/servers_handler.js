@@ -175,35 +175,54 @@ window.addEventListener('DOMContentLoaded', () => {
           const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
           const span = bubble.querySelector('span');
           const oldText = span.innerText;
-          // Replace with input
+          // Replace with input and send button
           const input = document.createElement('input');
           input.type = 'text';
           input.value = oldText;
           input.className = 'edit-message-input';
-          input.style.width = '90%';
+          input.style.width = '80%';
+          const sendBtn = document.createElement('button');
+          sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+          sendBtn.className = 'edit-message-send-btn';
+          sendBtn.title = 'Save';
+          sendBtn.style.marginLeft = '0.5em';
+          sendBtn.style.background = 'none';
+          sendBtn.style.border = 'none';
+          sendBtn.style.color = '#22d3a7';
+          sendBtn.style.fontSize = '1.2em';
+          sendBtn.style.cursor = 'pointer';
+          sendBtn.style.verticalAlign = 'middle';
+          sendBtn.style.padding = '0.2em 0.5em';
+          sendBtn.style.borderRadius = '0.5em';
+          sendBtn.onmousedown = e => e.preventDefault();
           bubble.innerHTML = '';
           bubble.appendChild(input);
+          bubble.appendChild(sendBtn);
           input.focus();
+          // Save on Enter or button click
+          async function saveEdit() {
+            const newText = input.value.trim();
+            if (newText && newText !== oldText) {
+              const user = JSON.parse(localStorage.getItem('spice_user'));
+              channelSocket.emit('channel_message_edit', {
+                channelId: currentChannel.id,
+                serverId: currentServer.id,
+                timestamp: ts,
+                userId: user.user_id,
+                newContent: newText
+              });
+            }
+            closeMsgOptModal();
+          }
           input.onkeydown = async function(e) {
             if (e.key === 'Enter') {
-              const newText = input.value.trim();
-              if (newText && newText !== oldText) {
-                // Emit edit event
-                const user = JSON.parse(localStorage.getItem('spice_user'));
-                channelSocket.emit('channel_message_edit', {
-                  channelId: currentChannel.id,
-                  serverId: currentServer.id,
-                  timestamp: ts,
-                  userId: user.user_id,
-                  newContent: newText
-                });
-              }
-              closeMsgOptModal();
+              await saveEdit();
             } else if (e.key === 'Escape') {
               bubble.innerHTML = `<span>${oldText}</span>`;
               closeMsgOptModal();
             }
           };
+          sendBtn.onclick = saveEdit;
         }
       };
       // Delete
@@ -2191,18 +2210,37 @@ function setupChannelSocketIO(serverId, channelId, user) {
   if (!window.channelSocket) return;
   // Remove previous listener for this channel
   window.channelSocket.off('channel_message');
+  window.channelSocket.off('channel_message_reply');
+  window.channelSocket.off('channel_message_edit');
   // Listen for new messages for this channel
   window.channelSocket.on('channel_message', (msg) => {
     if (!msg || msg.channelId !== channelId) return;
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
   });
-
   // Listen for reply messages for this channel
   window.channelSocket.on('channel_message_reply', (msg) => {
     if (!msg || msg.channelId !== channelId) return;
     const isMe = String(msg.userId) === String(user.user_id);
     appendChannelMessage(msg, isMe ? 'me' : 'them');
+  });
+  // Listen for edit messages for this channel
+  window.channelSocket.on('channel_message_edit', (msg) => {
+    if (!msg || msg.channelId !== channelId) return;
+    // Find the message div and update its content and show (edited) tag
+    const chat = document.querySelector('.chat-messages');
+    if (!chat) return;
+    const msgDiv = chat.querySelector(`.chat__conversation-board__message[data-timestamp="${msg.timestamp}"][data-userid="${msg.userId}"]`);
+    if (msgDiv) {
+      const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
+      if (bubble) {
+        // Keep reply bubble if present
+        let replyHtml = '';
+        const replyDiv = bubble.querySelector('.reply-bubble');
+        if (replyDiv) replyHtml = replyDiv.outerHTML;
+        bubble.innerHTML = `${replyHtml}<span>${msg.newContent}</span> <span class='edited-tag' style='color:#aaa;font-size:0.85em;margin-left:0.5em;'>(edited)</span>`;
+      }
+    }
   });
 }
 
