@@ -222,24 +222,60 @@ io.on('connection', (socket) => {
     delete socket.voiceWebRTCUserId;
   });
 
-  // --- Edit Channel Message ---
-  socket.on('edit_channel_message', async ({ serverId, channelId, userId, message_id, newContent }) => {
-    await supabase
+  // --- CHANNEL MESSAGE EDIT ---
+  socket.on('channel_message_edit', async ({ serverId, channelId, timestamp, userId, newContent }) => {
+    // Only allow editing own messages (or owner, if you want to add that logic)
+    // Update in Supabase
+    const { error } = await supabase
       .from('channel_messages')
       .update({ content: newContent, edited: true })
-      .eq('id', message_id);
+      .eq('channel_id', channelId)
+      .eq('user_id', userId)
+      .eq('created_at', new Date(Number(timestamp)).toISOString());
+    if (error) console.error('Supabase update error (channel_message_edit):', error);
+    // Broadcast to all in the channel room
     const room = `server-${serverId}-channel-${channelId}`;
-    io.to(room).emit('edit_channel_message', { message_id, newContent });
+    io.to(room).emit('channel_message_edit', {
+      serverId, channelId, timestamp, userId, newContent, edited: true
+    });
   });
 
-  // --- Delete Channel Message ---
-  socket.on('delete_channel_message', async ({ serverId, channelId, userId, message_id }) => {
-    await supabase
+  // --- CHANNEL MESSAGE DELETE ---
+  socket.on('channel_message_delete', async ({ serverId, channelId, timestamp, userId }) => {
+    // Only allow deleting own messages or if user is owner (add owner check if needed)
+    // Delete from Supabase
+    const { error } = await supabase
       .from('channel_messages')
       .delete()
-      .eq('id', message_id);
+      .eq('channel_id', channelId)
+      .eq('created_at', new Date(Number(timestamp)).toISOString());
+    if (error) console.error('Supabase delete error (channel_message_delete):', error);
+    // Broadcast to all in the channel room
     const room = `server-${serverId}-channel-${channelId}`;
-    io.to(room).emit('delete_channel_message', { message_id });
+    io.to(room).emit('channel_message_delete', {
+      serverId, channelId, timestamp, userId
+    });
+  });
+
+  // --- CHANNEL MESSAGE REPLY ---
+  socket.on('channel_message_reply', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp, reply }) => {
+    // Save to Supabase (store reply info as JSON if you want, or just as content)
+    const { error } = await supabase.from('channel_messages').insert([
+      {
+        channel_id: channelId,
+        user_id: userId,
+        content,
+        created_at: new Date().toISOString(),
+        reply_to: reply?.timestamp || null,
+        reply_content: reply?.content || null
+      }
+    ]);
+    if (error) console.error('Supabase insert error (channel_message_reply):', error);
+    // Broadcast to all in the channel room
+    const room = `server-${serverId}-channel-${channelId}`;
+    io.to(room).emit('channel_message_reply', {
+      serverId, channelId, userId, username, avatar_url, content, timestamp, reply
+    });
   });
 });
 

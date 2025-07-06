@@ -150,6 +150,98 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     };
   }
+
+  // --- Modal Button Actions ---
+  if (typeof window._msgOptModalWired === 'undefined') {
+    window._msgOptModalWired = true;
+    const modalOverlay = document.getElementById('message-options-modal-overlay');
+    const modal = document.getElementById('message-options-modal');
+    if (modal && modalOverlay) {
+      // Copy
+      modal.querySelector('.msg-opt-copy').onclick = async function() {
+        const ts = modalOverlay.dataset.msgTimestamp;
+        const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
+        if (msgDiv) {
+          const text = msgDiv.querySelector('.chat__conversation-board__message__bubble span')?.innerText || '';
+          await navigator.clipboard.writeText(text);
+        }
+        closeMsgOptModal();
+      };
+      // Edit
+      modal.querySelector('.msg-opt-edit').onclick = function() {
+        const ts = modalOverlay.dataset.msgTimestamp;
+        const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
+        if (msgDiv) {
+          const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
+          const span = bubble.querySelector('span');
+          const oldText = span.innerText;
+          // Replace with input
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = oldText;
+          input.className = 'edit-message-input';
+          input.style.width = '90%';
+          bubble.innerHTML = '';
+          bubble.appendChild(input);
+          input.focus();
+          input.onkeydown = async function(e) {
+            if (e.key === 'Enter') {
+              const newText = input.value.trim();
+              if (newText && newText !== oldText) {
+                // Emit edit event
+                const user = JSON.parse(localStorage.getItem('spice_user'));
+                channelSocket.emit('channel_message_edit', {
+                  channelId: currentChannel.id,
+                  serverId: currentServer.id,
+                  timestamp: ts,
+                  userId: user.user_id,
+                  newContent: newText
+                });
+              }
+              closeMsgOptModal();
+            } else if (e.key === 'Escape') {
+              bubble.innerHTML = `<span>${oldText}</span>`;
+              closeMsgOptModal();
+            }
+          };
+        }
+      };
+      // Delete
+      modal.querySelector('.msg-opt-delete').onclick = function() {
+        if (!confirm('Delete this message for everyone?')) return;
+        const ts = modalOverlay.dataset.msgTimestamp;
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        channelSocket.emit('channel_message_delete', {
+          channelId: currentChannel.id,
+          serverId: currentServer.id,
+          timestamp: ts,
+          userId: user.user_id
+        });
+        closeMsgOptModal();
+      };
+      // Reply
+      modal.querySelector('.msg-opt-reply').onclick = function() {
+        const ts = modalOverlay.dataset.msgTimestamp;
+        const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
+        if (msgDiv) {
+          const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble span');
+          const replyText = bubble?.innerText || '';
+          // Set reply state in input
+          const input = document.getElementById('messageInput');
+          if (input) {
+            input.focus();
+            input.dataset.replyTo = ts;
+            input.placeholder = `Replying: ${replyText.slice(0, 40)}...`;
+          }
+        }
+        closeMsgOptModal();
+      };
+      function closeMsgOptModal() {
+        modalOverlay.classList.remove('active');
+        setTimeout(() => modalOverlay.style.display = 'none', 180);
+      }
+    }
+  }
 });
 
 // --- Server List UI ---
@@ -348,6 +440,16 @@ async function appendChannelMessage(msg, who) {
   msgDiv.setAttribute('data-timestamp', msg.timestamp);
   msgDiv.setAttribute('data-userid', msg.userId || msg.user_id);
   msgDiv.setAttribute('tabindex', '0');
+  // --- Reply bubble ---
+  let replyHtml = '';
+  if (msg.reply && msg.reply.content) {
+    replyHtml = `<div class='reply-bubble' style='color:#22d3a7;font-size:0.97em;margin-bottom:0.18em;opacity:0.85;'>↪️ ${msg.reply.content.slice(0, 60)}</div>`;
+  }
+  // --- Edited tag ---
+  let editedHtml = '';
+  if (msg.edited) {
+    editedHtml = " <span class='edited-tag' style='color:#aaa;font-size:0.85em;margin-left:0.5em;'>(edited)</span>";
+  }
   msgDiv.innerHTML = `
     <div class="chat__conversation-board__message__person">
       <img class="chat__conversation-board__message__person__avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" width="35" height="35" />
@@ -355,134 +457,53 @@ async function appendChannelMessage(msg, who) {
       </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
-        <span>${content}</span>
+        ${replyHtml}<span>${content}</span>${editedHtml}
       </div>
     </div>
   `;
-  // --- Add right-click context menu ---
-  msgDiv.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    // Remove any existing modals
-    document.querySelectorAll('.custom-msg-modal').forEach(el => el.remove());
-    // Create modal
-    const modal = document.createElement('div');
-    modal.className = 'custom-msg-modal animate-in';
-    // Modal options
-    const user = JSON.parse(localStorage.getItem('spice_user'));
-    const isOwn = String(msg.userId || msg.user_id) === String(user.user_id);
-    modal.innerHTML = `
-      <button class="msg-modal-action" data-action="copy">Copy</button>
-      ${isOwn ? '<button class="msg-modal-action" data-action="edit">Edit</button>' : ''}
-      <button class="msg-modal-action" data-action="delete">Delete</button>
-      <button class="msg-modal-action" data-action="reply">Reply</button>
-    `;
-    // Position modal
-    modal.style.position = 'fixed';
-    modal.style.left = e.clientX + 'px';
-    modal.style.top = e.clientY + 'px';
-    modal.style.zIndex = 9999;
-    document.body.appendChild(modal);
-    // Animate in
-    setTimeout(() => modal.classList.add('active'), 10);
-    // Close on click outside or Escape
-    function closeModal() {
-      modal.classList.remove('active');
-      setTimeout(() => modal.remove(), 200);
-      document.removeEventListener('click', onDocClick, true);
-      document.removeEventListener('keydown', onEsc, true);
-    }
-    function onDocClick(ev) {
-      if (!modal.contains(ev.target)) closeModal();
-    }
-    function onEsc(ev) {
-      if (ev.key === 'Escape') closeModal();
-    }
-    document.addEventListener('click', onDocClick, true);
-    document.addEventListener('keydown', onEsc, true);
-    // Option handlers
-    modal.addEventListener('click', async (ev) => {
-      if (!ev.target.classList.contains('msg-modal-action')) return;
-      const action = ev.target.getAttribute('data-action');
-      if (action === 'copy') {
-        navigator.clipboard.writeText(msg.content || '').then(() => {
-          ev.target.textContent = 'Copied!';
-          setTimeout(() => { ev.target.textContent = 'Copy'; }, 1200);
-        });
-      } else if (action === 'edit' && isOwn) {
-        // Replace bubble with input for editing
-        const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
-        if (bubble) {
-          const old = bubble.innerHTML;
-          bubble.innerHTML = `<input class='edit-msg-input' value="${msg.content.replace(/"/g, '&quot;')}" style="width:90%;font-size:1.05em;padding:0.3em 0.7em;border-radius:0.7em;border:none;background:#23272f;color:#fff;outline:none;" /> <button class='save-edit-btn'>Save</button> <button class='cancel-edit-btn'>Cancel</button>`;
-          const input = bubble.querySelector('.edit-msg-input');
-          input.focus();
-          bubble.querySelector('.save-edit-btn').onclick = async () => {
-            const newContent = input.value.trim();
-            if (newContent && newContent !== msg.content) {
-              bubble.innerHTML = `<span>${highlightMentions(newContent, members)} <span class='edited-tag'>(edited)</span></span>`;
-              if (window.channelSocket) {
-                window.channelSocket.emit('edit_channel_message', {
-                  serverId: msg.serverId,
-                  channelId: msg.channelId,
-                  userId: user.user_id,
-                  message_id: msg.id,
-                  newContent
-                });
-              }
-            } else {
-              bubble.innerHTML = old;
-            }
-          };
-          bubble.querySelector('.cancel-edit-btn').onclick = () => {
-            bubble.innerHTML = old;
-          };
-        }
-      } else if (action === 'delete') {
-        // Only allow delete for own messages, unless user is server owner
-        let canDelete = isOwn;
-        if (!isOwn && window.currentServer && String(window.currentServer.owner_id) === String(user.user_id)) {
-          canDelete = true;
-        }
-        if (canDelete) {
-          if (window.channelSocket) {
-            window.channelSocket.emit('delete_channel_message', {
-              serverId: msg.serverId,
-              channelId: msg.channelId,
-              userId: user.user_id,
-              message_id: msg.id
-            });
-          }
-          msgDiv.remove();
-        }
-      } else if (action === 'reply') {
-        // Show reply UI above input (like WhatsApp/Discord)
-        const inputBar = document.querySelector('.chat-input-area, .messageBox');
-        if (inputBar) {
-          let replyBox = document.getElementById('reply-to-bar');
-          if (replyBox) replyBox.remove();
-          replyBox = document.createElement('div');
-          replyBox.id = 'reply-to-bar';
-          replyBox.className = 'reply-to-bar';
-          replyBox.innerHTML = `<span>Replying to <b>${username}</b>: ${msg.content.length > 60 ? msg.content.slice(0,60)+'…' : msg.content}</span> <button class='cancel-reply-btn' style='margin-left:1em;'>Cancel</button>`;
-          inputBar.parentNode.insertBefore(replyBox, inputBar);
-          replyBox.querySelector('.cancel-reply-btn').onclick = () => replyBox.remove();
-          // Store reply info globally for sending
-          window.currentReplyTo = {
-            userId: msg.userId || msg.user_id,
-            username,
-            content: msg.content,
-            timestamp: msg.timestamp
-          };
-        }
-      }
-      closeModal();
-    });
-  });
   // No JS for showing/hiding .more-button; CSS handles it now
   chat.appendChild(msgDiv);
   void msgDiv.offsetWidth;
   msgDiv.classList.add('dm-message-animate-in');
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+
+  // --- Message Options Context Menu ---
+  msgDiv.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('spice_user'));
+    const isOwn = String(msg.userId || msg.user_id) === String(user.user_id);
+    const isOwner = user.role === 'owner';
+    const modalOverlay = document.getElementById('message-options-modal-overlay');
+    const modal = document.getElementById('message-options-modal');
+    if (!modalOverlay || !modal) return;
+    // Show/hide buttons based on permissions
+    modal.querySelector('.msg-opt-edit').style.display = isOwn ? '' : 'none';
+    modal.querySelector('.msg-opt-delete').style.display = (isOwn || isOwner) ? '' : 'none';
+    // Store message info for later actions
+    modalOverlay.dataset.msgTimestamp = msg.timestamp;
+    modalOverlay.dataset.msgUserId = msg.userId || msg.user_id;
+    // Position modal at cursor
+    modal.style.left = e.clientX + 'px';
+    modal.style.top = e.clientY + 'px';
+    modalOverlay.style.display = 'flex';
+    setTimeout(() => modalOverlay.classList.add('active'), 10);
+  });
+  // Close modal on click outside or Escape
+  const modalOverlay = document.getElementById('message-options-modal-overlay');
+  if (modalOverlay) {
+    modalOverlay.onclick = function(e) {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('active');
+        setTimeout(() => modalOverlay.style.display = 'none', 180);
+      }
+    };
+    document.addEventListener('keydown', function escClose(ev) {
+      if (ev.key === 'Escape' && modalOverlay.classList.contains('active')) {
+        modalOverlay.classList.remove('active');
+        setTimeout(() => modalOverlay.style.display = 'none', 180);
+      }
+    });
+  }
 }
 
 // --- Refactor openServerChannel for Real-time & Premium UI ---
@@ -786,16 +807,6 @@ async function openServerChannel(serverId, channelId) {
         const content = input.value.trim();
         if (!user || !user.user_id || !content) return;
         input.value = '';
-        // --- Handle reply ---
-        let reply = null;
-        if (window.currentReplyTo) {
-          reply = {
-            userId: window.currentReplyTo.userId,
-            username: window.currentReplyTo.username,
-            content: window.currentReplyTo.content,
-            timestamp: window.currentReplyTo.timestamp
-          };
-        }
         // --- Optimistically render the message for sender ---
         const now = Date.now();
         appendChannelMessage({
@@ -803,8 +814,7 @@ async function openServerChannel(serverId, channelId) {
           username: user.username,
           avatar_url: user.avatar_url,
           content,
-          timestamp: now,
-          reply
+          timestamp: now
         }, 'me');
         // --- THEN emit to server as before ---
         channelSocket.emit('channel_message', {
@@ -814,13 +824,8 @@ async function openServerChannel(serverId, channelId) {
           username: user.username,
           avatar_url: user.avatar_url,
           content,
-          timestamp: now,
-          reply
+          timestamp: now
         });
-        // Clear reply bar and state
-        const replyBox = document.getElementById('reply-to-bar');
-        if (replyBox) replyBox.remove();
-        window.currentReplyTo = null;
       };
       // ENTER key always sends unless mention dropdown is open
       input.addEventListener('keydown', function(e) {
@@ -2111,16 +2116,6 @@ async function openVoiceChannel(serverId, channelId) {
       const content = input.value.trim();
       if (!user || !user.user_id || !content) return;
       input.value = '';
-      // --- Handle reply ---
-      let reply = null;
-      if (window.currentReplyTo) {
-        reply = {
-          userId: window.currentReplyTo.userId,
-          username: window.currentReplyTo.username,
-          content: window.currentReplyTo.content,
-          timestamp: window.currentReplyTo.timestamp
-        };
-      }
       // --- Optimistically render the message for sender ---
       const now = Date.now();
       appendChannelMessage({
@@ -2128,8 +2123,7 @@ async function openVoiceChannel(serverId, channelId) {
         username: user.username,
         avatar_url: user.avatar_url,
         content,
-        timestamp: now,
-        reply
+        timestamp: now
       }, 'me');
       // --- THEN emit to server as before ---
       channelSocket.emit('channel_message', {
@@ -2139,13 +2133,8 @@ async function openVoiceChannel(serverId, channelId) {
         username: user.username,
         avatar_url: user.avatar_url,
         content,
-        timestamp: now,
-        reply
+        timestamp: now
       });
-      // Clear reply bar and state
-      const replyBox = document.getElementById('reply-to-bar');
-      if (replyBox) replyBox.remove();
-      window.currentReplyTo = null;
     };
     // ENTER key always sends unless mention dropdown is open
     input.addEventListener('keydown', function(e) {
@@ -2402,21 +2391,3 @@ document.addEventListener('focusin', function(e) {
     }
   }
 });
-// Listen for delete_channel_message event:
-if (window.channelSocket && !window._deleteChannelMsgListener) {
-  window.channelSocket.on('delete_channel_message', ({ timestamp }) => {
-    const el = document.querySelector(`.chat__conversation-board__message[data-timestamp="${timestamp}"]`);
-    if (el) el.remove();
-  });
-  window._deleteChannelMsgListener = true;
-}
-// Listen for edit_channel_message event:
-if (window.channelSocket && !window._editChannelMsgListener) {
-  window.channelSocket.on('edit_channel_message', ({ timestamp, newContent }) => {
-    const el = document.querySelector(`.chat__conversation-board__message[data-timestamp="${timestamp}"] .chat__conversation-board__message__bubble`);
-    if (el) {
-      el.innerHTML = `<span>${highlightMentions(newContent, window.currentServerMembers || [])} <span class='edited-tag'>(edited)</span></span>`;
-    }
-  });
-  window._editChannelMsgListener = true;
-}
