@@ -540,7 +540,8 @@ async function appendChannelMessage(msg, who) {
       replyBubble.onclick = function() {
         const targetMsg = document.querySelector(`.chat__conversation-board__message[data-timestamp="${msg.reply.timestamp}"]`);
         if (targetMsg) {
-          targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetMsg.classList.remove('message-highlight');
+          void targetMsg.offsetWidth; // Force reflow to restart animation
           targetMsg.classList.add('message-highlight');
           setTimeout(() => targetMsg.classList.remove('message-highlight'), 1200);
         }
