@@ -486,7 +486,7 @@ async function appendChannelMessage(msg, who) {
       </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
-        ${replyHtml}<span>${content}</span>${editedHtml}
+        ${replyHtml}<span class="main-message-content">${content}</span>${editedHtml}
       </div>
     </div>
   `;
