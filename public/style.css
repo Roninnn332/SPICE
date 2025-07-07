@@ -5012,17 +5012,16 @@ input:checked + .toggle-slider:before {
   transition: border 0.18s, color 0.18s;
 }
 
-/* Modern reply bubble for chat messages */
 .reply-bubble-modern {
   background: #1f232b;
   border-left: 3px solid #4a90e2;
   border-radius: 6px;
   padding: 6px 12px;
-  margin-bottom: 6px;
   font-size: 0.95em;
   color: #ccc;
   display: inline-block;
-  max-width: 92%;
+  max-width: 220px; /* ✅ Limit width */
+  word-wrap: break-word;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   position: relative;
   transition: background 0.2s ease;
@@ -5044,5 +5043,4 @@ input:checked + .toggle-slider:before {
   color: #b0b0b0;
   font-size: 0.89em;
   line-height: 1.4em;
-  word-wrap: break-word;
 }
