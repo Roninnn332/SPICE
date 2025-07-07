@@ -205,10 +205,17 @@ window.addEventListener('DOMContentLoaded', () => {
             const newText = input.value.trim();
             if (newText && newText !== oldText) {
               const user = JSON.parse(localStorage.getItem('spice_user'));
+              // Ensure we send the ISO string timestamp (created_at) for edits
+              const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${ts}"]`);
+              let isoTimestamp = ts;
+              if (msgDiv) {
+                // If the DOM element has the ISO string, use it
+                isoTimestamp = msgDiv.getAttribute('data-timestamp');
+              }
               channelSocket.emit('channel_message_edit', {
                 channelId: currentChannel.id,
                 serverId: currentServer.id,
-                timestamp: ts,
+                timestamp: isoTimestamp, // always ISO string
                 userId: user.user_id,
                 newContent: newText
               });
