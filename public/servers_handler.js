@@ -470,7 +470,9 @@ async function appendChannelMessage(msg, who) {
   // --- Reply bubble ---
   let replyHtml = '';
   if (msg.reply && msg.reply.content) {
-    replyHtml = `<div class='reply-bubble' style='color:#22d3a7;font-size:0.97em;margin-bottom:0.18em;opacity:0.85;'>↪️ ${msg.reply.content.slice(0, 60)}</div>`;
+    replyHtml = `<div class="reply-bubble-pro" data-reply-to="${msg.reply.timestamp}">
+      <span class="reply-content">${msg.reply.content.slice(0, 60)}</span>
+    </div>`;
   }
   // --- Edited tag ---
   let editedHtml = '';
@@ -530,6 +532,20 @@ async function appendChannelMessage(msg, who) {
         setTimeout(() => modalOverlay.style.display = 'none', 180);
       }
     });
+  }
+  // Add click handler to reply bubble for scroll/highlight
+  if (msg.reply && msg.reply.timestamp) {
+    const replyBubble = msgDiv.querySelector('.reply-bubble-pro');
+    if (replyBubble) {
+      replyBubble.onclick = function() {
+        const targetMsg = document.querySelector(`.chat__conversation-board__message[data-timestamp="${msg.reply.timestamp}"]`);
+        if (targetMsg) {
+          targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetMsg.classList.add('message-highlight');
+          setTimeout(() => targetMsg.classList.remove('message-highlight'), 1200);
+        }
+      };
+    }
   }
 }
 

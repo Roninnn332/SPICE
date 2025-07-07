@@ -4997,9 +4997,10 @@ input:checked + .toggle-slider:before {
 .edited-tag-premium {
   background: none;
   border: 1.5px solid #ece000;
-  color: #000000;
+  color: #ffffff;
   font-size: 0.72em;
-  font-weight: 600;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-weight: 300;
   padding: 0.05em 0.45em;
   border-radius: 0.6em;
   margin-left: 0.35em;
