@@ -5013,18 +5013,20 @@ input:checked + .toggle-slider:before {
 }
 
 .reply-bubble-modern {
-  background: #1f232b;
+  background: #262b35;
   border-left: 3px solid #4a90e2;
   border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.95em;
+  padding: 3px 10px;
+  font-size: 0.9em; 
+  line-height: 0.2;  
   color: #ccc;
   display: inline-block;
-  max-width: 220px; /* ✅ Limit width */
+  max-width: 220px;
   word-wrap: break-word;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   position: relative;
   transition: background 0.2s ease;
+  margin: 0;
 }
 
 .reply-bubble-modern:hover {
@@ -5043,4 +5045,16 @@ input:checked + .toggle-slider:before {
   color: #b0b0b0;
   font-size: 0.89em;
   line-height: 1.4em;
+}
+
+.message-highlight-flash {
+  animation: msgHighlightFlash 1.2s cubic-bezier(.4,2,.6,1);
+  background: #ffe066 !important;
+  box-shadow: 0 0 0 2px #ffd70055;
+  transition: background 0.6s;
+}
+@keyframes msgHighlightFlash {
+  0% { background: #ffe066; }
+  80% { background: #ffe066; }
+  100% { background: transparent; }
 }

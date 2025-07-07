@@ -470,9 +470,8 @@ async function appendChannelMessage(msg, who) {
   // --- Reply bubble ---
   let replyHtml = '';
   if (msg.reply && msg.reply.content) {
-    // Use a modern, boxed reply style with username prefix
     const replyUsername = msg.reply.username ? msg.reply.username : '';
-    replyHtml = `<div class="reply-bubble-modern">
+    replyHtml = `<div class="reply-bubble-modern" data-reply-to="${msg.reply.timestamp || ''}">
       <span class="reply-username">${replyUsername ? `@${replyUsername}:` : ''}</span>
       <span class="reply-text">${msg.reply.content.slice(0, 80)}</span>
     </div>`;
@@ -2479,3 +2478,22 @@ document.addEventListener('focusin', function(e) {
     }
   }
 });
+
+// Add this after appendChannelMessage and message rendering logic
+if (!window._replyBubbleClickHandler) {
+  window._replyBubbleClickHandler = true;
+  document.addEventListener('click', function(e) {
+    const bubble = e.target.closest('.reply-bubble-modern[data-reply-to]');
+    if (bubble) {
+      const replyTo = bubble.getAttribute('data-reply-to');
+      if (replyTo) {
+        const msgDiv = document.querySelector(`.chat__conversation-board__message[data-timestamp="${replyTo}"]`);
+        if (msgDiv) {
+          msgDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          msgDiv.classList.add('message-highlight-flash');
+          setTimeout(() => msgDiv.classList.remove('message-highlight-flash'), 1200);
+        }
+      }
+    }
+  });
+}
