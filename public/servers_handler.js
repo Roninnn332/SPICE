@@ -470,8 +470,11 @@ async function appendChannelMessage(msg, who) {
   // --- Reply bubble ---
   let replyHtml = '';
   if (msg.reply && msg.reply.content) {
-    replyHtml = `<div class="reply-bubble-pro" data-reply-to="${msg.reply.timestamp}">
-      <span class="reply-content">${msg.reply.content.slice(0, 60)}</span>
+    // Use a modern, boxed reply style with username prefix
+    const replyUsername = msg.reply.username ? msg.reply.username : '';
+    replyHtml = `<div class="reply-bubble-modern">
+      <span class="reply-username">${replyUsername ? `@${replyUsername}:` : ''}</span>
+      <span class="reply-text">${msg.reply.content.slice(0, 80)}</span>
     </div>`;
   }
   // --- Edited tag ---
@@ -486,7 +489,7 @@ async function appendChannelMessage(msg, who) {
       </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
-        ${replyHtml}<span class="main-message-content">${content}</span>${editedHtml}
+        ${replyHtml}<span>${content}</span>${editedHtml}
       </div>
     </div>
   `;
@@ -532,21 +535,6 @@ async function appendChannelMessage(msg, who) {
         setTimeout(() => modalOverlay.style.display = 'none', 180);
       }
     });
-  }
-  // Add click handler to reply bubble for scroll/highlight
-  if (msg.reply && msg.reply.timestamp) {
-    const replyBubble = msgDiv.querySelector('.reply-bubble-pro');
-    if (replyBubble) {
-      replyBubble.onclick = function() {
-        const targetMsg = document.querySelector(`.chat__conversation-board__message[data-timestamp="${msg.reply.timestamp}"]`);
-        if (targetMsg) {
-          targetMsg.classList.remove('message-highlight');
-          void targetMsg.offsetWidth; // Force reflow to restart animation
-          targetMsg.classList.add('message-highlight');
-          setTimeout(() => targetMsg.classList.remove('message-highlight'), 1200);
-        }
-      };
-    }
   }
 }
 
