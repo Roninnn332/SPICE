@@ -224,26 +224,20 @@ io.on('connection', (socket) => {
 
   // --- CHANNEL MESSAGE EDIT ---
   socket.on('channel_message_edit', async ({ serverId, channelId, timestamp, userId, newContent }) => {
-    try {
-      if (!timestamp || typeof timestamp !== 'string') {
-        console.error('[channel_message_edit] Invalid timestamp:', timestamp);
-        return;
-      }
-      // Use timestamp directly as ISO string
-      const { error } = await supabase
-        .from('channel_messages')
-        .update({ content: newContent, edited: true })
-        .eq('channel_id', channelId)
-        .eq('user_id', userId)
-        .eq('created_at', timestamp);
-      if (error) console.error('[channel_message_edit] Supabase error:', error);
-      const room = `server-${serverId}-channel-${channelId}`;
-      io.to(room).emit('channel_message_edit', {
-        serverId, channelId, timestamp, userId, newContent, edited: true
-      });
-    } catch (err) {
-      console.error('[channel_message_edit] Unexpected error:', err);
-    }
+    // Only allow editing own messages (or owner, if you want to add that logic)
+    // Update in Supabase
+    const { error } = await supabase
+      .from('channel_messages')
+      .update({ content: newContent, edited: true })
+      .eq('channel_id', channelId)
+      .eq('user_id', userId)
+      .eq('created_at', timestamp); // Use ISO string directly
+    if (error) console.error('Supabase update error (channel_message_edit):', error);
+    // Broadcast to all in the channel room
+    const room = `server-${serverId}-channel-${channelId}`;
+    io.to(room).emit('channel_message_edit', {
+      serverId, channelId, timestamp, userId, newContent, edited: true
+    });
   });
 
   // --- CHANNEL MESSAGE DELETE ---
