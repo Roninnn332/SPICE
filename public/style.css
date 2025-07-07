@@ -5014,21 +5014,35 @@ input:checked + .toggle-slider:before {
 
 /* Modern reply bubble for chat messages */
 .reply-bubble-modern {
-  background: #23272f;
-  border-radius: 8px;
-  padding: 7px 14px 7px 12px;
-  margin-bottom: 7px;
-  font-size: 0.97em;
-  color: #b0b0b0;
+  background: #1f232b;
+  border-left: 3px solid #4a90e2;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  font-size: 0.95em;
+  color: #ccc;
   display: inline-block;
-  max-width: 95%;
-  box-shadow: 0 1px 4px 0 rgba(20,24,26,0.10);
+  max-width: 92%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  position: relative;
+  transition: background 0.2s ease;
 }
+
+.reply-bubble-modern:hover {
+  background: #262b33;
+}
+
 .reply-bubble-modern .reply-username {
   color: #7dafff;
-  font-weight: 500;
-  margin-right: 4px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.91em;
 }
+
 .reply-bubble-modern .reply-text {
   color: #b0b0b0;
+  font-size: 0.89em;
+  line-height: 1.4em;
+  word-wrap: break-word;
 }
