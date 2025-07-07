@@ -52,4 +52,15 @@
   0%   { background: #22d3a7; box-shadow: 0 0 0 6px #22d3a7; }
   60%  { background: #a7f3d0; box-shadow: 0 0 0 3px #22d3a7; }
   100% { background: inherit; box-shadow: none; }
+}
+.main-message-content {
+  font-size: 1.13em !important;
+  color: #f3f3f3 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+  line-height: 1.7;
+  display: block;
+  margin-top: 0.08em;
+  margin-bottom: 0.02em;
+  word-break: break-word;
 } 
