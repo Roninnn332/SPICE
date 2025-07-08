@@ -5058,3 +5058,325 @@ input:checked + .toggle-slider:before {
   80% { background: #ffe066; }
   100% { background: transparent; }
 }
+
+/* GOD-LEVEL PROFILE MODAL UPGRADE */
+.god-profile-modal {
+  background: rgba(24,24,28,0.92);
+  box-shadow: 0 8px 48px 0 rgba(0,0,0,0.22);
+  border-radius: 2.2rem;
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  width: 98vw;
+  max-width: 420px;
+  height: auto;
+  padding: 2.5rem 2.2rem 2.2rem 2.2rem;
+  position: relative;
+  animation: godProfileModalIn 0.7s cubic-bezier(.4,2,.6,1);
+}
+@keyframes godProfileModalIn {
+  0% { opacity: 0; transform: scale(0.96) translateY(40px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.god-profile-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #f3f4f6;
+  font-weight: 400;
+  background: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+.god-profile-close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: none;
+  border: none;
+  color: #b0b3b8;
+  font-size: 2.2rem;
+  border-radius: 50%;
+  width: 2.7rem;
+  height: 2.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+  z-index: 2;
+}
+.god-profile-close:hover, .god-profile-close:focus {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+}
+.god-profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  width: 100%;
+  margin-bottom: 2.2rem;
+  animation: godProfileCardIn 0.7s cubic-bezier(.4,2,.6,1);
+}
+@keyframes godProfileCardIn {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.god-profile-avatar-wrapper {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  margin-bottom: 0.2rem;
+}
+.god-profile-avatar {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.18);
+  border: none;
+  background: #23232b;
+  transition: box-shadow 0.22s cubic-bezier(.4,2,.6,1), filter 0.22s cubic-bezier(.4,2,.6,1);
+}
+.god-profile-avatar-wrapper:hover .god-profile-avatar {
+  box-shadow: 0 8px 48px 0 rgba(0,0,0,0.28);
+  filter: brightness(1.08) saturate(1.1);
+}
+.god-profile-avatar-edit {
+  position: absolute;
+  bottom: 0.7rem;
+  right: 0.7rem;
+  background: rgba(36,36,40,0.85);
+  border: none;
+  border-radius: 50%;
+  width: 2.7rem;
+  height: 2.7rem;
+  color: #b0b3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.13);
+  transition: background 0.18s, color 0.18s;
+  z-index: 2;
+}
+.god-profile-avatar-edit:hover, .god-profile-avatar-edit:focus {
+  background: #2e2e38;
+  color: #fff;
+}
+.god-profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.god-profile-displayname-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+.god-profile-displayname-input {
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 400;
+  background: rgba(36,36,40,0.85);
+  color: #fff;
+  border: none;
+  border-radius: 0.7rem;
+  padding: 0.3em 0.8em;
+  outline: none;
+  margin-left: 0.2rem;
+  min-width: 120px;
+  max-width: 220px;
+  transition: background 0.18s, color 0.18s;
+}
+.god-profile-edit-btn {
+  background: none;
+  border: none;
+  color: #b0b3b8;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+}
+.god-profile-edit-btn:hover, .god-profile-edit-btn:focus {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+}
+.god-profile-username-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.05rem;
+  color: #b0b3b8;
+  font-weight: 400;
+}
+.god-profile-userid {
+  font-family: "SF Mono", "Roboto Mono", "Menlo", monospace;
+  background: rgba(36,36,40,0.45);
+  border-radius: 0.5em;
+  padding: 0.1em 0.6em;
+  font-size: 1.01em;
+  color: #a3e3ff;
+  margin-left: 0.2em;
+}
+.god-profile-copy-id {
+  background: none;
+  border: none;
+  color: #b0b3b8;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+}
+.god-profile-copy-id:hover, .god-profile-copy-id:focus {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+}
+.god-profile-copy-feedback {
+  color: #a3e3ff;
+  font-size: 0.98em;
+  margin-left: 0.3em;
+  opacity: 0;
+  animation: godProfileCopyFade 1.2s cubic-bezier(.4,2,.6,1);
+}
+@keyframes godProfileCopyFade {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.god-profile-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1.01rem;
+  color: #a3e3ff;
+  font-weight: 400;
+  margin-top: 0.2em;
+}
+.god-profile-status-dot {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  display: inline-block;
+  background: #4ade80;
+  box-shadow: 0 0 8px 0 #4ade80cc;
+  margin-right: 0.2em;
+  transition: background 0.18s;
+}
+.god-profile-status-dot.offline {
+  background: #64748b;
+  box-shadow: none;
+}
+.god-profile-status-dot.busy {
+  background: #f87171;
+  box-shadow: 0 0 8px 0 #f87171cc;
+}
+.god-profile-status-dot.away {
+  background: #facc15;
+  box-shadow: 0 0 8px 0 #facc15cc;
+}
+.god-profile-status-text {
+  color: #b0b3b8;
+  font-size: 1.01em;
+}
+.god-profile-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: center;
+  margin-top: 0.7rem;
+  animation: godProfileActionsIn 0.7s cubic-bezier(.4,2,.6,1);
+}
+@keyframes godProfileActionsIn {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.god-profile-theme-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 1.1em;
+  font-size: 1.08rem;
+  color: #b0b3b8;
+  width: 100%;
+  justify-content: center;
+}
+.god-profile-theme-toggle {
+  background: rgba(36,36,40,0.85);
+  border: none;
+  border-radius: 1.2em;
+  width: 2.7em;
+  height: 2.7em;
+  color: #a3e3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3em;
+  transition: background 0.18s, color 0.18s;
+}
+.god-profile-theme-toggle:hover, .god-profile-theme-toggle:focus {
+  background: #2e2e38;
+  color: #fff;
+}
+.god-profile-logout {
+  background: linear-gradient(90deg, #23232b 60%, #2dd4bf 100%);
+  color: #fff;
+  border: none;
+  border-radius: 1.2em;
+  padding: 0.7em 2.2em;
+  font-family: inherit;
+  font-size: 1.08rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 12px 0 rgba(45,212,191,0.10);
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+  margin-top: 0.7em;
+}
+.god-profile-logout:hover, .god-profile-logout:focus {
+  background: linear-gradient(90deg, #2dd4bf 60%, #23232b 100%);
+  color: #23232b;
+  transform: scale(1.04);
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .god-profile-modal {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+    border-radius: 0.9rem;
+  }
+  .god-profile-avatar-wrapper, .god-profile-avatar {
+    width: 72px;
+    height: 72px;
+  }
+  .god-profile-close {
+    top: 0.7rem;
+    right: 0.7rem;
+    font-size: 1.5rem;
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+}

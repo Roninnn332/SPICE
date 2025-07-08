@@ -762,14 +762,161 @@ document.addEventListener('submit', async (e) => {
   }
 });
 
+// --- GOD-LEVEL PROFILE MODAL LOGIC ---
+function populateGodProfileModal() {
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (!user) return;
+  document.getElementById('god-profile-avatar').src = user.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg';
+  document.getElementById('god-profile-displayname').textContent = user.display_name || user.username || 'User';
+  document.getElementById('god-profile-username').textContent = '@' + (user.username || 'user');
+  document.getElementById('god-profile-userid').textContent = '#' + (user.user_id || 'id');
+}
+
 function openProfileModal() {
   if (!profileModal) return;
+  populateGodProfileModal();
   profileModal.style.display = 'flex';
   setTimeout(() => {
     profileModal.classList.add('active');
     document.body.style.overflow = 'hidden';
     profileModal.focus();
   }, 10);
+}
+
+// Inline display name editing
+const godDisplayName = document.getElementById('god-profile-displayname');
+const godEditBtn = document.getElementById('god-profile-edit-name');
+const godDisplayNameInput = document.getElementById('god-profile-displayname-input');
+if (godEditBtn && godDisplayName && godDisplayNameInput) {
+  godEditBtn.onclick = () => {
+    godDisplayNameInput.value = godDisplayName.textContent;
+    godDisplayName.style.display = 'none';
+    godEditBtn.style.display = 'none';
+    godDisplayNameInput.style.display = '';
+    godDisplayNameInput.focus();
+  };
+  godDisplayNameInput.onblur = saveDisplayName;
+  godDisplayNameInput.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveDisplayName();
+    }
+  };
+}
+async function saveDisplayName() {
+  const val = godDisplayNameInput.value.trim();
+  if (!val) return;
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  godDisplayName.textContent = val;
+  godDisplayName.style.display = '';
+  godEditBtn.style.display = '';
+  godDisplayNameInput.style.display = 'none';
+  if (user) {
+    await supabase.from('users').update({ display_name: val }).eq('user_id', user.user_id);
+    user.display_name = val;
+    localStorage.setItem('spice_user', JSON.stringify(user));
+    populateGodProfileModal();
+  }
+}
+
+// Copy user ID
+const godCopyIdBtn = document.getElementById('god-profile-copy-id');
+const godUserId = document.getElementById('god-profile-userid');
+const godCopyFeedback = document.getElementById('god-profile-copy-feedback');
+if (godCopyIdBtn && godUserId && godCopyFeedback) {
+  godCopyIdBtn.onclick = () => {
+    navigator.clipboard.writeText(godUserId.textContent.replace('#',''));
+    godCopyFeedback.style.display = 'inline-block';
+    godCopyFeedback.style.opacity = '1';
+    setTimeout(() => {
+      godCopyFeedback.style.opacity = '0';
+      setTimeout(() => godCopyFeedback.style.display = 'none', 600);
+    }, 1200);
+  };
+}
+
+// Avatar change
+const godAvatarEditBtn = document.getElementById('god-profile-avatar-edit');
+const godAvatarImg = document.getElementById('god-profile-avatar');
+if (godAvatarEditBtn && avatarInput) {
+  godAvatarEditBtn.onclick = (e) => {
+    e.preventDefault();
+    avatarInput.value = '';
+    avatarInput.click();
+  };
+}
+// After avatar upload/crop, update god-profile-avatar src as well
+function updateGodProfileAvatar(url) {
+  if (godAvatarImg) godAvatarImg.src = url;
+}
+// Patch avatar upload logic to update god-profile-avatar
+const origAvatarCropConfirm = avatarCropConfirm.onclick;
+avatarCropConfirm.onclick = async () => {
+  if (!cropper) return;
+  avatarCropModal.style.display = 'none';
+  avatarLoading.style.display = 'flex';
+  cropper.getCroppedCanvas({ width: 256, height: 256 }).toBlob(async (blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', blob);
+      formData.append('upload_preset', 'user_media');
+      const res = await fetch('https://api.cloudinary.com/v1_1/dbriuheef/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        // Update avatar in UI
+        document.querySelectorAll('.profile-avatar-img, .profile-preview-avatar-img').forEach(img => {
+          img.src = data.secure_url;
+        });
+        updateGodProfileAvatar(data.secure_url);
+        // Save to Supabase
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        if (user) {
+          await supabase.from('users').update({ avatar_url: data.secure_url }).eq('user_id', user.user_id);
+          user.avatar_url = data.secure_url;
+          localStorage.setItem('spice_user', JSON.stringify(user));
+          updateProfilePreview(user);
+        }
+      } else {
+        alert('Upload failed.');
+      }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+    } finally {
+      avatarLoading.style.display = 'none';
+      if (cropper) { cropper.destroy(); cropper = null; }
+    }
+  }, 'image/jpeg', 0.95);
+};
+
+// Theme toggle
+const godThemeToggle = document.getElementById('god-profile-theme-toggle');
+if (godThemeToggle) {
+  godThemeToggle.onclick = () => {
+    document.body.classList.toggle('light-theme');
+    // Optionally save theme to localStorage
+    localStorage.setItem('spice_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+    // Change icon
+    godThemeToggle.innerHTML = document.body.classList.contains('light-theme') ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
+  };
+  // On load, set icon
+  if (localStorage.getItem('spice_theme') === 'light') {
+    document.body.classList.add('light-theme');
+    godThemeToggle.innerHTML = '<i class="fa-regular fa-sun"></i>';
+  } else {
+    godThemeToggle.innerHTML = '<i class="fa-regular fa-moon"></i>';
+  }
+}
+
+// Logout
+const godLogoutBtn = document.getElementById('god-profile-logout');
+if (godLogoutBtn) {
+  godLogoutBtn.onclick = () => {
+    localStorage.removeItem('spice_user');
+    window.location.reload();
+  };
 }
 
 function closeProfileModal() {
@@ -870,6 +1017,7 @@ avatarCropConfirm.onclick = async () => {
         document.querySelectorAll('.profile-avatar-img, .profile-preview-avatar-img').forEach(img => {
           img.src = data.secure_url;
         });
+        updateGodProfileAvatar(data.secure_url);
         // Save to Supabase
         const user = JSON.parse(localStorage.getItem('spice_user'));
         if (user) {
