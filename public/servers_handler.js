@@ -951,7 +951,39 @@ async function openServerChannel(serverId, channelId) {
   }
   // Render messages with premium UI
   const user = JSON.parse(localStorage.getItem('spice_user'));
+  let lastDate = null;
+  function formatDateLabel(dateObj) {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    const d = dateObj;
+    if (
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate()
+    ) return 'Today';
+    if (
+      d.getFullYear() === yesterday.getFullYear() &&
+      d.getMonth() === yesterday.getMonth() &&
+      d.getDate() === yesterday.getDate()
+    ) return 'Yesterday';
+    // Format as e.g. 05 July 2025
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
   for (const msg of messages) {
+    // Insert date separator if needed
+    const msgDate = new Date(msg.created_at || msg.timestamp);
+    const msgDateStr = msgDate.toDateString();
+    if (lastDate !== msgDateStr) {
+      lastDate = msgDateStr;
+      const chat = document.querySelector('.chat-messages');
+      if (chat) {
+        const sep = document.createElement('div');
+        sep.className = 'chat-date-separator-discord';
+        sep.innerHTML = `<div class='date-line'></div><span class='date-label'>${formatDateLabel(msgDate)}</span><div class='date-line'></div>`;
+        chat.appendChild(sep);
+      }
+    }
     const isMe = String(msg.user_id) === String(user.user_id);
     await appendChannelMessage({
       userId: msg.user_id,
