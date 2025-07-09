@@ -481,6 +481,11 @@ async function appendChannelMessage(msg, who) {
   if (msg.edited) {
     editedHtml = " <span class='edited-tag edited-tag-premium'>edited</span>";
   }
+  // --- Heading detection ---
+  let headingClass = '';
+  if (typeof content === 'string' && content.trim().startsWith('# ')) {
+    headingClass = 'chat-message-heading';
+  }
   msgDiv.innerHTML = `
     <div class="chat__conversation-board__message__person">
       <img class="chat__conversation-board__message__person__avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" width="35" height="35" />
@@ -488,7 +493,7 @@ async function appendChannelMessage(msg, who) {
       </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
-        ${replyHtml}<span>${content}</span>${editedHtml}
+        ${replyHtml}<span class="${headingClass}">${content}</span>${editedHtml}
       </div>
     </div>
   `;
