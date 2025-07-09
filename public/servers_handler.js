@@ -460,6 +460,18 @@ async function appendChannelMessage(msg, who) {
       reactions.map(r => `<span class=\"emoji-reaction\">${r.emoji} ${r.count}</span>`).join('') +
       `</div>`;
   }
+  // --- Media rendering ---
+  let mediaHtml = '';
+  if (msg.media_url && msg.media_type) {
+    if (msg.media_type.startsWith('image/')) {
+      mediaHtml = `<img class="dm-message-media-img" src="${msg.media_url}" alt="Image" loading="lazy" />`;
+    } else if (msg.media_type.startsWith('video/')) {
+      mediaHtml = `<video class="dm-message-media-video" src="${msg.media_url}" controls preload="metadata"></video>`;
+    } else {
+      const name = msg.file_name ? msg.file_name : 'Download File';
+      mediaHtml = `<a class="dm-message-media-file" href="${msg.media_url}" download target="_blank"><i class="fa-solid fa-file-arrow-down"></i> ${name}</a>`;
+    }
+  }
   // Alignment
   const reversed = who === 'me' ? 'reversed' : '';
   const msgDiv = document.createElement('div');
@@ -493,7 +505,7 @@ async function appendChannelMessage(msg, who) {
       </div>
     <div class="chat__conversation-board__message__context">
       <div class="chat__conversation-board__message__bubble">
-        ${replyHtml}<span class="${headingClass}">${content}</span>${editedHtml}
+        ${replyHtml}${mediaHtml}<span class="${headingClass}">${content}</span>${editedHtml}
       </div>
     </div>
   `;
@@ -1083,7 +1095,130 @@ async function openServerChannel(serverId, channelId) {
       });
       // File upload (optional: you can add your logic here)
       fileInput.onchange = async (e) => {
-        // You can implement file upload logic here if needed
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) {
+          alert('File too large (max 20MB).');
+          return;
+        }
+        // Generate a unique upload ID for this upload
+        const uploadId = 'upload-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        // Optimistically render a placeholder message with spinner and progress bar
+        const now = Date.now();
+        const chat = document.querySelector('.chat-messages');
+        const reversed = 'me';
+        const user = JSON.parse(localStorage.getItem('spice_user'));
+        let username = user.username;
+        let avatar_url = user.avatar_url;
+        // Create the placeholder div
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat__conversation-board__message ${reversed}`;
+        msgDiv.setAttribute('data-upload-id', uploadId);
+        msgDiv.setAttribute('data-timestamp', now);
+        msgDiv.setAttribute('data-userid', user.user_id);
+        msgDiv.innerHTML = `
+          <div class="chat__conversation-board__message__person">
+            <img class="chat__conversation-board__message__person__avatar" src="${avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt="Avatar" width="35" height="35" />
+            <span class="chat__conversation-board__message__person__nickname" style="display:none;">${username}</span>
+          </div>
+          <div class="chat__conversation-board__message__context">
+            <div class="chat__conversation-board__message__bubble">
+              <div class="media-uploading-indicator">
+                <div class="spinner"></div>
+                <span>Uploading...</span>
+                <button class="media-upload-cancel-btn" title="Cancel Upload">✕</button>
+              </div>
+              <div class="media-upload-progress-bar-wrapper"><div class="media-upload-progress-bar" style="width:0%"></div></div>
+            </div>
+          </div>
+        `;
+        chat.appendChild(msgDiv);
+        void msgDiv.offsetWidth;
+        msgDiv.classList.add('dm-message-animate-in');
+        chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+        // Disable send button during upload
+        if (sendBtn) sendBtn.disabled = true;
+        // Setup cancel logic
+        let canceled = false;
+        let xhr = new XMLHttpRequest();
+        const cancelBtn = msgDiv.querySelector('.media-upload-cancel-btn');
+        cancelBtn.onclick = () => {
+          canceled = true;
+          xhr.abort();
+          // Remove the placeholder
+          msgDiv.remove();
+          if (sendBtn) sendBtn.disabled = false;
+        };
+        // Start upload with progress
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'user_media');
+        xhr.open('POST', 'https://api.cloudinary.com/v1_1/dbriuheef/auto/upload');
+        xhr.upload.onprogress = function(evt) {
+          if (evt.lengthComputable) {
+            const percent = Math.round((evt.loaded / evt.total) * 100);
+            const bar = msgDiv.querySelector('.media-upload-progress-bar');
+            if (bar) bar.style.width = percent + '%';
+          }
+        };
+        xhr.onload = function() {
+          if (sendBtn) sendBtn.disabled = false;
+          if (canceled) return;
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.secure_url) {
+              // Remove the placeholder
+              msgDiv.remove();
+              // Render the real message
+              appendChannelMessage({
+                userId: Number(user.user_id),
+                username: user.username,
+                avatar_url: user.avatar_url,
+                content: '',
+                timestamp: now,
+                media_url: data.secure_url,
+                media_type: file.type,
+                file_name: file.name
+              }, 'me');
+              // Emit to server
+              channelSocket.emit('channel_message', {
+                serverId,
+                channelId,
+                userId: Number(user.user_id),
+                username: user.username,
+                avatar_url: user.avatar_url,
+                content: '',
+                timestamp: now,
+                media_url: data.secure_url,
+                media_type: file.type,
+                file_name: file.name
+              });
+            } else {
+              showUploadError('Upload failed.');
+            }
+          } else {
+            showUploadError('Upload failed.');
+          }
+        };
+        xhr.onerror = function() {
+          if (sendBtn) sendBtn.disabled = false;
+          if (canceled) return;
+          showUploadError('Upload error.');
+        };
+        function showUploadError(msg) {
+          const bubble = msgDiv.querySelector('.chat__conversation-board__message__bubble');
+          if (bubble) {
+            bubble.innerHTML = `<span style='color:#ed4245;'>${msg}</span> <button class='media-upload-retry-btn'>Retry</button>`;
+            const retryBtn = bubble.querySelector('.media-upload-retry-btn');
+            retryBtn.onclick = () => {
+              msgDiv.remove();
+              if (sendBtn) sendBtn.disabled = false;
+              fileInput.value = '';
+              fileInput.click();
+            };
+          }
+        }
+        xhr.send(formData);
       };
       // Setup mention autocomplete
       setupMentionAutocomplete(input, window.currentServerMembers || []);

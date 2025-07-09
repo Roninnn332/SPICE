@@ -58,21 +58,24 @@ io.on('connection', (socket) => {
   });
 
   // Handle sending a channel message
-  socket.on('channel_message', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp }) => {
+  socket.on('channel_message', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp, media_url = null, media_type = null, file_name = null }) => {
     // Save to Supabase
     const { error } = await supabase.from('channel_messages').insert([
       {
         channel_id: channelId,
         user_id: userId,
         content,
-        created_at: new Date(Number(timestamp)).toISOString()
+        created_at: new Date(Number(timestamp)).toISOString(),
+        media_url,
+        media_type,
+        file_name
       }
     ]);
     if (error) console.error('Supabase insert error (channel_message):', error);
     // Broadcast to all in the channel room
     const room = `server-${serverId}-channel-${channelId}`;
     io.to(room).emit('channel_message', {
-      serverId, channelId, userId, username, avatar_url, content, timestamp
+      serverId, channelId, userId, username, avatar_url, content, timestamp, media_url, media_type, file_name
     });
   });
 
@@ -258,7 +261,7 @@ io.on('connection', (socket) => {
   });
 
   // --- CHANNEL MESSAGE REPLY ---
-  socket.on('channel_message_reply', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp, reply }) => {
+  socket.on('channel_message_reply', async ({ serverId, channelId, userId, username, avatar_url, content, timestamp, reply, media_url = null, media_type = null, file_name = null }) => {
     // Save to Supabase (store reply info as JSON if you want, or just as content)
     const { error } = await supabase.from('channel_messages').insert([
       {
@@ -267,14 +270,17 @@ io.on('connection', (socket) => {
         content,
         created_at: new Date(Number(timestamp)).toISOString(),
         reply_to: reply?.timestamp || null,
-        reply_content: reply?.content || null
+        reply_content: reply?.content || null,
+        media_url,
+        media_type,
+        file_name
       }
     ]);
     if (error) console.error('Supabase insert error (channel_message_reply):', error);
     // Broadcast to all in the channel room
     const room = `server-${serverId}-channel-${channelId}`;
     io.to(room).emit('channel_message_reply', {
-      serverId, channelId, userId, username, avatar_url, content, timestamp, reply
+      serverId, channelId, userId, username, avatar_url, content, timestamp, reply, media_url, media_type, file_name
     });
   });
 });
