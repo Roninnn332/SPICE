@@ -549,9 +549,106 @@ async function openServerChannel(serverId, channelId) {
   }
   // Fetch channel info
   const channel = channelsList.find(c => c.id === channelId);
-  // Render channel name in header
+  // Render channel name and search in header
   const header = serverChatSection.querySelector('.chat-header');
-  if (header) header.textContent = channel ? `# ${channel.name}` : '# Channel';
+  if (header) {
+    if (channel && channel.type === 'text') {
+      header.innerHTML = `
+        <span class="chat-header-title"># ${channel.name}</span>
+        <button class="chat-header-search-btn" title="Search Messages"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <div class="chat-header-search-bar" style="display:none;">
+          <input type="text" class="chat-header-search-input" placeholder="Search messages..." />
+          <button class="chat-header-search-nav chat-header-search-up" title="Previous"><i class="fa-solid fa-chevron-up"></i></button>
+          <button class="chat-header-search-nav chat-header-search-down" title="Next"><i class="fa-solid fa-chevron-down"></i></button>
+          <span class="chat-header-search-count"></span>
+          <button class="chat-header-search-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `;
+      // Animate search bar in/out
+      const searchBtn = header.querySelector('.chat-header-search-btn');
+      const searchBar = header.querySelector('.chat-header-search-bar');
+      const searchInput = header.querySelector('.chat-header-search-input');
+      const closeBtn = header.querySelector('.chat-header-search-close');
+      const upBtn = header.querySelector('.chat-header-search-up');
+      const downBtn = header.querySelector('.chat-header-search-down');
+      const countSpan = header.querySelector('.chat-header-search-count');
+      let matches = [];
+      let currentIdx = 0;
+      function showSearchBar() {
+        searchBar.style.display = 'flex';
+        setTimeout(() => searchBar.classList.add('active'), 10);
+        searchInput.focus();
+      }
+      function hideSearchBar() {
+        searchBar.classList.remove('active');
+        setTimeout(() => searchBar.style.display = 'none', 200);
+        clearHighlights();
+        searchInput.value = '';
+        countSpan.textContent = '';
+      }
+      function clearHighlights() {
+        document.querySelectorAll('.chat__conversation-board__message .message-highlight-flash').forEach(el => {
+          el.classList.remove('message-highlight-flash');
+        });
+      }
+      function highlightMatch(idx) {
+        clearHighlights();
+        if (!matches.length) return;
+        const el = matches[idx];
+        el.classList.add('message-highlight-flash');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      function updateCount() {
+        if (!matches.length) {
+          countSpan.textContent = '';
+        } else {
+          countSpan.textContent = `${currentIdx + 1} / ${matches.length}`;
+        }
+      }
+      function doSearch() {
+        clearHighlights();
+        const q = searchInput.value.trim().toLowerCase();
+        if (!q) {
+          matches = [];
+          currentIdx = 0;
+          updateCount();
+          return;
+        }
+        matches = Array.from(document.querySelectorAll('.chat__conversation-board__message .chat__conversation-board__message__bubble span'))
+          .filter(span => span.textContent.toLowerCase().includes(q))
+          .map(span => span.closest('.chat__conversation-board__message'));
+        currentIdx = 0;
+        updateCount();
+        if (matches.length) highlightMatch(currentIdx);
+      }
+      searchBtn.onclick = showSearchBar;
+      closeBtn.onclick = hideSearchBar;
+      searchInput.oninput = doSearch;
+      searchInput.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+          if (matches.length) {
+            highlightMatch(currentIdx);
+          }
+        } else if (e.key === 'Escape') {
+          hideSearchBar();
+        }
+      };
+      upBtn.onclick = function() {
+        if (!matches.length) return;
+        currentIdx = (currentIdx - 1 + matches.length) % matches.length;
+        highlightMatch(currentIdx);
+        updateCount();
+      };
+      downBtn.onclick = function() {
+        if (!matches.length) return;
+        currentIdx = (currentIdx + 1) % matches.length;
+        highlightMatch(currentIdx);
+        updateCount();
+      };
+    } else {
+      header.textContent = channel ? `# ${channel.name}` : '# Channel';
+    }
+  }
   const chat = serverChatSection.querySelector('.chat-messages');
   const footer = serverChatSection.querySelector('.chat-input-area');
   if (channel && channel.type === 'voice') {
