@@ -587,15 +587,46 @@ async function openServerChannel(serverId, channelId) {
         countSpan.textContent = '';
       }
       function clearHighlights() {
-        document.querySelectorAll('.chat__conversation-board__message .message-highlight-flash').forEach(el => {
-          el.classList.remove('message-highlight-flash');
+        // Remove .search-highlight spans and restore original text
+        document.querySelectorAll('.search-highlight').forEach(span => {
+          const parent = span.parentNode;
+          parent.replaceChild(document.createTextNode(span.textContent), span);
+          parent.normalize();
         });
       }
       function highlightMatch(idx) {
         clearHighlights();
         if (!matches.length) return;
         const el = matches[idx];
-        el.classList.add('message-highlight-flash');
+        const q = searchInput.value.trim();
+        if (!q) return;
+        const qLower = q.toLowerCase();
+        // Helper to wrap matches in a node
+        function highlightInElement(element) {
+          if (!element) return;
+          const text = element.textContent;
+          const textLower = text.toLowerCase();
+          let start = 0;
+          let result = '';
+          let i = 0;
+          while ((i = textLower.indexOf(qLower, start)) !== -1) {
+            result += text.substring(start, i) + `<span class='search-highlight'>${text.substring(i, i + q.length)}</span>`;
+            start = i + q.length;
+          }
+          result += text.substring(start);
+          if (result !== text) {
+            element.innerHTML = result;
+          }
+        }
+        // Main message
+        const mainSpan = el.querySelector('.chat__conversation-board__message__bubble span');
+        highlightInElement(mainSpan);
+        // Reply bubble
+        const replySpan = el.querySelector('.reply-bubble-modern .reply-text');
+        highlightInElement(replySpan);
+        // Edited tag
+        const editedTag = el.querySelector('.edited-tag-premium');
+        highlightInElement(editedTag);
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       function updateCount() {
@@ -614,16 +645,33 @@ async function openServerChannel(serverId, channelId) {
           updateCount();
           return;
         }
-        matches = Array.from(document.querySelectorAll('.chat__conversation-board__message .chat__conversation-board__message__bubble span'))
-          .filter(span => span.textContent.toLowerCase().includes(q))
-          .map(span => span.closest('.chat__conversation-board__message'));
+        // Search in main message, reply bubble, and edited tag
+        matches = Array.from(document.querySelectorAll('.chat__conversation-board__message')).filter(msgDiv => {
+          // Main message text
+          const mainSpan = msgDiv.querySelector('.chat__conversation-board__message__bubble span');
+          // Reply bubble text
+          const replySpan = msgDiv.querySelector('.reply-bubble-modern .reply-text');
+          // Edited tag
+          const editedTag = msgDiv.querySelector('.edited-tag-premium');
+          let found = false;
+          if (mainSpan && mainSpan.textContent.toLowerCase().includes(q)) found = true;
+          if (replySpan && replySpan.textContent.toLowerCase().includes(q)) found = true;
+          if (editedTag && editedTag.textContent.toLowerCase().includes(q)) found = true;
+          return found;
+        });
         currentIdx = 0;
         updateCount();
         if (matches.length) highlightMatch(currentIdx);
       }
       searchBtn.onclick = showSearchBar;
-      closeBtn.onclick = hideSearchBar;
-      searchInput.oninput = doSearch;
+      closeBtn.onclick = function() {
+        hideSearchBar();
+        clearHighlights();
+      };
+      searchInput.oninput = function() {
+        doSearch();
+        if (!searchInput.value.trim()) clearHighlights();
+      };
       searchInput.onkeydown = function(e) {
         if (e.key === 'Enter') {
           if (matches.length) {
@@ -631,6 +679,7 @@ async function openServerChannel(serverId, channelId) {
           }
         } else if (e.key === 'Escape') {
           hideSearchBar();
+          clearHighlights();
         }
       };
       upBtn.onclick = function() {
