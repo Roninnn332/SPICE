@@ -877,13 +877,13 @@ async function openServerChannel(serverId, channelId) {
             reply
           });
         } else {
-          channelSocket.emit('channel_message', {
-            serverId,
-            channelId,
-            userId: Number(user.user_id),
-            username: user.username,
-            avatar_url: user.avatar_url,
-            content,
+        channelSocket.emit('channel_message', {
+          serverId,
+          channelId,
+          userId: Number(user.user_id),
+          username: user.username,
+          avatar_url: user.avatar_url,
+          content,
             timestamp: now
           });
         }
@@ -2496,4 +2496,4 @@ if (!window._replyBubbleClickHandler) {
       }
     }
   });
-}
+} 

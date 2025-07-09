@@ -112,45 +112,82 @@
 
   <!-- Profile/Settings Modal (hidden by default) -->
   <div id="profile-modal" class="profile-modal-overlay" style="display:none;">
-    <div class="profile-modal-container god-profile-modal">
-      <section class="profile-modal-content god-profile-content">
-        <button class="profile-modal-close god-profile-close" id="close-profile-modal" title="Close">&times;</button>
-        <div class="god-profile-card">
-          <div class="god-profile-avatar-wrapper">
-            <img class="god-profile-avatar" id="god-profile-avatar" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar">
-            <button class="god-profile-avatar-edit" id="god-profile-avatar-edit" title="Change Avatar"><i class="fa-solid fa-camera"></i></button>
-          </div>
-          <div class="god-profile-info">
-            <div class="god-profile-displayname-row">
-              <span class="god-profile-displayname" id="god-profile-displayname">NAVANEETH REDDY</span>
-              <button class="god-profile-edit-btn" id="god-profile-edit-name" title="Edit Name"><i class="fa-regular fa-pen-to-square"></i></button>
-              <input type="text" class="god-profile-displayname-input" id="god-profile-displayname-input" style="display:none;" maxlength="32" />
+    <div class="profile-modal-container">
+      <aside class="profile-modal-sidebar modal-slide-in-left">
+        <nav class="profile-settings-nav">
+          <button class="nav-link active">My Account</button>
+          <button class="nav-link">Join Servers</button>
+        </nav>
+      </aside>
+      <section class="profile-modal-content">
+        <header class="profile-modal-header modal-fade-in">
+          <h2 id="profile-modal-title">My Account</h2>
+          <button class="profile-modal-close" id="close-profile-modal" title="Close">&times;</button>
+        </header>
+        <div class="modal-stagger">
+          <div id="profile-section-my-account">
+            <nav class="profile-tabs">
+              <button class="tab-link active">Main Profile</button>
+            </nav>
+            <div class="profile-banner-promo">
+              <div class="banner-img"></div>
+              <div class="banner-text">
+                <div class="banner-title">Give your profile a fresh look</div>
+                <div class="banner-desc">Check out the latest avatar decorations, profile effects, and nameplates and collect your favorite styles.</div>
+              </div>
+              <button class="banner-cta">Go to Shop</button>
             </div>
-            <div class="god-profile-username-row">
-              <span class="god-profile-username" id="god-profile-username">@rffastral</span>
-              <span class="god-profile-userid" id="god-profile-userid">#123456</span>
-              <button class="god-profile-copy-id" id="god-profile-copy-id" title="Copy User ID"><i class="fa-regular fa-copy"></i></button>
-              <span class="god-profile-copy-feedback" id="god-profile-copy-feedback" style="display:none;">Copied!</span>
+            <form class="profile-form">
+              <label>Display Name
+                <input type="text" class="profile-input" placeholder="Display Name">
+              </label>
+              <label>Pronouns
+                <input type="text" class="profile-input" placeholder="Add your pronouns">
+              </label>
+              <div class="profile-avatar-controls">
+                <span>Avatar</span>
+                <button class="profile-btn">Change Avatar</button>
+                <button class="profile-btn secondary">Remove Avatar</button>
+              </div>
+            </form>
+            <div class="profile-preview-section">
+              <div class="profile-preview-card">
+                <div class="profile-banner">
+                  <button class="profile-change-banner-btn" title="Change Banner"><i class="fa-solid fa-camera"></i></button>
+                </div>
+                <div class="profile-avatar-stack">
+                  <img class="profile-avatar-img" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar">
+                  <span class="profile-status-badge"><i class="fa-solid fa-minus"></i></span>
+                  <button class="profile-add-status" disabled><i class="fa-solid fa-plus"></i> Add Status</button>
+                </div>
+                <div class="profile-info">
+                  <div class="profile-displayname">NAVANEETH REDDY</div>
+                  <div class="profile-username">rffastral <span class="profile-tag">#</span></div>
+                </div>
+                <div class="profile-action">
+                  <button class="profile-action-btn">Example Button</button>
+                </div>
+              </div>
             </div>
-            <div class="god-profile-status-row">
-              <span class="god-profile-status-dot online"></span>
-              <span class="god-profile-status-text">Online</span>
+            <div class="profile-nameplate-preview">
+              <div class="nameplate-avatar"></div>
+              <div class="nameplate-name"></div>
+              <button class="nameplate-btn">Try it out</button>
             </div>
           </div>
-        </div>
-        <div class="god-profile-actions">
-          <div class="god-profile-theme-toggle-row">
-            <span class="god-profile-theme-label">Theme</span>
-            <button class="god-profile-theme-toggle" id="god-profile-theme-toggle" title="Toggle Theme">
-              <i class="fa-regular fa-moon"></i>
-            </button>
+          <div id="profile-section-join-servers" style="display:none;">
+            <form id="join-server-form" class="profile-form">
+              <label for="join-server-code">Enter Server Invite Code</label>
+              <input type="text" id="join-server-code" class="profile-input" placeholder="Invite Code (e.g. ABC123)" required />
+              <button type="submit" class="profile-btn">Join Server</button>
+            </form>
+            <div id="join-server-feedback" class="add-friend-feedback"></div>
+            <div id="join-server-status" class="add-friend-feedback"></div>
           </div>
-          <button class="god-profile-logout" id="god-profile-logout">Log Out</button>
         </div>
       </section>
     </div>
   </div>
-  <!-- End Profile/Settings Modal -->
 
   <!-- Avatar Upload Input (hidden) -->
   <input type="file" id="avatar-upload-input" accept="image/*" style="display:none;" />
