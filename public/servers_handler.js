@@ -464,9 +464,9 @@ async function appendChannelMessage(msg, who) {
   let mediaHtml = '';
   if (msg.media_url && msg.media_type) {
     if (msg.media_type.startsWith('image/')) {
-      mediaHtml = `<img class="dm-message-media-img" src="${msg.media_url}" alt="Image" loading="lazy" />`;
+      mediaHtml = `<img class="dm-message-media-img" src="${msg.media_url}" alt="${msg.file_name ? msg.file_name.replace(/"/g, '&quot;') : 'Image'}" loading="lazy" />`;
     } else if (msg.media_type.startsWith('video/')) {
-      mediaHtml = `<video class="dm-message-media-video" src="${msg.media_url}" controls preload="metadata"></video>`;
+      mediaHtml = `<video class="dm-message-media-video" src="${msg.media_url}" controls preload="metadata"${msg.file_name ? ` data-filename=\"${msg.file_name.replace(/"/g, '&quot;')}\"` : ''}></video>`;
     } else {
       const name = msg.file_name ? msg.file_name : 'Download File';
       mediaHtml = `<a class="dm-message-media-file" href="${msg.media_url}" download target="_blank"><i class="fa-solid fa-file-arrow-down"></i> ${name}</a>`;
@@ -1004,6 +1004,9 @@ async function openServerChannel(serverId, channelId) {
       content: msg.content,
       timestamp: msg.created_at,
       edited: msg.edited, // <-- Ensure edited status is passed
+      media_url: msg.media_url,
+      media_type: msg.media_type,
+      file_name: msg.file_name,
       ...(msg.reply_to && msg.reply_content ? { reply: { timestamp: msg.reply_to, content: msg.reply_content } } : {})
     }, isMe ? 'me' : 'them');
   }
@@ -2815,3 +2818,83 @@ if (!window._replyBubbleClickHandler) {
     }
   });
 } 
+
+// --- Media Modal Logic ---
+function openMediaModal({ url, type, fileName }) {
+  const overlay = document.getElementById('media-modal-overlay');
+  const content = overlay.querySelector('.media-modal-content');
+  const wrapper = overlay.querySelector('.media-modal-media-wrapper');
+  const filenameDiv = overlay.querySelector('.media-modal-filename');
+  const downloadBtn = overlay.querySelector('.media-modal-download');
+  // Clear previous
+  wrapper.innerHTML = '';
+  filenameDiv.textContent = '';
+  downloadBtn.style.display = 'none';
+  // Add media
+  let mediaEl;
+  if (type.startsWith('image/')) {
+    mediaEl = document.createElement('img');
+    mediaEl.src = url;
+    mediaEl.alt = fileName || 'Image';
+    mediaEl.style.maxWidth = '100%';
+    mediaEl.style.maxHeight = '100%';
+  } else if (type.startsWith('video/')) {
+    mediaEl = document.createElement('video');
+    mediaEl.src = url;
+    mediaEl.controls = true;
+    mediaEl.autoplay = true;
+    mediaEl.style.maxWidth = '100%';
+    mediaEl.style.maxHeight = '100%';
+  }
+  if (mediaEl) wrapper.appendChild(mediaEl);
+  // Filename
+  if (fileName) filenameDiv.textContent = fileName;
+  // Download
+  if (url) {
+    downloadBtn.href = url;
+    downloadBtn.style.display = '';
+    if (fileName) downloadBtn.setAttribute('download', fileName);
+    else downloadBtn.removeAttribute('download');
+  }
+  // Show modal
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('active'), 10);
+  // Focus for accessibility
+  content.focus && content.focus();
+}
+function closeMediaModal() {
+  const overlay = document.getElementById('media-modal-overlay');
+  overlay.classList.remove('active');
+  setTimeout(() => { overlay.style.display = 'none'; }, 220);
+}
+// Event listeners for modal
+(function setupMediaModalEvents() {
+  const overlay = document.getElementById('media-modal-overlay');
+  if (!overlay) return;
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeMediaModal();
+  });
+  const closeBtn = overlay.querySelector('.media-modal-close');
+  if (closeBtn) closeBtn.onclick = closeMediaModal;
+  document.addEventListener('keydown', function(e) {
+    if (overlay.style.display !== 'none' && (e.key === 'Escape' || e.key === 'Esc')) closeMediaModal();
+  });
+})();
+// Event delegation for media click in chat
+(function setupMediaClickDelegation() {
+  const chat = document.querySelector('.chat-messages');
+  if (!chat) return;
+  chat.addEventListener('click', function(e) {
+    const img = e.target.closest('.dm-message-media-img');
+    const vid = e.target.closest('.dm-message-media-video');
+    if (img) {
+      const url = img.src;
+      const fileName = img.alt || '';
+      openMediaModal({ url, type: 'image/', fileName });
+    } else if (vid) {
+      const url = vid.src;
+      const fileName = vid.getAttribute('data-filename') || '';
+      openMediaModal({ url, type: 'video/', fileName });
+    }
+  });
+})(); 
