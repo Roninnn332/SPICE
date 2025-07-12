@@ -110,6 +110,51 @@
     </div>
   </div>
 
+  <!-- Chat Background Customizer Modal (hidden by default) -->
+  <div id="chat-bg-customizer-modal-overlay" class="chat-bg-customizer-modal-overlay" style="display:none;">
+    <div class="chat-bg-customizer-modal">
+      <div class="chat-bg-customizer-header">
+        <span class="chat-bg-customizer-title">Chat Customizer</span>
+        <button class="chat-bg-customizer-close" title="Close">&times;</button>
+      </div>
+      <div class="chat-bg-customizer-content">
+        <div class="chat-bg-customizer-row">
+          <label class="switch"><input type="checkbox" id="bg-enable-toggle"><span class="slider"></span></label>
+          <span>Enable Background</span>
+        </div>
+        <div class="chat-bg-customizer-row">
+          <label class="switch"><input type="checkbox" id="bg-dark-overlay-toggle" checked><span class="slider"></span></label>
+          <span>Dark Overlay</span>
+        </div>
+        <div class="chat-bg-customizer-row">
+          <label class="switch"><input type="checkbox" id="bg-particle-toggle"><span class="slider"></span></label>
+          <span>Particle Effect</span>
+        </div>
+        <div class="chat-bg-customizer-slider-row">
+          <span>Brightness</span>
+          <input type="range" min="0.3" max="2" step="0.01" id="bg-brightness-slider">
+        </div>
+        <div class="chat-bg-customizer-slider-row">
+          <span>Blur</span>
+          <input type="range" min="0" max="20" step="0.1" id="bg-blur-slider">
+        </div>
+        <div class="chat-bg-customizer-slider-row">
+          <span>Opacity</span>
+          <input type="range" min="0.1" max="1" step="0.01" id="bg-opacity-slider">
+        </div>
+        <div class="chat-bg-customizer-upload-row">
+          <label for="bg-file-input" class="chat-bg-customizer-upload-btn">Choose Background</label>
+          <input type="file" id="bg-file-input" accept="image/*,video/mp4,video/webm" style="display:none;">
+        </div>
+        <div class="chat-bg-customizer-preview" id="bg-preview-container"></div>
+        <div class="chat-bg-customizer-actions">
+          <button class="chat-bg-customizer-reset">Reset</button>
+          <button class="chat-bg-customizer-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Media Modal/Lightbox Overlay -->
   <div id="media-modal-overlay" class="media-modal-overlay" style="display:none;">
     <div class="media-modal-content">
