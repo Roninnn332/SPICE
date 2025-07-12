@@ -92,6 +92,9 @@
     <main class="chat-section">
       <header class="chat-header">
         <!-- Channel name, topic, etc. -->
+        <button class="chat-bg-btn" id="open-bg-customizer" title="Customize Chat Background">
+          <i class="fa-solid fa-image"></i> Background
+        </button>
       </header>
       <section class="chat-messages">
         <!-- Messages will appear here -->
@@ -463,6 +466,65 @@
       <button class="msg-opt-btn msg-opt-edit"><i class="fa-regular fa-pen-to-square"></i><span>Edit</span></button>
       <button class="msg-opt-btn msg-opt-reply"><i class="fa-regular fa-reply"></i><span>Reply</span></button>
       <button class="msg-opt-btn msg-opt-delete"><i class="fa-regular fa-trash-can"></i><span>Delete</span></button>
+    </div>
+  </div>
+
+  <!-- Chat Background Customizer Modal (hidden by default) -->
+  <div id="bg-customizer-modal-overlay" class="bg-customizer-modal-overlay" style="display:none;">
+    <div class="bg-customizer-modal">
+      <header class="bg-customizer-header">
+        <span class="bg-customizer-title">Chat Customizer</span>
+        <button class="bg-customizer-close" id="close-bg-customizer" title="Close">&times;</button>
+      </header>
+      <div class="bg-customizer-content">
+        <div class="bg-customizer-row">
+          <label class="switch">
+            <input type="checkbox" id="bg-enable-toggle">
+            <span class="slider"></span>
+          </label>
+          <span>Enable Background</span>
+        </div>
+        <div class="bg-customizer-row">
+          <label class="switch">
+            <input type="checkbox" id="bg-dark-overlay-toggle">
+            <span class="slider"></span>
+          </label>
+          <span>Dark Overlay</span>
+        </div>
+        <div class="bg-customizer-row">
+          <label class="switch">
+            <input type="checkbox" id="bg-particle-toggle">
+            <span class="slider"></span>
+          </label>
+          <span>Particle Effect</span>
+        </div>
+        <div class="bg-customizer-slider-row">
+          <span>Brightness</span>
+          <input type="range" min="0.5" max="1.5" step="0.01" value="1" id="bg-brightness-slider">
+        </div>
+        <div class="bg-customizer-slider-row">
+          <span>Blur</span>
+          <input type="range" min="0" max="20" step="1" value="0" id="bg-blur-slider">
+        </div>
+        <div class="bg-customizer-slider-row">
+          <span>Opacity</span>
+          <input type="range" min="0.2" max="1" step="0.01" value="1" id="bg-opacity-slider">
+        </div>
+        <div class="bg-customizer-upload-row">
+          <label for="bg-upload-input" class="bg-upload-label">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Choose Background
+          </label>
+          <input type="file" id="bg-upload-input" accept="image/*,video/mp4,video/webm" style="display:none;" />
+        </div>
+        <div class="bg-customizer-support-text">
+          Supports images (JPG, PNG) and videos (MP4, WebM). For best results, use high-resolution files.
+        </div>
+        <div class="bg-customizer-preview" id="bg-customizer-preview"></div>
+        <div class="bg-customizer-actions">
+          <button class="bg-customizer-reset" id="bg-reset-btn"><i class="fa-solid fa-trash"></i> Reset</button>
+          <button class="bg-customizer-apply" id="bg-apply-btn"><i class="fa-solid fa-check"></i> Apply</button>
+        </div>
+      </div>
     </div>
   </div>
 

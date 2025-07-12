@@ -1345,3 +1345,230 @@ if (joinServerForm) {
     }
   };
 } 
+
+// --- Chat Background Customizer Logic ---
+const bgCustomizerBtn = document.getElementById('open-bg-customizer');
+const bgCustomizerModalOverlay = document.getElementById('bg-customizer-modal-overlay');
+const bgCustomizerModal = bgCustomizerModalOverlay?.querySelector('.bg-customizer-modal');
+const closeBgCustomizerBtn = document.getElementById('close-bg-customizer');
+const bgEnableToggle = document.getElementById('bg-enable-toggle');
+const bgDarkOverlayToggle = document.getElementById('bg-dark-overlay-toggle');
+const bgParticleToggle = document.getElementById('bg-particle-toggle');
+const bgBrightnessSlider = document.getElementById('bg-brightness-slider');
+const bgBlurSlider = document.getElementById('bg-blur-slider');
+const bgOpacitySlider = document.getElementById('bg-opacity-slider');
+const bgUploadInput = document.getElementById('bg-upload-input');
+const bgCustomizerPreview = document.getElementById('bg-customizer-preview');
+const bgResetBtn = document.getElementById('bg-reset-btn');
+const bgApplyBtn = document.getElementById('bg-apply-btn');
+let bgSettings = {
+  enabled: false,
+  url: '',
+  type: '',
+  darkOverlay: true,
+  particle: false,
+  brightness: 1,
+  blur: 0,
+  opacity: 1
+};
+let bgFile = null;
+const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/auto/upload';
+const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET';
+function showBgCustomizerModal() {
+  if (!bgCustomizerModalOverlay) return;
+  bgCustomizerModalOverlay.style.display = 'flex';
+  setTimeout(() => {
+    bgCustomizerModalOverlay.classList.add('active');
+    bgCustomizerModal.classList.add('scale-in');
+  }, 10);
+  renderBgCustomizerUI();
+}
+function hideBgCustomizerModal() {
+  if (!bgCustomizerModalOverlay) return;
+  bgCustomizerModal.classList.remove('scale-in');
+  bgCustomizerModalOverlay.classList.remove('active');
+  setTimeout(() => {
+    bgCustomizerModalOverlay.style.display = 'none';
+  }, 300);
+}
+if (bgCustomizerBtn) bgCustomizerBtn.onclick = showBgCustomizerModal;
+if (closeBgCustomizerBtn) closeBgCustomizerBtn.onclick = hideBgCustomizerModal;
+// Modal close on overlay click or Escape
+if (bgCustomizerModalOverlay) {
+  bgCustomizerModalOverlay.onclick = e => {
+    if (e.target === bgCustomizerModalOverlay) hideBgCustomizerModal();
+  };
+  document.addEventListener('keydown', e => {
+    if (bgCustomizerModalOverlay.style.display === 'flex' && e.key === 'Escape') hideBgCustomizerModal();
+  });
+}
+function renderBgCustomizerUI() {
+  // Set toggles/sliders to current settings
+  bgEnableToggle.checked = bgSettings.enabled;
+  bgDarkOverlayToggle.checked = bgSettings.darkOverlay;
+  bgParticleToggle.checked = bgSettings.particle;
+  bgBrightnessSlider.value = bgSettings.brightness;
+  bgBlurSlider.value = bgSettings.blur;
+  bgOpacitySlider.value = bgSettings.opacity;
+  // Preview
+  renderBgPreview(bgSettings.url, bgSettings.type);
+}
+function renderBgPreview(url, type) {
+  bgCustomizerPreview.innerHTML = '';
+  if (!url) return;
+  if (type === 'video') {
+    const vid = document.createElement('video');
+    vid.src = url;
+    vid.autoplay = true;
+    vid.loop = true;
+    vid.muted = true;
+    vid.style.maxWidth = '100%';
+    vid.style.maxHeight = '140px';
+    bgCustomizerPreview.appendChild(vid);
+  } else if (type === 'image') {
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '140px';
+    bgCustomizerPreview.appendChild(img);
+  }
+}
+function applyChatBackground() {
+  let bgLayer = document.querySelector('.chat-section-bg');
+  const chatSection = document.querySelector('.chat-section');
+  if (!chatSection) return;
+  if (!bgLayer) {
+    bgLayer = document.createElement(bgSettings.type === 'video' ? 'video' : 'div');
+    bgLayer.className = 'chat-section-bg';
+    chatSection.insertBefore(bgLayer, chatSection.firstChild);
+  }
+  if (!bgSettings.enabled || !bgSettings.url) {
+    bgLayer.style.display = 'none';
+    return;
+  }
+  bgLayer.style.display = '';
+  if (bgSettings.type === 'video') {
+    if (!(bgLayer instanceof HTMLVideoElement)) {
+      bgLayer.remove();
+      bgLayer = document.createElement('video');
+      bgLayer.className = 'chat-section-bg';
+      chatSection.insertBefore(bgLayer, chatSection.firstChild);
+    }
+    bgLayer.src = bgSettings.url;
+    bgLayer.autoplay = true;
+    bgLayer.loop = true;
+    bgLayer.muted = true;
+    bgLayer.style.objectFit = 'cover';
+    bgLayer.style.width = '100%';
+    bgLayer.style.height = '100%';
+  } else {
+    if (!(bgLayer instanceof HTMLDivElement)) {
+      bgLayer.remove();
+      bgLayer = document.createElement('div');
+      bgLayer.className = 'chat-section-bg';
+      chatSection.insertBefore(bgLayer, chatSection.firstChild);
+    }
+    bgLayer.style.background = `url('${bgSettings.url}') center/cover no-repeat`;
+  }
+  // Filters
+  bgLayer.style.filter = `brightness(${bgSettings.brightness}) blur(${bgSettings.blur}px)`;
+  bgLayer.style.opacity = bgSettings.opacity;
+  // Overlay
+  if (bgSettings.darkOverlay) {
+    bgLayer.style.backgroundColor = 'rgba(0,0,0,0.35)';
+    bgLayer.style.mixBlendMode = 'multiply';
+  } else {
+    bgLayer.style.backgroundColor = 'transparent';
+    bgLayer.style.mixBlendMode = 'unset';
+  }
+}
+function saveBgSettingsToSupabase() {
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (!user) {
+    localStorage.setItem('spice_bg_settings', JSON.stringify(bgSettings));
+    return;
+  }
+  supabase.from('users').update({
+    user_bgurl: bgSettings.url,
+    user_bgsettings: bgSettings
+  }).eq('user_id', user.user_id);
+}
+function loadBgSettingsFromSupabase() {
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (!user) {
+    const local = localStorage.getItem('spice_bg_settings');
+    if (local) bgSettings = { ...bgSettings, ...JSON.parse(local) };
+    applyChatBackground();
+    return;
+  }
+  supabase.from('users').select('user_bgurl, user_bgsettings').eq('user_id', user.user_id).then(({ data }) => {
+    if (data && data[0]) {
+      if (data[0].user_bgsettings) {
+        bgSettings = { ...bgSettings, ...data[0].user_bgsettings };
+      } else if (data[0].user_bgurl) {
+        bgSettings.url = data[0].user_bgurl;
+        bgSettings.type = data[0].user_bgurl.match(/\.(mp4|webm)$/i) ? 'video' : 'image';
+        bgSettings.enabled = true;
+      }
+      applyChatBackground();
+    }
+  });
+}
+// Handle toggles/sliders
+if (bgEnableToggle) bgEnableToggle.onchange = e => { bgSettings.enabled = e.target.checked; };
+if (bgDarkOverlayToggle) bgDarkOverlayToggle.onchange = e => { bgSettings.darkOverlay = e.target.checked; };
+if (bgParticleToggle) bgParticleToggle.onchange = e => { bgSettings.particle = e.target.checked; };
+if (bgBrightnessSlider) bgBrightnessSlider.oninput = e => { bgSettings.brightness = parseFloat(e.target.value); };
+if (bgBlurSlider) bgBlurSlider.oninput = e => { bgSettings.blur = parseInt(e.target.value); };
+if (bgOpacitySlider) bgOpacitySlider.oninput = e => { bgSettings.opacity = parseFloat(e.target.value); };
+// Upload
+if (bgUploadInput) bgUploadInput.onchange = async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  bgFile = file;
+  const type = file.type.startsWith('video') ? 'video' : 'image';
+  // Show preview
+  const url = URL.createObjectURL(file);
+  renderBgPreview(url, type);
+};
+// Apply
+if (bgApplyBtn) bgApplyBtn.onclick = async () => {
+  if (bgFile) {
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', bgFile);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: formData });
+    const data = await res.json();
+    bgSettings.url = data.secure_url;
+    bgSettings.type = bgFile.type.startsWith('video') ? 'video' : 'image';
+    bgFile = null;
+  }
+  bgSettings.enabled = bgEnableToggle.checked;
+  bgSettings.darkOverlay = bgDarkOverlayToggle.checked;
+  bgSettings.particle = bgParticleToggle.checked;
+  bgSettings.brightness = parseFloat(bgBrightnessSlider.value);
+  bgSettings.blur = parseInt(bgBlurSlider.value);
+  bgSettings.opacity = parseFloat(bgOpacitySlider.value);
+  saveBgSettingsToSupabase();
+  applyChatBackground();
+  hideBgCustomizerModal();
+};
+// Reset
+if (bgResetBtn) bgResetBtn.onclick = () => {
+  bgSettings = {
+    enabled: false,
+    url: '',
+    type: '',
+    darkOverlay: true,
+    particle: false,
+    brightness: 1,
+    blur: 0,
+    opacity: 1
+  };
+  saveBgSettingsToSupabase();
+  applyChatBackground();
+  renderBgCustomizerUI();
+};
+// On page load, load background settings
+window.addEventListener('DOMContentLoaded', loadBgSettingsFromSupabase); 
