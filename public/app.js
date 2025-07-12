@@ -1381,6 +1381,8 @@ if (joinServerForm) {
   let fileDataUrl = '';
   let fileType = '';
   let fileToUpload = null;
+  let cloudinaryPublicId = '';
+  let realtimeSub = null;
 
   // Get current user
   function getCurrentUserId() {
@@ -1408,6 +1410,7 @@ if (joinServerForm) {
         url: data.background_url,
         type: data.background_type,
       };
+      cloudinaryPublicId = data.cloudinary_public_id || '';
       localStorage.setItem('chat_bg_settings', JSON.stringify(bgSettings));
     } else {
       // fallback to localStorage if no DB row
@@ -1415,6 +1418,7 @@ if (joinServerForm) {
       if (saved) {
         try { bgSettings = { ...bgSettings, ...JSON.parse(saved) }; } catch {}
       }
+      cloudinaryPublicId = '';
     }
   }
 
@@ -1433,9 +1437,31 @@ if (joinServerForm) {
       particle_effect: bgSettings.particle,
       enabled: bgSettings.enabled,
       updated_at: new Date().toISOString(),
+      cloudinary_public_id: cloudinaryPublicId || null,
     };
     await supabase.from('user_chat_backgrounds').upsert(upsertData, { onConflict: ['user_id'] });
     localStorage.setItem('chat_bg_settings', JSON.stringify(bgSettings));
+  }
+
+  // --- Real-time sync: Listen for changes to user_chat_backgrounds for this user ---
+  async function setupRealtimeSync() {
+    const user_id = getCurrentUserId();
+    if (!user_id) return;
+    if (realtimeSub) {
+      supabase.removeChannel(realtimeSub);
+      realtimeSub = null;
+    }
+    realtimeSub = supabase.channel('user-bg-rt')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_chat_backgrounds',
+        filter: `user_id=eq.${user_id}`
+      }, async (payload) => {
+        await loadBgSettings();
+        applyChatBackground();
+      })
+      .subscribe();
   }
 
   // Apply background to chat-section
@@ -1618,21 +1644,27 @@ if (joinServerForm) {
   if (applyBtn) applyBtn.onclick = async function() {
     const user_id = getCurrentUserId();
     if (!user_id) return;
-    // If a new file is selected, upload to Supabase Storage
+    // If a new file is selected, upload to Cloudinary
     if (fileToUpload && fileType) {
-      const ext = fileToUpload.name.split('.').pop();
-      const fileName = `bg_${user_id}_${Date.now()}.${ext}`;
-      const { data, error } = await supabase.storage
-        .from('chat-backgrounds')
-        .upload(fileName, fileToUpload, { upsert: true, contentType: fileType });
-      if (error) {
-        alert('Upload failed: ' + error.message);
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('upload_preset', 'user_media');
+      let cloudinaryUrl = 'https://api.cloudinary.com/v1_1/dbriuheef/image/upload';
+      if (fileType.startsWith('video')) {
+        cloudinaryUrl = 'https://api.cloudinary.com/v1_1/dbriuheef/video/upload';
+      }
+      const res = await fetch(cloudinaryUrl, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!data.secure_url) {
+        alert('Upload failed.');
         return;
       }
-      // Get public URL
-      const { data: pubUrl } = supabase.storage.from('chat-backgrounds').getPublicUrl(fileName);
-      bgSettings.url = pubUrl.publicUrl;
+      bgSettings.url = data.secure_url;
       bgSettings.type = fileType.startsWith('image') ? 'image' : 'video';
+      cloudinaryPublicId = data.public_id || '';
     }
     bgSettings.enabled = enableToggle.checked;
     bgSettings.darkOverlay = darkOverlayToggle.checked;
@@ -1649,8 +1681,28 @@ if (joinServerForm) {
     fileToUpload = null;
   };
 
+  // File deletion from Cloudinary
+  async function deleteCloudinaryFile(publicId, type) {
+    // You need a backend endpoint to securely delete from Cloudinary (never expose API secret in frontend)
+    // Example: POST /delete-cloudinary with { public_id, type }
+    if (!publicId) return;
+    try {
+      await fetch('/delete-cloudinary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id: publicId, type: type })
+      });
+    } catch (err) {
+      // Ignore errors for now
+    }
+  }
+
   // Reset
   if (resetBtn) resetBtn.onclick = async function() {
+    // Delete file from Cloudinary if set
+    if (cloudinaryPublicId) {
+      await deleteCloudinaryFile(cloudinaryPublicId, bgSettings.type);
+    }
     bgSettings = {
       enabled: false,
       darkOverlay: true,
@@ -1661,6 +1713,7 @@ if (joinServerForm) {
       url: '',
       type: '',
     };
+    cloudinaryPublicId = '';
     fileDataUrl = '';
     fileType = '';
     fileToUpload = null;
@@ -1670,10 +1723,11 @@ if (joinServerForm) {
     closeModal();
   };
 
-  // On page load, apply background from Supabase
+  // On page load, apply background from Supabase and setup realtime sync
   (async function() {
     await loadBgSettings();
     applyChatBackground();
+    setupRealtimeSync();
   })();
 
   // (Optional) Listen for storage changes (multi-tab sync)

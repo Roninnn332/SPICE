@@ -5,6 +5,12 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -296,6 +302,19 @@ app.get('/messages', async (req, res) => {
     .order('timestamp', { ascending: true });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+// Endpoint to delete a file from Cloudinary
+app.post('/delete-cloudinary', async (req, res) => {
+  const { public_id, type } = req.body;
+  if (!public_id) return res.status(400).json({ error: 'Missing public_id' });
+  try {
+    const resourceType = type === 'video' ? 'video' : 'image';
+    await cloudinary.uploader.destroy(public_id, { resource_type: resourceType });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
