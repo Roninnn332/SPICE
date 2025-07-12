@@ -1372,8 +1372,8 @@ let bgSettings = {
   opacity: 1
 };
 let bgFile = null;
-const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/auto/upload';
-const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET';
+const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dbriuheef/auto/upload';
+const CLOUDINARY_UPLOAD_PRESET = 'user_media';
 function showBgCustomizerModal() {
   if (!bgCustomizerModalOverlay) return;
   bgCustomizerModalOverlay.style.display = 'flex';
