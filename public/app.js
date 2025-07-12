@@ -1434,6 +1434,7 @@ function renderBgPreview(url, type) {
   }
 }
 function applyChatBackground() {
+  console.log('[BG APPLY]', bgSettings); // Debug log
   let bgLayer = document.querySelector('.chat-section-bg');
   const chatSection = document.querySelector('.chat-section');
   if (!chatSection) return;
@@ -1533,43 +1534,34 @@ if (bgUploadInput) bgUploadInput.onchange = async e => {
 };
 // Apply
 if (bgApplyBtn) bgApplyBtn.onclick = async () => {
-  if (bgFile) {
-    bgApplyBtn.disabled = true;
-    bgApplyBtn.textContent = 'Uploading...';
-    try {
-      // Upload to Cloudinary
-      const formData = new FormData();
-      formData.append('file', bgFile);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!data.secure_url) {
-        alert('Background upload failed. Please try again.');
-        bgApplyBtn.disabled = false;
-        bgApplyBtn.textContent = 'Apply';
-        return;
-      }
-      bgSettings.url = data.secure_url;
-      bgSettings.type = bgFile.type.startsWith('video') ? 'video' : 'image';
-      bgFile = null;
-    } catch (err) {
-      alert('Background upload error: ' + (err.message || err));
-      bgApplyBtn.disabled = false;
-      bgApplyBtn.textContent = 'Apply';
-      return;
-    }
-    bgApplyBtn.disabled = false;
-    bgApplyBtn.textContent = 'Apply';
+  if (!bgFile) return;
+
+  bgApplyBtn.disabled = true;
+  bgApplyBtn.textContent = 'Uploading...';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', bgFile);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!data.secure_url) throw new Error('Upload failed.');
+
+    bgSettings.url = data.secure_url;
+    bgSettings.type = bgFile.type.startsWith('video') ? 'video' : 'image';
+    bgSettings.enabled = true; // ✅ force enable
+    bgFile = null;
+
+    await saveBgSettingsToSupabase(); // or localStorage
+    applyChatBackground();            // ✅ this is CRITICAL
+
+  } catch (err) {
+    alert('Error: ' + (err.message || err));
   }
-  bgSettings.enabled = bgEnableToggle.checked;
-  bgSettings.darkOverlay = bgDarkOverlayToggle.checked;
-  bgSettings.particle = bgParticleToggle.checked;
-  bgSettings.brightness = parseFloat(bgBrightnessSlider.value);
-  bgSettings.blur = parseInt(bgBlurSlider.value);
-  bgSettings.opacity = parseFloat(bgOpacitySlider.value);
-  saveBgSettingsToSupabase();
-  applyChatBackground();
-  hideBgCustomizerModal();
+
+  bgApplyBtn.disabled = false;
+  bgApplyBtn.textContent = 'Apply';
 };
 // Reset
 if (bgResetBtn) bgResetBtn.onclick = () => {
