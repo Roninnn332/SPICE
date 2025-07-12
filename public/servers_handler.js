@@ -569,47 +569,150 @@ async function openServerChannel(serverId, channelId) {
   // Render channel name and search in header
   const header = serverChatSection.querySelector('.chat-header');
   if (header) {
-    header.innerHTML = `
-      <span class="chat-header-title"># ${channel ? channel.name : ''}</span>
-      <button class="chat-header-search-btn" title="Search Messages"><i class="fa-solid fa-magnifying-glass"></i></button>
-      <button class="chat-header-bg-btn" title="Customize Background"><i class="fa-solid fa-image"></i></button>
-      <div class="chat-header-search-bar" style="display:none;">
-        <input type="text" class="chat-header-search-input" placeholder="Search messages..." />
-        <button class="chat-header-search-nav chat-header-search-up" title="Previous"><i class="fa-solid fa-chevron-up"></i></button>
-        <button class="chat-header-search-nav chat-header-search-down" title="Next"><i class="fa-solid fa-chevron-down"></i></button>
-        <span class="chat-header-search-count"></span>
-        <button class="chat-header-search-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-    `;
-    // Animate search bar in/out
-    const searchBtn = header.querySelector('.chat-header-search-btn');
-    const searchBar = header.querySelector('.chat-header-search-bar');
-    const searchInput = header.querySelector('.chat-header-search-input');
-    const closeBtn = header.querySelector('.chat-header-search-close');
-    // --- Add background customizer modal trigger logic ---
-    const bgBtn = header.querySelector('.chat-header-bg-btn');
-    if (bgBtn) {
-      bgBtn.onclick = function() {
-        const modal = document.getElementById('chat-bg-customizer-modal-overlay');
-        if (modal) {
-          modal.style.display = 'flex';
-          setTimeout(() => modal.classList.add('active'), 10);
+    if (channel && channel.type === 'text') {
+      header.innerHTML = `
+        <span class="chat-header-title"># ${channel.name}</span>
+        <button class="chat-header-search-btn" title="Search Messages"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <div class="chat-header-search-bar" style="display:none;">
+          <input type="text" class="chat-header-search-input" placeholder="Search messages..." />
+          <button class="chat-header-search-nav chat-header-search-up" title="Previous"><i class="fa-solid fa-chevron-up"></i></button>
+          <button class="chat-header-search-nav chat-header-search-down" title="Next"><i class="fa-solid fa-chevron-down"></i></button>
+          <span class="chat-header-search-count"></span>
+          <button class="chat-header-search-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `;
+      // Animate search bar in/out
+      const searchBtn = header.querySelector('.chat-header-search-btn');
+      const searchBar = header.querySelector('.chat-header-search-bar');
+      const searchInput = header.querySelector('.chat-header-search-input');
+      const closeBtn = header.querySelector('.chat-header-search-close');
+      const upBtn = header.querySelector('.chat-header-search-up');
+      const downBtn = header.querySelector('.chat-header-search-down');
+      const countSpan = header.querySelector('.chat-header-search-count');
+      let matches = [];
+      let currentIdx = 0;
+      function showSearchBar() {
+        searchBar.style.display = 'flex';
+        setTimeout(() => searchBar.classList.add('active'), 10);
+        searchInput.focus();
+      }
+      function hideSearchBar() {
+        searchBar.classList.remove('active');
+        setTimeout(() => searchBar.style.display = 'none', 200);
+        clearHighlights();
+        searchInput.value = '';
+        countSpan.textContent = '';
+      }
+      function clearHighlights() {
+        // Remove .search-highlight spans and restore original text
+        document.querySelectorAll('.search-highlight').forEach(span => {
+          const parent = span.parentNode;
+          parent.replaceChild(document.createTextNode(span.textContent), span);
+          parent.normalize();
+        });
+      }
+      function highlightMatch(idx) {
+        clearHighlights();
+        if (!matches.length) return;
+        const el = matches[idx];
+        const q = searchInput.value.trim();
+        if (!q) return;
+        const qLower = q.toLowerCase();
+        // Helper to wrap matches in a node
+        function highlightInElement(element) {
+          if (!element) return;
+          const text = element.textContent;
+          const textLower = text.toLowerCase();
+          let start = 0;
+          let result = '';
+          let i = 0;
+          while ((i = textLower.indexOf(qLower, start)) !== -1) {
+            result += text.substring(start, i) + `<span class='search-highlight'>${text.substring(i, i + q.length)}</span>`;
+            start = i + q.length;
+          }
+          result += text.substring(start);
+          if (result !== text) {
+            element.innerHTML = result;
+          }
+        }
+        // Main message
+        const mainSpan = el.querySelector('.chat__conversation-board__message__bubble span');
+        highlightInElement(mainSpan);
+        // Reply bubble
+        const replySpan = el.querySelector('.reply-bubble-modern .reply-text');
+        highlightInElement(replySpan);
+        // Edited tag
+        const editedTag = el.querySelector('.edited-tag-premium');
+        highlightInElement(editedTag);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      function updateCount() {
+        if (!matches.length) {
+          countSpan.textContent = '';
+        } else {
+          countSpan.textContent = `${currentIdx + 1} / ${matches.length}`;
+        }
+      }
+      function doSearch() {
+        clearHighlights();
+        const q = searchInput.value.trim().toLowerCase();
+        if (!q) {
+          matches = [];
+          currentIdx = 0;
+          updateCount();
+          return;
+        }
+        // Search in main message, reply bubble, and edited tag
+        matches = Array.from(document.querySelectorAll('.chat__conversation-board__message')).filter(msgDiv => {
+          // Main message text
+          const mainSpan = msgDiv.querySelector('.chat__conversation-board__message__bubble span');
+          // Reply bubble text
+          const replySpan = msgDiv.querySelector('.reply-bubble-modern .reply-text');
+          // Edited tag
+          const editedTag = msgDiv.querySelector('.edited-tag-premium');
+          let found = false;
+          if (mainSpan && mainSpan.textContent.toLowerCase().includes(q)) found = true;
+          if (replySpan && replySpan.textContent.toLowerCase().includes(q)) found = true;
+          if (editedTag && editedTag.textContent.toLowerCase().includes(q)) found = true;
+          return found;
+        });
+        currentIdx = 0;
+        updateCount();
+        if (matches.length) highlightMatch(currentIdx);
+      }
+      searchBtn.onclick = showSearchBar;
+      closeBtn.onclick = function() {
+        hideSearchBar();
+        clearHighlights();
+      };
+      searchInput.oninput = function() {
+        doSearch();
+        if (!searchInput.value.trim()) clearHighlights();
+      };
+      searchInput.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+          if (matches.length) {
+            highlightMatch(currentIdx);
+          }
+        } else if (e.key === 'Escape') {
+          hideSearchBar();
+          clearHighlights();
         }
       };
-    }
-  }
-  // Hide background and button in voice channels
-  if (channel && channel.type === 'voice') {
-    const chatSection = document.querySelector('.chat-section');
-    if (chatSection) {
-      let bgEl = chatSection.querySelector('.chat-bg-customizer-bg');
-      if (bgEl) bgEl.remove();
-      let overlayEl = chatSection.querySelector('.chat-bg-customizer-overlay');
-      if (overlayEl) overlayEl.remove();
-    }
-    if (header) {
-      const bgBtn = header.querySelector('.chat-header-bg-btn');
-      if (bgBtn) bgBtn.style.display = 'none';
+      upBtn.onclick = function() {
+        if (!matches.length) return;
+        currentIdx = (currentIdx - 1 + matches.length) % matches.length;
+        highlightMatch(currentIdx);
+        updateCount();
+      };
+      downBtn.onclick = function() {
+        if (!matches.length) return;
+        currentIdx = (currentIdx + 1) % matches.length;
+        highlightMatch(currentIdx);
+        updateCount();
+      };
+    } else {
+      header.textContent = channel ? `# ${channel.name}` : '# Channel';
     }
   }
   const chat = serverChatSection.querySelector('.chat-messages');
