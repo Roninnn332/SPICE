@@ -1534,15 +1534,32 @@ if (bgUploadInput) bgUploadInput.onchange = async e => {
 // Apply
 if (bgApplyBtn) bgApplyBtn.onclick = async () => {
   if (bgFile) {
-    // Upload to Cloudinary
-    const formData = new FormData();
-    formData.append('file', bgFile);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: formData });
-    const data = await res.json();
-    bgSettings.url = data.secure_url;
-    bgSettings.type = bgFile.type.startsWith('video') ? 'video' : 'image';
-    bgFile = null;
+    bgApplyBtn.disabled = true;
+    bgApplyBtn.textContent = 'Uploading...';
+    try {
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', bgFile);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!data.secure_url) {
+        alert('Background upload failed. Please try again.');
+        bgApplyBtn.disabled = false;
+        bgApplyBtn.textContent = 'Apply';
+        return;
+      }
+      bgSettings.url = data.secure_url;
+      bgSettings.type = bgFile.type.startsWith('video') ? 'video' : 'image';
+      bgFile = null;
+    } catch (err) {
+      alert('Background upload error: ' + (err.message || err));
+      bgApplyBtn.disabled = false;
+      bgApplyBtn.textContent = 'Apply';
+      return;
+    }
+    bgApplyBtn.disabled = false;
+    bgApplyBtn.textContent = 'Apply';
   }
   bgSettings.enabled = bgEnableToggle.checked;
   bgSettings.darkOverlay = bgDarkOverlayToggle.checked;
