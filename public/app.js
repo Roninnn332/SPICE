@@ -535,6 +535,9 @@ function showMainApp(user) {
   renderFriendsSidebar();
   setupSocketIO(user.user_id);
   if (typeof renderServersList === 'function') renderServersList();
+  // --- Add this ---
+  loadBgSettingsFromSupabase();
+  setupBgRealtime();
 }
 
 // Helper to update profile preview card with real user data
@@ -1374,6 +1377,38 @@ let bgSettings = {
 let bgFile = null;
 const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dbriuheef/auto/upload';
 const CLOUDINARY_UPLOAD_PRESET = 'user_media';
+let bgRealtimeSub = null; // <-- Add this for realtime
+
+function setupBgRealtime() {
+  // Remove previous subscription if any
+  if (bgRealtimeSub) {
+    supabase.removeChannel(bgRealtimeSub);
+    bgRealtimeSub = null;
+  }
+  const user = JSON.parse(localStorage.getItem('spice_user'));
+  if (!user) return;
+  bgRealtimeSub = supabase.channel('user-bg-rt')
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'users',
+      filter: `user_id=eq.${user.user_id}`
+    }, payload => {
+      // Only reload if bg fields changed
+      if (payload.new.user_bgsettings || payload.new.user_bgurl) {
+        loadBgSettingsFromSupabase();
+      }
+    })
+    .subscribe();
+}
+
+function teardownBgRealtime() {
+  if (bgRealtimeSub) {
+    supabase.removeChannel(bgRealtimeSub);
+    bgRealtimeSub = null;
+  }
+}
+
 function showBgCustomizerModal() {
   if (!bgCustomizerModalOverlay) return;
   bgCustomizerModalOverlay.style.display = 'flex';
@@ -1492,7 +1527,11 @@ function saveBgSettingsToSupabase() {
   supabase.from('users').update({
     user_bgurl: bgSettings.url,
     user_bgsettings: bgSettings
-  }).eq('user_id', user.user_id);
+  }).eq('user_id', user.user_id).then(({ error }) => {
+    if (error) {
+      console.error('Failed to save background settings:', error);
+    }
+  });
 }
 function loadBgSettingsFromSupabase() {
   const user = JSON.parse(localStorage.getItem('spice_user'));
@@ -1580,4 +1619,7 @@ if (bgResetBtn) bgResetBtn.onclick = () => {
   renderBgCustomizerUI();
 };
 // On page load, load background settings
-window.addEventListener('DOMContentLoaded', loadBgSettingsFromSupabase); 
+window.addEventListener('DOMContentLoaded', () => {
+  loadBgSettingsFromSupabase();
+  setupBgRealtime();
+}); 
