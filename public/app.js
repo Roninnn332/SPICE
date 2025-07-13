@@ -1470,16 +1470,21 @@ function renderBgPreview(url, type) {
 }
 function applyChatBackground() {
   console.log('[BG APPLY]', bgSettings); // Debug log
-  let bgLayer = document.querySelector('.chat-section-bg');
   const chatSection = document.querySelector('.chat-section');
-  if (!chatSection) return;
+  if (!chatSection) {
+    console.warn('[BG APPLY] .chat-section not found!');
+    return;
+  }
+  let bgLayer = document.querySelector('.chat-section-bg');
   if (!bgLayer) {
     bgLayer = document.createElement(bgSettings.type === 'video' ? 'video' : 'div');
     bgLayer.className = 'chat-section-bg';
     chatSection.insertBefore(bgLayer, chatSection.firstChild);
+    console.log('[BG APPLY] Created bgLayer:', bgLayer);
   }
   if (!bgSettings.enabled || !bgSettings.url) {
     bgLayer.style.display = 'none';
+    console.log('[BG APPLY] Background disabled or no URL, hiding bgLayer');
     return;
   }
   bgLayer.style.display = '';
@@ -1489,6 +1494,7 @@ function applyChatBackground() {
       bgLayer = document.createElement('video');
       bgLayer.className = 'chat-section-bg';
       chatSection.insertBefore(bgLayer, chatSection.firstChild);
+      console.log('[BG APPLY] Switched to video bgLayer:', bgLayer);
     }
     bgLayer.src = bgSettings.url;
     bgLayer.autoplay = true;
@@ -1503,8 +1509,12 @@ function applyChatBackground() {
       bgLayer = document.createElement('div');
       bgLayer.className = 'chat-section-bg';
       chatSection.insertBefore(bgLayer, chatSection.firstChild);
+      console.log('[BG APPLY] Switched to div bgLayer:', bgLayer);
     }
     bgLayer.style.background = `url('${bgSettings.url}') center/cover no-repeat`;
+    if (!bgLayer.style.background.includes(bgSettings.url)) {
+      console.warn('[BG APPLY] Background style not set correctly:', bgLayer.style.background);
+    }
   }
   // Filters
   bgLayer.style.filter = `brightness(${bgSettings.brightness}) blur(${bgSettings.blur}px)`;
@@ -1517,6 +1527,19 @@ function applyChatBackground() {
     bgLayer.style.backgroundColor = 'transparent';
     bgLayer.style.mixBlendMode = 'unset';
   }
+  // Extra debug: log computed style and DOM
+  setTimeout(() => {
+    const computed = window.getComputedStyle(bgLayer);
+    console.log('[BG APPLY] bgLayer computed:', {
+      display: computed.display,
+      background: computed.background,
+      opacity: computed.opacity,
+      filter: computed.filter,
+      width: computed.width,
+      height: computed.height
+    });
+    console.log('[BG APPLY] chatSection:', chatSection, 'bgLayer:', bgLayer);
+  }, 100);
 }
 function saveBgSettingsToSupabase() {
   const user = JSON.parse(localStorage.getItem('spice_user'));
