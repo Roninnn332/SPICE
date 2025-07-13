@@ -573,6 +573,7 @@ async function openServerChannel(serverId, channelId) {
       header.innerHTML = `
         <span class="chat-header-title"># ${channel.name}</span>
         <button class="chat-header-search-btn" title="Search Messages"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <button class="chat-bg-btn" id="open-bg-customizer" title="Customize Chat Background"><i class="fa-solid fa-image"></i> Background</button>
         <div class="chat-header-search-bar" style="display:none;">
           <input type="text" class="chat-header-search-input" placeholder="Search messages..." />
           <button class="chat-header-search-nav chat-header-search-up" title="Previous"><i class="fa-solid fa-chevron-up"></i></button>
