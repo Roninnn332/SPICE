@@ -688,7 +688,7 @@ body {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--pure-black);
+  background: transparent !important;
 }
 .chat-header {
   height: 44px;
@@ -701,8 +701,7 @@ body {
   font-weight: 700;
   color: var(--white);
   background: transparent !important;
-  /* Optional: frosted glass effect */
-  backdrop-filter: blur(2px) brightness(0.98);
+  backdrop-filter: none !important;
 }
 .chat-messages {
   flex: 1 1 0;
@@ -716,8 +715,7 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #3B82F6;
   background: transparent !important;
-  /* Optional: frosted glass effect */
-  backdrop-filter: blur(2px) brightness(0.98);
+  backdrop-filter: none !important;
 }
 .chat-messages::-webkit-scrollbar {
   width: 5px;
@@ -736,8 +734,7 @@ body {
   align-items: center;
   padding: 0.4rem 1rem;
   background: transparent !important;
-  /* Optional: frosted glass effect */
-  backdrop-filter: blur(2px) brightness(0.98);
+  backdrop-filter: none !important;
 }
 
 .sidebar-user-profile,
@@ -1967,10 +1964,8 @@ body {
   display: flex;
   align-items: center;
   padding: 0.7rem 1.2rem;
-  background: #181c25;
-  border-top: 2px solid var(--primary-blue);
-  min-height: 64px;
-  gap: 0.7rem;
+  background: transparent !important;
+  backdrop-filter: none !important;
 }
 .dm-chat-input {
   flex: 1 1 0;
