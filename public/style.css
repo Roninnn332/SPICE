@@ -700,7 +700,9 @@ body {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   color: var(--white);
-  background-color: #252830;
+  background: transparent !important;
+  /* Optional: frosted glass effect */
+  backdrop-filter: blur(2px) brightness(0.98);
 }
 .chat-messages {
   flex: 1 1 0;
@@ -713,7 +715,9 @@ body {
   max-height: calc(100vh - 120px);
   scrollbar-width: thin;
   scrollbar-color: #3B82F6;
-  background-color: #1E2129;
+  background: transparent !important;
+  /* Optional: frosted glass effect */
+  backdrop-filter: blur(2px) brightness(0.98);
 }
 .chat-messages::-webkit-scrollbar {
   width: 5px;
@@ -731,7 +735,10 @@ body {
   display: flex;
   align-items: center;
   padding: 0.4rem 1rem;
-background-color: #252830;}
+  background: transparent !important;
+  /* Optional: frosted glass effect */
+  backdrop-filter: blur(2px) brightness(0.98);
+}
 
 .sidebar-user-profile,
 .sidebar-user-profile-btn {
