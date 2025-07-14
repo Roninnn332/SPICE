@@ -1472,16 +1472,16 @@ function applyChatBackground() {
   console.log('[BG APPLY]', bgSettings); // Debug log
   // Remove any old .chat-section-bg from .chat-section
   document.querySelectorAll('.chat-section > .chat-section-bg').forEach(el => el.remove());
-  const chatMessages = document.querySelector('.chat-messages');
-  if (!chatMessages) {
-    console.warn('[BG APPLY] .chat-messages not found!');
+  const chatSection = document.querySelector('.chat-section');
+  if (!chatSection) {
+    console.warn('[BG APPLY] .chat-section not found!');
     return;
   }
-  let bgLayer = chatMessages.querySelector('.chat-section-bg');
+  let bgLayer = chatSection.querySelector('.chat-section-bg');
   if (!bgLayer) {
     bgLayer = document.createElement(bgSettings.type === 'video' ? 'video' : 'div');
     bgLayer.className = 'chat-section-bg';
-    chatMessages.insertBefore(bgLayer, chatMessages.firstChild);
+    chatSection.insertBefore(bgLayer, chatSection.firstChild);
     console.log('[BG APPLY] Created bgLayer:', bgLayer);
   }
   if (!bgSettings.enabled || !bgSettings.url) {
@@ -1495,7 +1495,7 @@ function applyChatBackground() {
       bgLayer.remove();
       bgLayer = document.createElement('video');
       bgLayer.className = 'chat-section-bg';
-      chatMessages.insertBefore(bgLayer, chatMessages.firstChild);
+      chatSection.insertBefore(bgLayer, chatSection.firstChild);
       console.log('[BG APPLY] Switched to video bgLayer:', bgLayer);
     }
     bgLayer.src = bgSettings.url;
@@ -1510,7 +1510,7 @@ function applyChatBackground() {
       bgLayer.remove();
       bgLayer = document.createElement('div');
       bgLayer.className = 'chat-section-bg';
-      chatMessages.insertBefore(bgLayer, chatMessages.firstChild);
+      chatSection.insertBefore(bgLayer, chatSection.firstChild);
       console.log('[BG APPLY] Switched to div bgLayer:', bgLayer);
     }
     bgLayer.style.background = `url('${bgSettings.url}') center/cover no-repeat`;
@@ -1540,7 +1540,7 @@ function applyChatBackground() {
       width: computed.width,
       height: computed.height
     });
-    console.log('[BG APPLY] chatMessages:', chatMessages, 'bgLayer:', bgLayer);
+    console.log('[BG APPLY] chatSection:', chatSection, 'bgLayer:', bgLayer);
   }, 100);
 }
 window.applyChatBackground = applyChatBackground;
