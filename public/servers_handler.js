@@ -1232,6 +1232,8 @@ async function openServerChannel(serverId, channelId) {
       footer.innerHTML = '';
     }
   }
+  // Re-apply chat background after channel UI is rendered
+  if (window.applyChatBackground) window.applyChatBackground();
 }
 
 // --- Server Creation/Join ---

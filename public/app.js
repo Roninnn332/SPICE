@@ -1543,6 +1543,7 @@ function applyChatBackground() {
     console.log('[BG APPLY] chatMessages:', chatMessages, 'bgLayer:', bgLayer);
   }, 100);
 }
+window.applyChatBackground = applyChatBackground;
 function saveBgSettingsToSupabase() {
   const user = JSON.parse(localStorage.getItem('spice_user'));
   if (!user) {
